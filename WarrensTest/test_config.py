@@ -7,10 +7,10 @@ import sys
 import json
 import random
 import ConfigParser
-import dungeonGame.AI
-import dungeonGame.Actors
-import dungeonGame.Effects
-import dungeonGame.CONSTANTS
+import WarrensGame.AI
+import WarrensGame.Actors
+import WarrensGame.Effects
+import WarrensGame.CONSTANTS
 
 red = "\033[1;31m"
 green = "\033[1;32m"
@@ -175,8 +175,8 @@ def is_list_of_list(dic, key):
 def runTests():
     config = ConfigParser.ConfigParser()
     try:
-        print('\nChecking ' + dungeonGame.CONSTANTS.GAME_CONFIG)
-        config.read('../' + dungeonGame.CONSTANTS.GAME_CONFIG)
+        print('\nChecking ' + WarrensGame.CONSTANTS.GAME_CONFIG)
+        config.read('../' + WarrensGame.CONSTANTS.GAME_CONFIG)
     except Exception, e:
         print(red + str(e) + reset)
         sys.exit(1)
@@ -204,7 +204,7 @@ def runTests():
         is_numeric(monster, 'defense')
         is_numeric(monster, 'power')
         is_numeric(monster, 'xp')
-        has_attrib(dungeonGame.AI, monster, 'ai')
+        has_attrib(WarrensGame.AI, monster, 'ai')
 
     print('Checking items section')
     for item_name in config.get('lists', 'item list').split(', '):
@@ -212,7 +212,7 @@ def runTests():
         print('* testing %s...' % item_name)
 
         # TEST ITEM HERE
-        has_attrib(dungeonGame.Actors, item, 'type')
+        has_attrib(WarrensGame.Actors, item, 'type')
         is_char(item, 'char')
         is_string(item, 'name')
         is_list_of_list(item, 'chance')
@@ -224,7 +224,7 @@ def runTests():
 
         # Consumable specific
         if item['type'] == 'Consumable':
-            has_attrib(dungeonGame.Effects, item, 'effect')
+            has_attrib(WarrensGame.Effects, item, 'effect')
             is_boolean(item, 'targeted')
             is_numeric(item, 'effectradius')
             is_hitdie(item, 'effecthitdie')
