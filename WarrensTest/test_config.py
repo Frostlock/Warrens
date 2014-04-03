@@ -176,7 +176,8 @@ def runTests():
     config = ConfigParser.ConfigParser()
     try:
         print('\nChecking ' + WarrensGame.CONSTANTS.GAME_CONFIG)
-        config.read('../' + WarrensGame.CONSTANTS.GAME_CONFIG)
+        #config.read('../' + WarrensGame.CONSTANTS.GAME_CONFIG)
+        config.read(WarrensGame.CONSTANTS.GAME_CONFIG)
     except Exception, e:
         print(red + str(e) + reset)
         sys.exit(1)

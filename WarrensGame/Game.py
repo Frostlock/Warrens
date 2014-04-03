@@ -292,7 +292,3 @@ class Game(object):
         for c in self.currentLevel.characters:
             if c.state == Character.ACTIVE:
                 c.takeTurn()
-
-if __name__ == '__main__':
-    print("There is not much sense in running this file.")
-    print("Try running the GUI instead.")

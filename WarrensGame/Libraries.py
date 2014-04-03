@@ -67,19 +67,13 @@ class MonsterLibrary(Library):
     Logic to create monsters goes here. It contains logic related to managing
     a population of monsters.
     """
-
-    #class variables
-
-    _uniqueMonsters = []
-
+    
     @property
     def uniqueMonsters(self):
         """
         Returns a list of all created unique Monster objects
         """
         return self._uniqueMonsters
-
-    _regularMonsters = []
 
     @property
     def regularMonsters(self):
@@ -93,8 +87,20 @@ class MonsterLibrary(Library):
         """
         Returns a list of all created Monster objects
         """
-        return self._uniqueMonsters.append(self._regularMonsters)
+        allMonsters = []
+        for m in self.uniqueMonsters:
+            allMonsters.append(m)
+        for m in self.regularMonsters:
+            allMonsters.append(m)
+        return allMonsters
 
+    @property
+    def availableMonsters(self):
+        """
+        Returns a list of monsters that can be created.
+        """
+        return self._chancesDictionary["names"]
+    
     def __init__(self):
         """
         Constructor to create a new monster library
@@ -136,6 +142,8 @@ class MonsterLibrary(Library):
         # register the monster
         if monster_data['unique'] == 'True':
             self.uniqueMonsters.append(newMonster)
+            #Avoid recreating the same unique monster in the future
+            self.chancesDictionary["names"].remove(newMonster.id)
         else:
             self.regularMonsters.append(newMonster)
         return newMonster
@@ -150,11 +158,7 @@ class MonsterLibrary(Library):
     def getRandomMonster(self, difficulty):
         #Determine possibilities
         possibilities = self.chancesDictionary["names"]
-
-        #Avoid recreating unique monsters
-        for unique_monster in self.uniqueMonsters:
-            del possibilities[unique_monster.id]
-
+            
         #Determine chances for every possibility
         chances = []
         for possi in possibilities:
@@ -185,6 +189,13 @@ class ItemLibrary(Library):
         """
         return self._items
 
+    @property
+    def availableItems(self):
+        """
+        Returns a list of items that can be created.
+        """
+        return self._chancesDictionary["names"]
+    
     def __init__(self):
         """
         Constructor to create a new item library
