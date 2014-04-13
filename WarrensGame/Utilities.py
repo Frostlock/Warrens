@@ -27,7 +27,7 @@ def rollHitDie(hitdie):
     #roll the dice
     role_count = 0
     hitpoints = 0
-    while role_count <= nbr_of_rolls:
+    while role_count < nbr_of_rolls:
         role_count += 1
         hitpoints += random.randrange(1, dice_size)
     return hitpoints
