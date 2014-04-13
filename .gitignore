@@ -1,0 +1,12 @@
+# exclude the savegame data
+savegame
+
+# exclude the NonGit subfolder
+NonGit/
+
+# exclude compiled python files
+*.py[cod]
+
+# exclude eclipse project files
+.project
+.pydevproject
