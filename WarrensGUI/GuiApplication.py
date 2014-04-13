@@ -4,7 +4,7 @@ Created on Mar 16, 2014
 @author: pi
 '''
 
-from WarrensGame.Game import Game, Application
+from WarrensGame.Game import Game
 from WarrensGame.Actors import Character
 from WarrensGame.Effects import EffectTarget
 from WarrensGame.Maps import TileType
@@ -44,7 +44,7 @@ movement_keys = {
         pygame.K_PAGEDOWN: (+1, +1),
         }
                     
-class GuiApplication(Application):
+class GuiApplication(object):
     '''
     PyGame implementation for dungeonGame GUI
     '''
@@ -220,7 +220,7 @@ class GuiApplication(Application):
     
     def playNewGame(self):
         #Initialize a basic game
-        self._game = Game(self)
+        self._game = Game()
         
         #Initialize rendering variables
         self._renderSelectedTile = None

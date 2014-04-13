@@ -45,6 +45,8 @@ LEVEL_UP_FACTOR = 150
 GAME_CONFIG = "WarrensGame/Game.conf"
 
 #config switches
-SHOW_GAME_LOGGING = True
+SHOW_GAME_LOGGING = False
 SHOW_AI_LOGGING = False
+SHOW_GENERATION_LOGGING = True
 QUICKSTART = False
+
