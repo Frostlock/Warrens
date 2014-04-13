@@ -7,6 +7,7 @@ import Utilities
 import CONSTANTS
 import Effects #this is used in an eval statement
 import AI
+import Inventory
 
 ##########
 # ACTORS #
@@ -21,17 +22,12 @@ class Actor(object):
     # Also I added hitpoints on this level, every Actor can be destroyed,
     # including items and portals.
 
-    #class variables
-    _id = "ID not set"
-
     @property
     def id(self):
         """
         ID code for this Actor
         """
         return self._id
-
-    _name = "Name not set"
 
     @property
     def name(self):
@@ -40,16 +36,12 @@ class Actor(object):
         """
         return self._name
 
-    _char = None
-
     @property
     def char(self):
         """
         Returns a 1 char shorthand for this actor.
         """
         return self._char
-    
-    _tile = None
 
     @property
     def tile(self):
@@ -68,8 +60,6 @@ class Actor(object):
         self._tile = targetTile
         targetTile.addActor(self)
 
-    _level = None
-
     @property
     def level(self):
         """
@@ -87,8 +77,6 @@ class Actor(object):
         self._level = targetLevel
         self.registerWithLevel(targetLevel)
 
-    _baseMaxHitPoints = 0
-
     @property
     def maxHitPoints(self):
         """
@@ -99,8 +87,6 @@ class Actor(object):
         #return actual max_hp, by summing up the bonuses from all equipped items
         #bonus = sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
         return self._baseMaxHitPoints + bonus
-
-    _currentHitPoints = 0
 
     @property
     def currentHitPoints(self):
@@ -115,8 +101,6 @@ class Actor(object):
             self._currentHitPoints = self.maxHitPoints
         else:
             self._currentHitPoints = hitPoints
-
-    _inView = False
 
     @property
     def inView(self):
@@ -151,6 +135,7 @@ class Actor(object):
         self._tile = None
         self._level = None
         self._color = (255, 255, 255)
+        self._inView = False
 
     #functions
     def __str__(self):
@@ -295,18 +280,9 @@ class Character(Actor):
     Every character manages an inventory of items
     """
 
-    #Class variables
-    _inventoryItems = []
-
     @property
-    def inventoryItems(self):
-        """
-        Returns a list of items representing this characters inventory.
-        These are the unequiped items only.
-        """
-        return self._inventoryItems
-
-    _equipedItems = []
+    def inventory(self):
+        return self._inventory
 
     @property
     def equipedItems(self):
@@ -318,7 +294,6 @@ class Character(Actor):
 
     ACTIVE = 0
     DEAD = 1
-    _state = ACTIVE
 
     @property
     def state(self):
@@ -327,16 +302,12 @@ class Character(Actor):
         """
         return self._state
 
-    _xpValue = 0
-
     @property
     def xpValue(self):
         """
         Return xp value
         """
         return self._xpValue
-
-    _basePower = 0
 
     @property
     def power(self):
@@ -347,8 +318,6 @@ class Character(Actor):
         for item in self.equipedItems:
             bonus += int(item.powerBonus)
         return self._basePower + bonus
-
-    _baseDefense = 0
 
     @property
     def defense(self):
@@ -386,7 +355,7 @@ class Character(Actor):
         self._baseDefense = 0
         self._basePower = 1
         self._equipedItems = []
-        self._inventoryItems = []
+        self._inventory = Inventory.Inventory()
         self._xpValue = 0
         self._AI = None
         self._state = Character.ACTIVE
@@ -402,7 +371,7 @@ class Character(Actor):
         """
         adding item puts it in this characters inventory
         """
-        self.inventoryItems.append(item)
+        self.inventory.add(item)
         #TODO: check for auto equip
 
     def removeItem(self, item):
@@ -412,7 +381,7 @@ class Character(Actor):
         if item in self.equipedItems:
             #unequip the item
             self.unEquipItem(item)
-        self.inventoryItems.remove(item)
+        self.inventory.remove(item)
 
     def equipItem(self, item):
         """
@@ -420,7 +389,7 @@ class Character(Actor):
         equipment slots. Should be overridden in subclass implementations.
         """
         #can only equip if item is in inventory
-        if item in self.inventoryItems:
+        if item in self.inventory.items:
             #can only equip if not yet equiped
             if item not in self.equipedItems:
                 self.equipedItems.append(item)
@@ -464,8 +433,8 @@ class Character(Actor):
         if item in self.equipedItems:
             self.unEquipItem(item)
         #if it is in the inventory remove it
-        if item in self.inventoryItems:
-            self.inventoryItems.remove(item)
+        if item in self.inventory.items:
+            self.inventory.remove(item)
         #add it to the current tile of the character
         item.moveToLevel(self.level, self.tile)
         #message
@@ -820,6 +789,37 @@ class Item(Actor):
         """
         return False
 
+    @property
+    def stackable(self):
+        """
+        Items can be stackable
+        """
+        return self._stackable
+    
+    @property
+    def stackSize(self):
+        '''
+        Stack size getter
+        '''
+        return self._stackSize
+    
+    @stackSize.setter
+    def stackSize(self,newStackSize):
+        '''
+        Stack size setter
+        '''
+        self._stackSize = newStackSize
+    
+    @property
+    def name(self):
+        '''
+        Name of this Item, overrides base class implementation to deal stack names.
+        '''
+        if self.stackable and self.stackSize > 1:
+            return self._name + ' stack (' + str(self.stackSize) + ')'
+        else:
+            return self._name
+    
     def registerWithLevel(self, level):
         """
         Makes the level aware that this item is on it.
@@ -834,13 +834,15 @@ class Item(Actor):
         """
         #call super class constructor
         super(Item, self).__init__()
-        #Initialize Actor components
+        #Initialize Item components
         self._id = item_data['key']
         self._char = item_data['char']
         self._baseMaxHitPoints = 1
         self._currentHitPoints = self._baseMaxHitPoints
         self._name = item_data['name']
-
+        #Basic items are not stackable
+        self._stackable = False
+        self.stackSize = 1
 
 class Equipment(Item):
     """
@@ -909,9 +911,6 @@ class Consumable(Item):
     """
     Sub class for items that can be used and consumed.
     """
-
-    _effect = None
-
     @property
     def effect(self):
         """
@@ -925,8 +924,6 @@ class Consumable(Item):
         The effect that this consumable can generate.
         """
         return self._effectColor
-    
-    _consumed = False
 
     @property
     def targeted(self):
@@ -941,10 +938,11 @@ class Consumable(Item):
     @property
     def isConsumed(self):
         """
-        Boolean indicating if this consumable has been consumed.
+        Boolean indicating if this stack of consumable has been consumed completely
         """
-        return self._consumed
-
+        if self.stackSize == 0: return True
+        return False
+    
     #constructor
     def __init__(self, item_data):
         """
@@ -953,14 +951,14 @@ class Consumable(Item):
         """
         #call super class constructor
         super(Consumable, self).__init__(item_data)
+        #consumables are stackable
+        self._stackable = True
         #consumables usually have an effect
         if item_data['effect'] != '':
             effect_class = eval("Effects." + item_data['effect'])
             self._effect = effect_class and effect_class(self, item_data) or None
-            self._consumed = False
         else:
             self._effect = None
-            self._consumed = True
 
     #functions
     def applyTo(self, target):
@@ -969,12 +967,10 @@ class Consumable(Item):
         The target can be several types of object, it depends on the
         specific Effect subclass.
         """
-        #consumable can be used only once.
-        if self._consumed is False:
-            self.effect.applyTo(target)
-            self._consumed = True
-            self._effect = None
-
+        if self.stackSize > 0:
+            if self.effect is not None:
+                self.effect.applyTo(target)
+            self.stackSize -= 1
 
 class QuestItem(Item):
     """

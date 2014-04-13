@@ -824,7 +824,7 @@ class GuiApplication(Application):
         if self.game is not None and self.game.player is not None:
             header = "Select item to use, escape to cancel"
             options = []
-            items = self.game.player.inventoryItems
+            items = self.game.player.inventory.items
             for item in items:
                 options.append(item.name)
             selection = GuiUtilities.showMenu(self.surfaceDisplay, header, options)
@@ -882,7 +882,7 @@ class GuiApplication(Application):
         if self.game is not None and self.game.player is not None:
             header = "Select item to drop, escape to cancel"
             options = []
-            items = self.game.player.inventoryItems
+            items = self.game.player.inventory.items
             for item in items:
                 options.append(item.name)
             selection = GuiUtilities.showMenu(self.surfaceDisplay, header, options)
