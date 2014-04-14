@@ -173,6 +173,37 @@ class MonsterLibrary(Library):
         monster = self.createMonster(choice)
         return monster
 
+    def generateMonster(self,difficulty):
+        '''
+        Completely random generation of a monster
+        '''
+        Utilities.message('generating monster from scratch', 'GENERATION')
+        
+        monster_data = {}
+        
+        #Actor components
+        monster_data['key'] = 'random'
+        monster_data['char'] = 'M'
+        monster_data['hitdie'] = str(difficulty) + 'd8'
+        monster_data['name'] = 'Unrecognizable aberation'
+        monster_data['color'] = '[65, 255, 85]'
+
+        #Character components
+        monster_data['defense'] = str(difficulty)
+        monster_data['power'] = str(difficulty)
+        monster_data['xp'] = difficulty * difficulty * 50
+        monster_data['ai'] = 'BasicMonsterAI'
+
+        #Monster components
+        monster_data['flavor'] = 'An unrecognizable aberation approaches'
+        monster_data['killed_by'] = 'The aberation wanders around your remains.'
+        
+        #create monster        
+        newMonster = Monster(monster_data)
+        
+        # register the monster
+        self.regularMonsters.append(newMonster)
+        return newMonster
 
 class ItemLibrary(Library):
     """

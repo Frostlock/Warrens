@@ -315,6 +315,17 @@ class CaveLevel(Level):
         #generate the map
         self._map = Maps.CaveMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
         #add some monsters
-        #self._placeMonsters()
+        self._placeMonsters()
         #add some items
         #self._placeItems()
+        
+    def _placeMonsters(self):
+        #Grab the MonsterLibrary
+        lib = self.game.monsterLibrary
+        #Randomly determine nbr of monsters
+        nbr = random.randrange(0, 4)
+        for i in range(0, nbr):
+            randTile = self.map.getRandomEmptyTile()
+            new_monster = lib.generateMonster(2)
+            new_monster.moveToLevel(self, randTile)
+            
