@@ -1,7 +1,6 @@
 ## Welcome to the Warrens repo.
 
 This repository contains a python game called 'Warrens'. It is meant as a coding playground for me to have some fun with Python.
-
 The current GUI implementation is based on pygame.
 
 Feel free to fork a copy and get your hands dirty!
