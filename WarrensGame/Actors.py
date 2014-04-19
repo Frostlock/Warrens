@@ -320,16 +320,6 @@ class Character(Actor):
         return self._basePower + bonus
 
     @property
-    def defense(self):
-        """
-        Return defense value
-        """
-        bonus = 0
-        for item in self.equipedItems:
-            bonus += int(item.defenseBonus)
-        return self._baseDefense + bonus
-
-    @property
     def AI(self):
         """
         Return AI associated to this character.
@@ -343,6 +333,37 @@ class Character(Actor):
         """
         self._AI = myAI
 
+    @property
+    def baseAttackBonus(self):
+        '''
+        base attack bonus (depends on class and level)
+        '''
+        return 1
+        
+    @property
+    def attackBonus(self):
+        '''
+        attackBonus = Base attack bonus + Strength modifier + size modifier
+        '''
+        return self.baseAttackBonus
+
+    @property
+    def armorClass(self):
+        '''
+        ArmorClass = 10 + armor bonus + shield bonus + Dexterity modifier + size modifier
+        '''
+        return 10 + self.armorBonus
+
+    @property
+    def armorBonus(self):
+        """
+        Return armorBonus
+        """
+        bonus = 0
+        for item in self.equipedItems:
+            bonus += int(item.defenseBonus)
+        return bonus
+            
     #Constructor
     def __init__(self):
         """
@@ -352,7 +373,6 @@ class Character(Actor):
         #call super class constructor
         super(Character, self).__init__()
         #initialize class variables
-        self._baseDefense = 0
         self._basePower = 1
         self._equipedItems = []
         self._inventory = Inventory.Inventory()
@@ -447,16 +467,41 @@ class Character(Actor):
         Arguments
             target - the Character to be attacked
         """
-        #a simple formula for attack damage
-        damage = self.power - target.defense
-
-        if damage > 0:
-            Utilities.message(self.name.capitalize() + ' attacks '
-                    + target.name + ' for ' + str(damage) + ' Damage.', "GAME")
-            target.takeDamage(damage, self)
+        #attack roll (1d20)
+        attackRoll = random.randint(1,20) + self.attackBonus
+        #Critical miss
+        if attackRoll <= 1 :
+            damageRoll = 1
+            Utilities.message(self.name.capitalize() + ' critically misses and takes ' + str(damageRoll) + ' Damage.', "GAME")
+            self.takeDamage(damageRoll, self) 
+        #Critical threat
+        elif attackRoll >= 20 :
+            damageRoll = 2 * random.randint(1, self.power)
+            Utilities.message(self.name.capitalize() + ' critically hits ' + target.name + ' for ' + str(damageRoll) + ' Damage.', "GAME")
+            target.takeDamage(damageRoll, self)
+        #Normal situation 
         else:
-            Utilities.message(self.name.capitalize() + ' attacks '
-                    + target.name + ' but it has no effect!', "GAME")
+            #Hit
+            if attackRoll >= target.armorClass:
+                damageRoll = random.randint(1, self.power)
+                Utilities.message(self.name.capitalize() + ' hits ' + target.name + ' for ' + str(damageRoll) + ' Damage.', "GAME")
+                target.takeDamage(damageRoll, self)
+            #Miss
+            else:
+                Utilities.message(self.name.capitalize() + ' attacks ' + target.name + ' but misses!', "GAME")
+                        
+#===============================================================================
+#         #a simple formula for attack damage
+#         damage = self.power - target.defense
+# 
+#         if damage > 0:
+#             Utilities.message(self.name.capitalize() + ' attacks '
+#                     + target.name + ' for ' + str(damage) + ' Damage.', "GAME")
+#             target.takeDamage(damage, self)
+#         else:
+#             Utilities.message(self.name.capitalize() + ' attacks '
+#                     + target.name + ' but it has no effect!', "GAME")
+#===============================================================================
 
     def takeDamage(self, amount, attacker):
         """
@@ -556,7 +601,6 @@ class Player(Character):
         #player is white
         self._color = (250,250,250)
         #Character properties
-        self._baseDefense = 2
         self._basePower = 5
         self._xpValue = 1
         self._AI = None
@@ -584,7 +628,7 @@ class Player(Character):
         Utilities.message("You feel stronger!", "GAME")
         self._playerLevel += 1
         self._baseMaxHitPoints += 10
-        self._baseDefense += 1
+        #self._baseDefense += 1
         self._basePower += 1
          
     def gainXp(self, amount):
@@ -760,7 +804,7 @@ class Monster(Character):
         self._color = eval(monster_data['color'])
 
         #Character components
-        self._baseDefense = int(monster_data['defense'])
+        #self._baseDefense = int(monster_data['defense'])
         self._basePower = int(monster_data['power'])
         self._xpValue = int(monster_data['xp'])
         #gets a class object by name; and instanstiate it if not None
@@ -850,8 +894,6 @@ class Equipment(Item):
     Might need more subclasses for weapons versus armor
     """
 
-    _defenseBonus = 0
-
     @property
     def defenseBonus(self):
         """
@@ -859,16 +901,12 @@ class Equipment(Item):
         """
         return self._defenseBonus
 
-    _powerBonus = 0
-
     @property
     def powerBonus(self):
         """
         The power bonus of this piece of equipment
         """
         return self._powerBonus
-
-    _isEquiped = False
 
     @property
     def isEquiped(self):
