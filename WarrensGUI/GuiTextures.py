@@ -3,6 +3,11 @@ Created on Mar 24, 2014
 
 @author: pi
 '''
+
+"""
+TODO: In case we pull out all the texture related code this module can be discarded.
+"""
+
 import pygame
 from WarrensGame.Maps import TileType
 

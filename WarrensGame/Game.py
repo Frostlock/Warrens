@@ -101,17 +101,15 @@ class Game(object):
         """
         Constructor to create a new game.
         """
-        #reset Game
-        self.resetGame()
-
-    #functions
-    def resetGame(self):
         #Initialize class variables
         self._player = None
         self._currentLevel = None
         #initialize libraries
         self._monsterLibrary = MonsterLibrary()
         self._itemLibrary = ItemLibrary()
+
+    #functions
+    def resetGame(self):
         #clear message buffer
         Utilities.resetMessageBuffer()
         #clear existing levels
@@ -231,6 +229,7 @@ class Game(object):
         self.player.addItem(scroll)
             
     #TODO medium: implement saving and loading of gamestate
+    
     def loadGame(self, fileName):
         return
 

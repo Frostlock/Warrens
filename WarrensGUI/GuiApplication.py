@@ -197,31 +197,58 @@ class GuiApplication(object):
         #Welcome sequence
         #GuiUtilities.showMessage(self.surfaceDisplay,'Welcome!', 'Welcome to this bit of python code!\n It sure is not nethack :-).\n Now I only need to find a really really good intro story, maybe something about an evil wizard with a ring and bunch of small guys with hairy feet that are trying to destroy the ring. I bet that would be original. But hey in all seriousness, this is just some text to make sure that the auto wrapping feature works correctly.\n \n-Frost')
         
-        options = ['New game', ' Controls', 'Quit']
+        options = ['New game', ' Controls', 'Quit', 'Debug Maps']
         selection = GuiUtilities.showMenu(self.surfaceDisplay, 'Main Menu',options)
         
         if selection is None:
             #sys.exit()
             return
         elif selection == 0:
-            # first option
-            print 'Main Menu: Starting new game'
+            print 'Main Menu: ' + options[0]
             self.playNewGame()
         elif selection == 1:
-            # second option
             print 'Main Menu: ' + options[1]
             GuiUtilities.showMessageControls(self.surfaceDisplay)
         elif selection == 2:
-            # third option
-            print 'Main Menu: Quit!'
+            print 'Main Menu: ' + options[2]
             sys.exit()
+        elif selection == 3:
+            print 'Main Menu: ' + options[3]
+            self.debugMaps()
         else:
             print 'unknown selection...?'
     
     def playNewGame(self):
-        #Initialize a basic game
+        #Create a game
+        self._game = Game()
+        #Reset the game
+        self.game.resetGame()
+        #Show the Game
+        self.mainRenderLoop()
+    
+    def debugMaps(self):
+        #Create a game
         self._game = Game()
         
+        #Create some maps to debug
+        self.game._levels = []
+        
+        from WarrensGame import Levels
+        
+        #town level
+        levelName = "Debug Map"
+        levelDifficulty = 1
+        town = Levels.CaveLevel(self.game, levelDifficulty, levelName)
+        self.game.levels.append(town)
+        self.game._currentLevel = town
+        
+        #Create player (without a player the rendering loop fails)
+        self.game.addPlayer()
+        
+        #Show the Game
+        self.mainRenderLoop()
+    
+    def mainRenderLoop(self):
         #Initialize rendering variables
         self._renderSelectedTile = None
         self._zoomFactor = 1
@@ -262,7 +289,7 @@ class GuiApplication(object):
             clock.tick(frameRateLimit)
             
             if GuiCONSTANTS.SHOW_PERFORMANCE_LOGGING: print "LOOP! FrameRateLimit: " + str(frameRateLimit) + " Rendering: " + str(render_time) + "s " + str(len(events)) + " events: " + str(event_time) + "s"
- 
+           
     def handleEvent(self, event):
         #Quit
         if event.type == pygame.QUIT: sys.exit()
@@ -329,7 +356,7 @@ class GuiApplication(object):
                     # update field of vision
                     if self._gamePlayerTookTurn:
                         self.game.currentLevel.map.updateFieldOfView(self.game.player.tile.x, self.game.player.tile.y)
-           
+        
     
     def renderGame(self):
         '''
@@ -504,12 +531,17 @@ class GuiApplication(object):
                 tileRect = pygame.Rect(vpX, vpY, self.tileSize, self.tileSize)
                 if tile.explored:
                     tileCount += 1
+                    #blit color of tile
+                    self.surfaceViewPort.fill(tile.color, tileRect)
+                    
+                    #TEXTURE BASED: deprecated
                     #blit empty tile first (empty tile underneath transparant overlay)
-                    tex = GuiTextures.getTextureSurface(TileType.EMPTY)
-                    self.surfaceViewPort.blit(tex,tileRect)
+                    #tex = GuiTextures.getTextureSurface(TileType.EMPTY)
+                    #self.surfaceViewPort.blit(tex,tileRect)
                     #blit possible tile texture (transparant overlay)
-                    tex = GuiTextures.getTextureSurface(tile.type)
-                    self.surfaceViewPort.blit(tex,tileRect)
+                    #tex = GuiTextures.getTextureSurface(tile.type)
+                    #self.surfaceViewPort.blit(tex,tileRect)
+                    
                     #blit rect for tile border (this shows a black border for every tile)
                     #pygame.draw.rect(self.surfaceViewPort, (0,0,0), tileRect,1)
                     if tile.inView:
@@ -555,7 +587,7 @@ class GuiApplication(object):
         x = tileRect.x + (tileRect.width / 2 - textImg.get_width() /2)
         y = tileRect.y + (tileRect.height / 2 - textImg.get_height() /2)
         self.surfaceViewPort.blit(textImg, (x,y))
-
+        
         if self.targetingMode:
             #Indicate we are in targeting mode
             blitText = GuiUtilities.FONT_PANEL.render("Select target (Escape to cancel)", 1, (255,0,0))
@@ -585,7 +617,7 @@ class GuiApplication(object):
         if self.game.currentLevel is not None:
             blitText = GuiUtilities.FONT_PANEL.render(self.game.currentLevel.name, 1, GuiCONSTANTS.COLOR_PANEL_FONT)
             self.surfaceViewPort.blit(blitText, (6, 2))
-            
+        
     def renderDetailSurface(self, tile):
         '''
         renders a surface containing info details for the given tile
@@ -678,7 +710,7 @@ class GuiApplication(object):
             clock.tick(frameRateLimit)
 
     def animationNova(self, color, centerTile, radius=0):
-        R, G, B = color
+        #R, G, B = color
         if radius == 0: 
             ripples = 1
             radius = self.tileSize

@@ -260,9 +260,10 @@ class TownLevel(Level):
         #Select actual location randomly
         doorX, doorY = random.choice(doorLocations)
         doorTile = self.map.tiles[doorX][doorY]
-        #Cut a hole in the wall for the door
+        #Cut a hole in the wall for the door (this time in the town map)
         doorTile.blocked = False
         doorTile.blockSight = False
+        doorTile.material = Maps.MaterialType.DOOR
         #Create the door that leads into the house
         doorIn = Actors.Portal()
         doorIn._char = '>'
@@ -273,6 +274,10 @@ class TownLevel(Level):
         houseLevel = SingleRoomLevel(self.game, self.difficulty, 'house', house)
         self.subLevels.append(houseLevel)
         doorTile = houseLevel.map.tiles[doorX][doorY]
+        #Cut a hole in the wall for the door (this time in the House map)
+        doorTile.blocked = False
+        doorTile.blockSight = False
+        doorTile.material = Maps.MaterialType.DOOR
         #Create the door that leads out of the house
         doorOut = Actors.Portal()
         doorOut._char = '<'

@@ -329,6 +329,7 @@ class DungeonMap(Map):
                 myTile.blocked = True
                 myTile.blockSight = True
                 myTile.color = CONSTANTS.DUNGEON_COLOR_WALL
+                myTile.material = MaterialType.STONE
                 myTile.type = TileType.FULL
 
         #cut out rooms
@@ -359,6 +360,7 @@ class DungeonMap(Map):
                     self.tiles[x][y].blocked = False
                     self.tiles[x][y].blockSight = False
                     self.tiles[x][y].color = CONSTANTS.DUNGEON_COLOR_FLOOR
+                    self.tiles[x][y].material = MaterialType.DIRT
                     self.tiles[x][y].type = TileType.EMPTY
             
             #set tile types of walls and corners
@@ -488,7 +490,8 @@ class DungeonMap(Map):
             self.tiles[x][y].blocked = False
             self.tiles[x][y].blockSight = False
             self.tiles[x][y].color = CONSTANTS.DUNGEON_COLOR_FLOOR
-            self.tiles[x][y].type =TileType.EMPTY
+            self.tiles[x][y].material = MaterialType.DIRT
+            self.tiles[x][y].type = TileType.EMPTY
         #north wall
         if y-1 >= 0:
             for x in range(min(x1, x2), max(x1, x2) + 1):
@@ -504,6 +507,7 @@ class DungeonMap(Map):
             self.tiles[x][y].blocked = False
             self.tiles[x][y].blockSight = False
             self.tiles[x][y].color = CONSTANTS.DUNGEON_COLOR_FLOOR
+            self.tiles[x][y].material = MaterialType.DIRT
             self.tiles[x][y].type =TileType.EMPTY
         #west wall
         if x-1 >= 0:
@@ -585,11 +589,13 @@ class TownMap(Map):
                     myTile.blocked = True
                     myTile.blockSight = True
                     myTile.color = CONSTANTS.TOWN_COLOR_BORDER
+                    myTile.material = MaterialType.STONE
                     myTile.type = TileType.FULL
                 else:
                     myTile.blocked = False
                     myTile.blockSight = False
                     myTile.color = CONSTANTS.TOWN_COLOR_DIRT
+                    myTile.material = MaterialType.DIRT
                     myTile.type = TileType.EMPTY
 
         #generate houses
@@ -620,6 +626,7 @@ class TownMap(Map):
                     self.tiles[x][y].blocked = True
                     self.tiles[x][y].blockSight = True
                     self.tiles[x][y].color = CONSTANTS.TOWN_COLOR_STONE
+                    self.tiles[x][y].material = MaterialType.STONE
                     self.tiles[x][y].type = TileType.FULL
 
             #set tile types of walls and corners
@@ -693,14 +700,16 @@ class SingleRoomMap(Map):
                 myTile.blocked = True
                 myTile.blockSight = True
                 myTile.color = CONSTANTS.DUNGEON_COLOR_WALL
+                myTile.material = MaterialType.STONE
                 myTile.type = TileType.FULL
 
         #Cut out the single room
-        for x in range(self.room.x1, self.room.x2 + 1):
-            for y in range(self.room.y1, self.room.y2 + 1):
+        for x in range(self.room.x1 + 1, self.room.x2):
+            for y in range(self.room.y1 + 1, self.room.y2):
                 self.tiles[x][y].blocked = False
                 self.tiles[x][y].blockSight = False
                 self.tiles[x][y].color = CONSTANTS.DUNGEON_COLOR_FLOOR
+                self.tiles[x][y].material = MaterialType.DIRT
                 self.tiles[x][y].type = TileType.EMPTY
         
         #calculate tile types (no need, set above)
@@ -721,7 +730,7 @@ class CaveMap(Map):
         super(CaveMap, self).__init__(MapWidth, MapHeight)
         #Initialize range of view
         self._rangeOfView = CONSTANTS.TORCH_RADIUS
-        self._textureFile = CONSTANTS.CAVE_TEXTURE
+        #self._textureFile = CONSTANTS.CAVE_TEXTURE
 
     def generateMap(self):
         #Create a new map with empty tiles
@@ -736,6 +745,7 @@ class CaveMap(Map):
                 myTile.blocked = True
                 myTile.blockSight = True
                 myTile.color = CONSTANTS.CAVE_COLOR_ROCK
+                myTile.material = MaterialType.STONE 
         
         #Cut out a starting cave area
         x = random.randrange(0, self.width)
@@ -747,11 +757,20 @@ class CaveMap(Map):
             tile.blocked = False
             tile.blockSight = False
             tile.color = CONSTANTS.CAVE_COLOR_DIRT
+            tile.material = MaterialType.DIRT
         
+        #Create a bit of water
+        circleTiles = self.getCircleTiles(x+1, y+1, 2, fullCircle)
+        for tile in circleTiles:
+            tile.material = MaterialType.WATER
+            tile.blocked = False
+            tile.blockSight = False
+            tile.color = CONSTANTS.WATER_COLOR_LIGHT
+            
         #TODO: Grow additional cave areas.
 
         #calculate tile types
-        self.calculateTileTypes()
+        #self.calculateTileTypes()
 
 class Room():
     """
@@ -798,6 +817,11 @@ class Room():
 
 class TileType():
     
+    """
+    Deprecated enumerator to indicate the type of tile. Should no longer be used.
+    TODO; Clear out all Texture related code properties
+    """
+    
     EMPTY = 0
     FULL = 1
     INNER_NW = 2
@@ -812,9 +836,18 @@ class TileType():
     OUTER_NE = 11
     OUTER_SW = 12
     OUTER_SE = 13
-    
 
-class Tile():
+class MaterialType():
+    """
+    Enumerator for material types.
+    """
+    NONE = 0
+    DIRT = 1
+    STONE = 2
+    DOOR = 3
+    WATER = 4
+
+class Tile(object):
     """
     represents a Tile on the map
     """
@@ -872,7 +905,7 @@ class Tile():
         """
         Returns a boolean indicating if this tile blocks line of sight.
         """
-        return self._block_sight
+        return self._blockSight
 
     @blockSight.setter
     def blockSight(self, blocksLineOfSight):
@@ -884,9 +917,12 @@ class Tile():
         Returns if this tile is in the player field of vision.
         This is set by the game engine during each turn.
         """
-
         return self._in_view
 
+    @inView.setter
+    def inView(self, newInView):
+        self._in_view = newInView
+    
     @property
     def actors(self):
         """
@@ -902,13 +938,31 @@ class Tile():
         if len(self.actors) == 0:
             return True
         return False
-
+    
+    @property
+    def material(self):
+        """
+        Property to store the material type of the tile.
+        """
+        return self._material
+    
+    @material.setter
+    def material(self, newMaterial):
+        self._material = newMaterial
+        
     @property
     def color(self):
         """
         Returns the preferred color of this tile.
         """
-        return self._color
+        if self.material == MaterialType.WATER :
+            r = random.randrange(-5,5)
+            g = random.randrange(-5,5)
+            b = random.randrange(-50,0)
+            newColor = (self._color[0]+r,self._color[1]+g,self._color[2]+b)
+            return newColor
+        else:
+            return self._color
     
     @color.setter
     def color(self, newColor):
@@ -940,7 +994,8 @@ class Tile():
         self._y = y
         self._explored = False
         self._blocked = False
-        self._block_sight = False
+        self._blockSight = False
+        self._material = MaterialType.NONE
         self._in_view = True
         self._color = CONSTANTS.TILE_DEFAULT_COLOR
         self._type = TileType.EMPTY
