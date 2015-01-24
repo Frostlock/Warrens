@@ -97,7 +97,7 @@ class GlApplication(object):
         width, height = displaySize
         pygame.display.set_mode(self.displaySize,RESIZABLE|DOUBLEBUF|OPENGL)
         GL.glViewport(0, 0, width, height)
-        
+            
     def showMainMenu(self):
         #Init pygame
         pygame.init()
@@ -107,47 +107,44 @@ class GlApplication(object):
         GLU.gluPerspective(45, (self.displayWidth/self.displayHeight), 0.1, 500.0)
         GLUT.glutInit([])
         
+        #Enable depth testing
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glDepthMask(GL.GL_TRUE)
         GL.glDepthFunc(GL.GL_LEQUAL)
         GL.glDepthRange(0.0, 1.0)
     
+        #Enable alpha testing
+        GL.glEnable(GL.GL_ALPHA_TEST)
+        GL.glAlphaFunc(GL.GL_GREATER, 0.5)
+        
         #Init Game
         self._game = Game()
         self.game.resetGame()        
         
         GL.glMatrixMode(GL.GL_MODELVIEW)
-        
         #Camera is always at (0, 0, 0) looking down along the z axis
-        
-        #Center above the player
-        #playerTile = self.game.player.tile
-        #x = playerTile.x
-        #y = playerTile.y
-        #glTranslatef(-1* x * tileSize,-1* y * tileSize, 0)
-        
+         
         #Center above the center of the map
         map = self.game.currentLevel.map
         x = map.width / 2
         y = map.height / 2
         GL.glTranslatef(-1* x * tileSize,-1* y * tileSize, 0)
-         
+          
         #Move the entire world down so it becomes visible
         GL.glTranslatef(0,8, -25)
-         
+          
         #Move camera out and rotate
         #glTranslatef(15 * tileSize,15 * tileSize, 0)
         GL.glRotatef(-45, 0.5, 0, 1)
         
-       
         while True:
             #handle pygame (GUI) events
             events = pygame.event.get()
             for event in events:
                 self.handleEvent(event)
             
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)    
-
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
+            
             #draw the scene
             self.drawView()
             self.drawHUD()
@@ -161,6 +158,24 @@ class GlApplication(object):
                 
             pygame.time.wait(10)
 
+    def cameraPlayer(self):
+        GL.glLoadIdentity()
+        #Center above the player
+        playerTile = self.game.player.tile
+        x = playerTile.x
+        y = playerTile.y
+        GL.glTranslatef(-1* x * tileSize,-1* y * tileSize, 0)
+        #Move the entire world down so it becomes visible
+        #GL.glTranslatef(0,0, -25)
+         
+        #Move camera out and rotate
+        #glTranslatef(15 * tileSize,15 * tileSize, 0)
+        #GL.glRotatef(-45, 0.5, 0, 1)
+
+    def cameraMap(self):
+        GLU.gluLookAt(25,25,0, 0,0,0, 0,1,0)
+        pass
+        
     def drawView(self):        
         #Draw map border
         map = self.game.currentLevel.map
@@ -232,12 +247,23 @@ class GlApplication(object):
         
     def setDrawColor(self, color):
         GL.glColor3f(float(color[0])/250,float(color[1])/250,float(color[2])/250)
+    
+    def drawText(self, position, textString, textSize):     
+        font = pygame.font.Font (None, textSize)
+        textSurface = font.render(textString, True, (255,255,255,255))#, (0,0,0,255))     
+        textData = pygame.image.tostring(textSurface, "RGBA", True)
+        GL.glRasterPos3d(*position)     
+        GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
         
     def drawHUD(self):
         #Switch to orthographic mode
         GL.glPushMatrix()
         GL.glOrtho(0.0, self.displayWidth, self.displayHeight, 0.0, -1.0, 10.0)
         GL.glClear(GL.GL_DEPTH_BUFFER_BIT)
+        
+        
+        GL.glLoadIdentity()
+        self.drawText((-0.98,0.9,0), self.game.currentLevel.name,24)
         
         #Health Bar
         GL.glLoadIdentity()
@@ -323,6 +349,10 @@ class GlApplication(object):
             #Handle keys that are always active
             if event.key == pygame.K_ESCAPE:
                 sys.exit() 
+            elif event.key == pygame.K_p:
+                self.cameraPlayer()
+            elif event.key == pygame.K_m:
+                self.cameraMap()
             #Handle keys that are active while playing
             if self.game.state == Game.PLAYING:
                 player = self.game.player
@@ -422,8 +452,6 @@ class GlApplication(object):
             #unset rotation center
             GL.glTranslatef(-rotation_center_x * tileSize,-rotation_center_y * tileSize, 0)
             
-            
-
     def eventZoomIn(self):
         factor = -1
         #Get the direction of the camera from the current modelview matrix
