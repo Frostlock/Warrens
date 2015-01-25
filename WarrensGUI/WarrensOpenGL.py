@@ -27,6 +27,8 @@ from gameobjects.vector3 import *
 
 from math import sqrt
 
+from ctypes import c_void_p
+
 #movement keys
 movement_keys = {
         pygame.K_h: (-1, +0),       # vi keys
@@ -56,7 +58,14 @@ movement_keys = {
         }
 
 #tileSize in OpenGl space
-tileSize = 0.25
+TILESIZE = 0.25
+
+# 4 bytes in a float
+# TODO: Find a better way to deal with this
+SIZE_OF_FLOAT = 4
+
+# 4 components in a vector: X, Y, Z, W
+VERTEX_COMPONENTS = 4
 
 class GlApplication(object):
 
@@ -89,6 +98,23 @@ class GlApplication(object):
         return self.displaySize[1]
 
     @property
+    def level(self):
+        """
+        Returns the level that is currently being shown in the GUI
+        """
+        return self._level
+
+    @level.setter
+    def level(self,level):
+        """
+        Sets the level to be shown in the GUI.
+        This will also load the vertexbuffer for the level mesh
+        """
+        self._level = level
+        #Load the mesh for the level in the vertexbuffer
+        self.loadVBOLevel()
+
+    @property
     def cameraMatrix(self):
         """
         Returns the camera matrix
@@ -96,11 +122,11 @@ class GlApplication(object):
         return self._cameraMatrix
 
     @cameraMatrix.setter
-    def cameraMatrix(self,m):
+    def cameraMatrix(self,matrix):
         """
         Sets the camera matrix
         """
-        self._cameraMatrix = m
+        self._cameraMatrix = matrix
 
     #constructor
     def __init__(self):
@@ -112,6 +138,7 @@ class GlApplication(object):
         self._dragging = False
         self._rotating = False
         self._gamePlayerTookTurn = False
+        self._level = None
         self.FPS = 0
         
     #Called whenever the window is resized. The new window size is given, in pixels.
@@ -121,13 +148,11 @@ class GlApplication(object):
         pygame.display.set_mode(self.displaySize,RESIZABLE|HWSURFACE|DOUBLEBUF|OPENGL)
         GL.glViewport(0, 0, width, height)
         
-        GL.glMatrixMode(GL.GL_PROJECTION)
-        GL.glLoadIdentity()
-        
-        GLU.gluPerspective(60.0, float(width)/height, .1, 1000.)
-        
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glLoadIdentity()
+#        GL.glMatrixMode(GL.GL_PROJECTION)
+#        GL.glLoadIdentity()
+#        GLU.gluPerspective(60.0, float(width)/height, .1, 1000.)
+#        GL.glMatrixMode(GL.GL_MODELVIEW)
+#        GL.glLoadIdentity()
             
     def showMainMenu(self):
         #Init pygame
@@ -139,7 +164,34 @@ class GlApplication(object):
             
         #Init PyOpenGl
         GLUT.glutInit([])
-        
+
+        #Compile shaders
+        from OpenGL.GL.shaders import compileShader, compileProgram
+        strVertexShader = open("WarrensGUI/shaders/VertexShader.glsl").read()
+        strFragmentShader = open("WarrensGUI/shaders/FragmentShader.glsl").read()
+        theProgram = compileProgram(
+            compileShader(strVertexShader, GL.GL_VERTEX_SHADER),
+            compileShader(strFragmentShader, GL.GL_FRAGMENT_SHADER)
+        )
+        GL.glUseProgram(theProgram)
+        self.perspectiveMatrixUnif = GL.glGetUniformLocation(theProgram, "perspectiveMatrix")
+        self.cameraMatrixUnif = GL.glGetUniformLocation(theProgram, "cameraMatrix")
+
+        #Create perspective matrix
+        fFrustumScale = 1.0
+        fzNear = 0.1
+        fzFar = 1000.0
+        theMatrix = [0.0 for i in range(16)]
+        theMatrix[0] = fFrustumScale
+        theMatrix[5] = fFrustumScale
+        theMatrix[10] = (fzFar + fzNear) / (fzNear - fzFar)
+        theMatrix[14] = (2 * fzFar * fzNear) / (fzNear - fzFar)
+        theMatrix[11] = -1.0
+        #Send perspective matrix to the GPU
+        GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, theMatrix)
+
+        GL.glUseProgram(0)
+
         #Enable depth testing
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glDepthMask(GL.GL_TRUE)
@@ -161,8 +213,7 @@ class GlApplication(object):
 
         #Init Game
         self._game = Game()
-        self.game.resetGame()        
-        
+        self.game.resetGame()
 
         clock = pygame.time.Clock()    
         
@@ -181,13 +232,11 @@ class GlApplication(object):
             #handle pygame (GUI) events
             events = pygame.event.get()
             for event in events:
-                self.handleEvent(event)
+                self.handlePyGameEvent(event)
             
             #handle game events
-            if self.game.player.state == Character.DEAD:
-                #zoom in on player corpse
-                self.centerCameraOnActor(self.game.player)
-                
+            self.handleWarrensGameEvents()
+
             # Clear the screen, and z-buffer
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
                             
@@ -228,16 +277,22 @@ class GlApplication(object):
             heading = Vector3(self.cameraMatrix.forward)
             movement = heading * movement_direction.z * movement_speed                    
             self.cameraMatrix.translate += movement * time_passed_seconds
-            
-            # Upload the inverse camera matrix to OpenGL
-            GL.glLoadMatrixd(self.cameraMatrix.get_inverse().to_opengl())
-                    
+
+            # Load the GPU program
+            GL.glUseProgram(theProgram)
+
+            #Send the cameraMatrix to the GPU
+            camMatrix = self.cameraMatrix.get_inverse().to_opengl()
+            GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, camMatrix)
+
             # Light must be transformed as well
 #            GL.glLight(GL.GL_LIGHT0, GL.GL_POSITION,  (0, 1.5, 1, 0)) 
                     
             #Render the 3D view
-            self.drawView()
-            
+            self.drawVBOs()
+
+            GL.glUseProgram(0)
+
             #Render the HUD (health bar, XP bar, etc...)
             self.drawHUD()
                     
@@ -258,7 +313,7 @@ class GlApplication(object):
         #Translate it above the actor
         x = actor.tile.x
         y = actor.tile.y
-        self.cameraMatrix.translate = (x * tileSize,y * tileSize, 4)
+        self.cameraMatrix.translate = (x * TILESIZE,y * TILESIZE, 4)
 
     def centerCameraOnMap(self):
         #Set a new camera transform matrix
@@ -267,69 +322,156 @@ class GlApplication(object):
         map = self.game.currentLevel.map
         x = map.width / 2
         y = map.height / 2
-        self.cameraMatrix.translate = (x * tileSize,y * tileSize-1, 13)
-        
-    def drawView(self):        
-        #Draw map border
-        map = self.game.currentLevel.map
-        GL.glBegin(GL.GL_POLYGON) 
-        GL.glColor3f(0.5,0.4,0.1)
-        GL.glVertex3fv((0 * tileSize,0 * tileSize,-0.0001))
-        #glVertex3fv((map.width * tileSize, 0 * tileSize,0))
-        GL.glVertex3fv((map.width * tileSize, 0 * tileSize,-0.0001))
-        #glVertex3fv((map.width * tileSize, map.height * tileSize,0))
-        GL.glVertex3fv((map.width * tileSize, map.height * tileSize,-0.0001))
-        #glVertex3fv((0 * tileSize, map.height * tileSize,0))
-        GL.glVertex3fv((0 * tileSize, map.height * tileSize,-0.0001))
-        #glVertex3fv((0 * tileSize,0 * tileSize,0))
-        GL.glEnd()
-        
-        #Draw all visible tiles on the current level
-        GL.glColor3f(0,0,0)
-        for tile in self.game.currentLevel.map.visible_tiles:
-            self.drawTile(tile)
-            for actor in tile.actors:
-                self.drawActor(actor)
-                
-#         #Draw underlying levels
-#         for i in range (1, len(self.game.levels) -1):
-#             GL.glPushMatrix()
-#             GL.glTranslatef(0, 0, -i)
-#             GL.glColor3f(0.5,0.5,0.5)
-#             self.drawLevel(self.game.levels[i])
-#             GL.glPopMatrix()
+        self.cameraMatrix.translate = (x * TILESIZE,y * TILESIZE-1, 13)
+
+    def loadVBOLevel(self):
+        """
+        Initialize a VBO for the basic level mesh
+        To optimize performance this will only be called when a new level is loaded
+        """
+        #Create the vertex buffer on the GPU and remember the address ID
+        self.VBO_level_id = GL.glGenBuffers(1)
+
+        #Construct the data array that will be loaded into the buffer
+        vertexData = []
+
+        #Store the vertex coordinates
+        for tileRow in self.game.currentLevel.map.tiles:
+            for tile in tileRow:
+                #4 components per vertex: x, y, z, w
+                #First Triangle
+                vertexData.extend((tile.x * TILESIZE,tile.y * TILESIZE, 0.0, 1.0))
+                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE, 0.0, 1.0))
+                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE + TILESIZE, 0.0, 1.0))
+                #Second Triangle
+                vertexData.extend((tile.x * TILESIZE,tile.y * TILESIZE, 0.0, 1.0))
+                vertexData.extend((tile.x * TILESIZE, tile.y * TILESIZE + TILESIZE, 0.0, 1.0))
+                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE + TILESIZE, 0.0, 1.0))
+
+        self.VBO_level_color_offset = len(vertexData)
+
+        #Store the vertex colors
+        for tileRow in self.game.currentLevel.map.tiles:
+            for tile in tileRow:
+                #4 components per color: R, G, B, A
+                color = self.normalizeColor(tile.color)
+                #First Triangle
+                vertexData.extend((color[0],color[1],color[2],1.0))
+                vertexData.extend((color[0],color[1],color[2],1.0))
+                vertexData.extend((color[0],color[1],color[2],1.0))
+                #Second Triangle
+                vertexData.extend((color[0],color[1],color[2],1.0))
+                vertexData.extend((color[0],color[1],color[2],1.0))
+                vertexData.extend((color[0],color[1],color[2],1.0))
+
+
+        self.VBO_level_length = len(vertexData)
+
+        #Load the constructed data array into the buffer
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.VBO_level_id)
+        array_type = (GL.GLfloat * len(vertexData))
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, len(vertexData) * SIZE_OF_FLOAT, array_type(*vertexData), GL.GL_STATIC_DRAW)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
+
+    def loadVBOActors(self):
+        """
+        Initialize a VBO for the actors
+        This should be called whenever there is a change in actor positions or visibility
+        """
+        #Create the vertex buffer on the GPU and remember the address ID
+        self.VBO_actors_id = GL.glGenBuffers(1)
+
+        #Construct the data array that will be loaded into the buffer
+        vertexData = []
+
+        #Store the vertex coordinates
+        for vTile in self.game.currentLevel.map.visible_tiles:
+            for actor in vTile.actors:
+                tile = actor.tile
+                #4 components per vertex: x, y, z, w
+                vertexData.extend((tile.x * TILESIZE,tile.y * TILESIZE, 0.0, 1.0))
+                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE, 0.0, 1.0))
+                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE + TILESIZE, 0.0, 1.0))
+
+        self.VBO_actors_color_offset = len(vertexData)
+
+        #Store the vertex colors
+        for vTile in self.game.currentLevel.map.visible_tiles:
+            for actor in vTile.actors:
+                #4 components per color: R, G, B, A
+                color = self.normalizeColor(actor.color)
+                vertexData.extend((color[0],color[1],color[2],1.0))
+                vertexData.extend((color[0],color[1],color[2],1.0))
+                vertexData.extend((color[0],color[1],color[2],1.0))
+
+        self.VBO_actors_length = len(vertexData)
+
+        #Load the constructed data array into the buffer
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.VBO_actors_id)
+        array_type = (GL.GLfloat * len(vertexData))
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, len(vertexData) * SIZE_OF_FLOAT, array_type(*vertexData), GL.GL_STATIC_DRAW)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
+
+    def drawVBOs(self):
+        #Draw level VBO
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.VBO_level_id)
+        GL.glEnableVertexAttribArray(0)
+        GL.glEnableVertexAttribArray(1)
+        GL.glVertexAttribPointer(0, VERTEX_COMPONENTS, GL.GL_FLOAT, False, 0, None)
+        colorDataStart = self.VBO_level_color_offset * SIZE_OF_FLOAT
+        GL.glVertexAttribPointer(1, VERTEX_COMPONENTS, GL.GL_FLOAT, False, 0, c_void_p(colorDataStart))
+        vertices = self.VBO_level_length / 2 / VERTEX_COMPONENTS
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, vertices)
+        GL.glDisableVertexAttribArray(0)
+        GL.glDisableVertexAttribArray(1)
+
+        #Draw actors VBO
+        self.loadVBOActors()
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.VBO_actors_id)
+        GL.glEnableVertexAttribArray(0)
+        GL.glEnableVertexAttribArray(1)
+        GL.glVertexAttribPointer(0, VERTEX_COMPONENTS, GL.GL_FLOAT, False, 0, None)
+        colorDataStart = self.VBO_actors_color_offset * SIZE_OF_FLOAT
+        GL.glVertexAttribPointer(1, VERTEX_COMPONENTS, GL.GL_FLOAT, False, 0, c_void_p(colorDataStart))
+        vertices = self.VBO_actors_length / 2 / VERTEX_COMPONENTS
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, vertices)
+        GL.glDisableVertexAttribArray(0)
+        GL.glDisableVertexAttribArray(1)
     
         
-    def drawLevel(self, level):
-        for tilerow in level.map.tiles:
-            for tile in tilerow:
-                if not tile.blocked:
-                    self.drawTile(tile)
+    # def drawLevel(self, level):
+    #     for tilerow in level.map.tiles:
+    #         for tile in tilerow:
+    #             if not tile.blocked:
+    #                 self.drawTile(tile)
     
-    def drawTile(self, tile):
-        GL.glBegin(GL.GL_QUADS)
-        self.setDrawColor(tile.color) 
-        GL.glVertex3fv((tile.x * tileSize,tile.y * tileSize,0))
-        GL.glVertex3fv((tile.x * tileSize + tileSize,tile.y * tileSize,0))
-        #GL.glVertex3fv((tile.x * tileSize + tileSize,tile.y * tileSize,0))
-        GL.glVertex3fv((tile.x * tileSize + tileSize,tile.y * tileSize + tileSize,0))
-        #GL.glVertex3fv((tile.x * tileSize + tileSize,tile.y * tileSize + tileSize,0))
-        GL.glVertex3fv((tile.x * tileSize,tile.y * tileSize + tileSize,0))
-        #GL.glVertex3fv((tile.x * tileSize,tile.y * tileSize + tileSize,0))
-        #GL.glVertex3fv((tile.x * tileSize,tile.y * tileSize,0))
-        GL.glEnd()
+    # def drawTile(self, tile):
+    #     GL.glBegin(GL.GL_QUADS)
+    #     self.setDrawColor(tile.color)
+    #     GL.glVertex3fv((tile.x * TILESIZE,tile.y * TILESIZE,0))
+    #     GL.glVertex3fv((tile.x * TILESIZE + TILESIZE,tile.y * TILESIZE,0))
+    #     #GL.glVertex3fv((tile.x * tileSize + tileSize,tile.y * tileSize,0))
+    #     GL.glVertex3fv((tile.x * TILESIZE + TILESIZE,tile.y * TILESIZE + TILESIZE,0))
+    #     #GL.glVertex3fv((tile.x * tileSize + tileSize,tile.y * tileSize + tileSize,0))
+    #     GL.glVertex3fv((tile.x * TILESIZE,tile.y * TILESIZE + TILESIZE,0))
+    #     #GL.glVertex3fv((tile.x * tileSize,tile.y * tileSize + tileSize,0))
+    #     #GL.glVertex3fv((tile.x * tileSize,tile.y * tileSize,0))
+    #     GL.glEnd()
     
-    def drawActor(self, actor):
-        tile = actor.tile
-        GL.glPushMatrix()
-        GL.glTranslatef(tile.x * tileSize + tileSize / 2, tile.y * tileSize + tileSize / 2, tileSize / 2)
-        self.setDrawColor(actor.color)
-        GLUT.glutSolidSphere(tileSize/2,32,32)
-        GL.glPopMatrix()
+    # def drawActor(self, actor):
+    #     tile = actor.tile
+    #     GL.glPushMatrix()
+    #     GL.glTranslatef(tile.x * TILESIZE + TILESIZE / 2, tile.y * TILESIZE + TILESIZE / 2, TILESIZE / 2)
+    #     self.setDrawColor(actor.color)
+    #     GLUT.glutSolidSphere(TILESIZE/2,32,32)
+    #     GL.glPopMatrix()
         
         
+    def normalizeColor(self,color):
+        return (float(color[0])/250,float(color[1])/250,float(color[2])/250)
+
     def setDrawColor(self, color):
-        GL.glColor3f(float(color[0])/250,float(color[1])/250,float(color[2])/250)
+        GL.glColor3f(*self.normalizeColor(color))
     
     def drawText(self, position, textString, textSize):     
         font = pygame.font.Font (None, textSize)
@@ -339,13 +481,21 @@ class GlApplication(object):
         GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
         
     def drawHUD(self):
-        #Switch to orthographic mode
-        GL.glMatrixMode(GL.GL_PROJECTION)
-        GL.glPushMatrix()
-        GL.glLoadIdentity()
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glPushMatrix()
-        GL.glLoadIdentity()
+        """
+        For the HUD we use an Orthographic projection and some older style opengl code
+        This is not using Vertex Buffers.
+        """
+
+        # No longer needed since working with custom shaders
+        # The relevant matrices are sent to the GPU using uniform variables
+        #         GL.glMatrixMode(GL.GL_PROJECTION)
+        #         GL.glPushMatrix()
+        #         GL.glLoadIdentity()
+        #         GL.glMatrixMode(GL.GL_MODELVIEW)
+        #         GL.glPushMatrix()
+        #         GL.glLoadIdentity()
+
+        #Switch to Orthographic projection
         GL.glOrtho(0.0, self.displayWidth, self.displayHeight, 0.0, -1.0, 10.0)
         
         GL.glClear(GL.GL_DEPTH_BUFFER_BIT)
@@ -432,15 +582,25 @@ class GlApplication(object):
                 GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
 
             messageCounter += 1
-            
-        #Switch back to perspective mode
-        GLU.gluPerspective(60.0, (self.displayWidth/self.displayHeight), .1, 1000.)
-        GL.glMatrixMode(GL.GL_PROJECTION)
-        GL.glPopMatrix()
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glPopMatrix()
 
-    def handleEvent(self, event):
+        # No longer needed since working with custom shaders
+        # The relevant matrices are sent to the GPU using uniform variables
+        #        #Switch back to perspective mode
+        #        GLU.gluPerspective(60.0, (self.displayWidth/self.displayHeight), .1, 1000.)
+        #         GL.glMatrixMode(GL.GL_PROJECTION)
+        #         GL.glPopMatrix()
+        #         GL.glMatrixMode(GL.GL_MODELVIEW)
+        #         GL.glPopMatrix()
+
+    def handleWarrensGameEvents(self):
+        #Detect level change
+        if self.level is not self.game.currentLevel:
+            self.level = self.game.currentLevel
+        #React to player death
+        if self.game.player.state == Character.DEAD:
+            self.centerCameraOnActor(self.game.player)
+
+    def handlePyGameEvent(self, event):
         #Quit
         if event.type == pygame.QUIT: sys.exit()
         
