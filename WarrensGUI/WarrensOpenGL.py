@@ -10,24 +10,23 @@ http://www.willmcgugan.com/blog/tech/2007/6/4/opengl-sample-code-for-pygame/
 @author: pi
 '''
 
-import sys, pygame
+import pygame
 from pygame.locals import *
-
 from OpenGL import GL
-from OpenGL import GLU
 from OpenGL import GLUT
+from math import sqrt
+from ctypes import c_void_p
 
 from WarrensGame.Game import Game
 from WarrensGame.Actors import Character
+
 import GuiUtilities
 import GuiCONSTANTS
 
-from gameobjects.matrix44 import *
-from gameobjects.vector3 import *
+from WarrensGUI.Utilities.matrix44 import *
+from WarrensGUI.Utilities.vector3 import *
 
-from math import sqrt
-
-from ctypes import c_void_p
+import sys
 
 #movement keys
 movement_keys = {
@@ -165,10 +164,10 @@ class GlApplication(object):
         #Init PyOpenGl
         GLUT.glutInit([])
 
-        #Compile shaders
+        #Compile Shaders
         from OpenGL.GL.shaders import compileShader, compileProgram
-        strVertexShader = open("WarrensGUI/shaders/VertexShader.glsl").read()
-        strFragmentShader = open("WarrensGUI/shaders/FragmentShader.glsl").read()
+        strVertexShader = open("WarrensGUI/Shaders/VertexShader.glsl").read()
+        strFragmentShader = open("WarrensGUI/Shaders/FragmentShader.glsl").read()
         theProgram = compileProgram(
             compileShader(strVertexShader, GL.GL_VERTEX_SHADER),
             compileShader(strFragmentShader, GL.GL_FRAGMENT_SHADER)
@@ -486,7 +485,7 @@ class GlApplication(object):
         This is not using Vertex Buffers.
         """
 
-        # No longer needed since working with custom shaders
+        # No longer needed since working with custom Shaders
         # The relevant matrices are sent to the GPU using uniform variables
         #         GL.glMatrixMode(GL.GL_PROJECTION)
         #         GL.glPushMatrix()
@@ -583,7 +582,7 @@ class GlApplication(object):
 
             messageCounter += 1
 
-        # No longer needed since working with custom shaders
+        # No longer needed since working with custom Shaders
         # The relevant matrices are sent to the GPU using uniform variables
         #        #Switch back to perspective mode
         #        GLU.gluPerspective(60.0, (self.displayWidth/self.displayHeight), .1, 1000.)
