@@ -10,3 +10,6 @@ NonGit/
 # exclude eclipse project files
 .project
 .pydevproject
+
+# exclude pycharm project information
+.idea/
