@@ -177,7 +177,7 @@ class GlApplication(object):
         self.cameraMatrixUnif = GL.glGetUniformLocation(theProgram, "cameraMatrix")
 
         #Create perspective matrix
-        fFrustumScale = 1.0
+        fFrustumScale = 1.3
         fzNear = 0.1
         fzFar = 1000.0
         theMatrix = [0.0 for i in range(16)]
@@ -307,6 +307,9 @@ class GlApplication(object):
 
             
     def centerCameraOnActor(self, actor):
+        """
+        Centers the camera above the given actor.
+        """
         #Set a new camera transform matrix
         self.cameraMatrix = Matrix44()
         #Translate it above the actor
@@ -315,6 +318,9 @@ class GlApplication(object):
         self.cameraMatrix.translate = (x * TILESIZE,y * TILESIZE, 4)
 
     def centerCameraOnMap(self):
+        """
+        Centers the camera above the current map
+        """
         #Set a new camera transform matrix
         self.cameraMatrix = Matrix44()
         #Translate it above the center of the map
@@ -322,6 +328,20 @@ class GlApplication(object):
         x = map.width / 2
         y = map.height / 2
         self.cameraMatrix.translate = (x * TILESIZE,y * TILESIZE-1, 13)
+
+    def firstPersonCamera(self):
+        """
+        Moves the camera to a first person view for the player
+        """
+        #Set a new camera transform matrix
+        self.cameraMatrix = Matrix44()
+        #Translate it above the player
+        x = self.game.player.tile.x
+        y = self.game.player.tile.y
+        self.cameraMatrix.translate = (x * TILESIZE,y * TILESIZE, TILESIZE)
+        #Rotate to look ahead
+        rotation_matrix = Matrix44.xyz_rotation(90,0,0)
+        self.cameraMatrix *= rotation_matrix
 
     def loadVBOLevel(self):
         """
@@ -634,6 +654,8 @@ class GlApplication(object):
                 self.centerCameraOnActor(self.game.player)
             elif event.key == pygame.K_m:
                 self.centerCameraOnMap()
+            elif event.key == pygame.K_o:
+                self.firstPersonCamera()
             #Handle keys that are active while playing
             if self.game.state == Game.PLAYING:
                 player = self.game.player
