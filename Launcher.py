@@ -1,25 +1,28 @@
 from WarrensGUI.GuiApplication import GuiApplication
 from WarrensGUI.WarrensOpenGL import GlApplication
 
-#This is where it all starts!
+import sys
+
+"""
+Launcher script
+Command line options
+    -3D : Starts the opengl based implementation
+"""
 if __name__ == '__main__':
-    print 'Select option:'
-    print ' 0: 2D pygame interface'
-    print ' 1: 3D pygame opengl interface (needs pyopengl)'
-    
-    #ans = 1
-    ans = input()
-    if ans == 0:
+    #This is where it all starts!
+    if len(sys.argv) > 1:
+        FirstCommandLineArg = sys.argv [1]
+        if FirstCommandLineArg == '-3D':
+            _application = GlApplication()
+            _application.showMainMenu()
+        else:
+            print 'Bad commandline parameter, exiting'
+    else:
         _application = GuiApplication()
         #Start application
         _application.showMainMenu()
-    elif ans == 1:
-        _application = GlApplication()
-        #Start application
-        _application.showMainMenu()
-    else:
-        print 'Bad input, exiting'
-    
+
+
     """
     from dungeonGame.AI import *
     ai = BasicMonsterAI(None)

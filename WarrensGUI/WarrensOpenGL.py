@@ -87,7 +87,21 @@ class GlApplication(object):
         Returns the display height
         """
         return self.displaySize[1]
-    
+
+    @property
+    def cameraMatrix(self):
+        """
+        Returns the camera matrix
+        """
+        return self._cameraMatrix
+
+    @cameraMatrix.setter
+    def cameraMatrix(self,m):
+        """
+        Sets the camera matrix
+        """
+        self._cameraMatrix = m
+
     #constructor
     def __init__(self):
         """
@@ -208,15 +222,15 @@ class GlApplication(object):
             # Calculate rotation matrix and multiply by camera matrix    
             rotation = rotation_direction * rotation_speed * time_passed_seconds
             rotation_matrix = Matrix44.xyz_rotation(*rotation)        
-            self.camera_matrix *= rotation_matrix
+            self.cameraMatrix *= rotation_matrix
             
             # Calcluate movment and add it to camera matrix translate
-            heading = Vector3(self.camera_matrix.forward)
+            heading = Vector3(self.cameraMatrix.forward)
             movement = heading * movement_direction.z * movement_speed                    
-            self.camera_matrix.translate += movement * time_passed_seconds
+            self.cameraMatrix.translate += movement * time_passed_seconds
             
             # Upload the inverse camera matrix to OpenGL
-            GL.glLoadMatrixd(self.camera_matrix.get_inverse().to_opengl())
+            GL.glLoadMatrixd(self.cameraMatrix.get_inverse().to_opengl())
                     
             # Light must be transformed as well
 #            GL.glLight(GL.GL_LIGHT0, GL.GL_POSITION,  (0, 1.5, 1, 0)) 
@@ -240,20 +254,20 @@ class GlApplication(object):
             
     def centerCameraOnActor(self, actor):
         #Set a new camera transform matrix
-        self.camera_matrix = Matrix44()
+        self.cameraMatrix = Matrix44()
         #Translate it above the actor
         x = actor.tile.x
         y = actor.tile.y
-        self.camera_matrix.translate = (x * tileSize,y * tileSize, 4)
+        self.cameraMatrix.translate = (x * tileSize,y * tileSize, 4)
 
     def centerCameraOnMap(self):
         #Set a new camera transform matrix
-        self.camera_matrix = Matrix44()
+        self.cameraMatrix = Matrix44()
         #Translate it above the center of the map
         map = self.game.currentLevel.map
         x = map.width / 2
         y = map.height / 2
-        self.camera_matrix.translate = (x * tileSize,y * tileSize-1, 13)
+        self.cameraMatrix.translate = (x * tileSize,y * tileSize-1, 13)
         
     def drawView(self):        
         #Draw map border
@@ -515,27 +529,27 @@ class GlApplication(object):
             #get relative distance of mouse since last call to get_rel()
             rel = pygame.mouse.get_rel()
             
-            s= self.camera_matrix[3,3]
+            s= self.cameraMatrix[3,3]
             
             #Get the left right direction of the camera from the current modelview matrix
-            x= self.camera_matrix[0,0]
-            y= self.camera_matrix[1,0]
-            z= self.camera_matrix[2,0]
+            x= self.cameraMatrix[0,0]
+            y= self.cameraMatrix[1,0]
+            z= self.cameraMatrix[2,0]
             l=sqrt(x*x+y*y+z*z)
             factor = -1 * rel[0] / s/l
             #Translate along this direction
             translation = Matrix44.translation(factor * x,factor * y,factor * z)
-            self.camera_matrix *= translation 
+            self.cameraMatrix *= translation
             
             #Get the up down direction of the camera from the current modelview matrix
-            x= self.camera_matrix[0,1]
-            y= self.camera_matrix[1,1]
-            z= self.camera_matrix[2,1]
+            x= self.cameraMatrix[0,1]
+            y= self.cameraMatrix[1,1]
+            z= self.cameraMatrix[2,1]
             l=sqrt(x*x+y*y+z*z)
             factor = rel[1] / s/l
             #Translate along this direction
             translation = Matrix44.translation(factor * x,factor * y,factor * z)
-            self.camera_matrix *= translation 
+            self.cameraMatrix *= translation
             
         elif self._rotating:
             #get relative distance of mouse since last call to get_rel()
@@ -548,19 +562,19 @@ class GlApplication(object):
 #             GL.glTranslatef(rotation_center_x * tileSize,rotation_center_y * tileSize, 0)
                      
             #Get the left right direction of the camera from the current modelview matrix
-            x= self.camera_matrix[0,0]
-            y= self.camera_matrix[1,0]
-            z= self.camera_matrix[2,0]
+            x= self.cameraMatrix[0,0]
+            y= self.cameraMatrix[1,0]
+            z= self.cameraMatrix[2,0]
             rotation = Matrix44.rotation_about_axis((x,y,z), radians(1))#.translation(factor * x,factor * y,factor * z)
-            self.camera_matrix *= rotation 
+            self.cameraMatrix *= rotation
             #GL.glRotatef(rel[1] ,x, y, z)
             
             #Get the up down direction of the camera from the current modelview matrix
-            x= self.camera_matrix[0,1]
-            y= self.camera_matrix[1,1]
-            z= self.camera_matrix[2,1]
+            x= self.cameraMatrix[0,1]
+            y= self.cameraMatrix[1,1]
+            z= self.cameraMatrix[2,1]
             rotation = Matrix44.rotation_about_axis((x,y,z), radians(-1))#.translation(factor * x,factor * y,factor * z)
-            self.camera_matrix *= rotation
+            self.cameraMatrix *= rotation
             #GL.glRotatef(rel[0] ,x, y, z)
 
             #unset rotation center
@@ -569,19 +583,19 @@ class GlApplication(object):
     def eventZoomIn(self):
         factor = -1
         #Get the direction of the camera from the camera matrix
-        x= self.camera_matrix[0,2]
-        y= self.camera_matrix[1,2]
-        z= self.camera_matrix[2,2]
+        x= self.cameraMatrix[0,2]
+        y= self.cameraMatrix[1,2]
+        z= self.cameraMatrix[2,2]
         #Translate along this direction
         translation = Matrix44.translation(factor * x,factor * y,factor * z)
-        self.camera_matrix *= translation 
+        self.cameraMatrix *= translation
         
     def eventZoomOut(self):
         factor = 1
         #Get the direction of the camera from the current modelview matrix
-        x= self.camera_matrix[0,2]
-        y= self.camera_matrix[1,2]
-        z= self.camera_matrix[2,2]
+        x= self.cameraMatrix[0,2]
+        y= self.cameraMatrix[1,2]
+        z= self.cameraMatrix[2,2]
         #Translate along this direction        
         translation = Matrix44.translation(factor * x,factor * y,factor * z)
-        self.camera_matrix *= translation 
+        self.cameraMatrix *= translation
