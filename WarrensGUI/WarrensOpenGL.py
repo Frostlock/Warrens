@@ -13,8 +13,10 @@ http://www.willmcgugan.com/blog/tech/2007/6/4/opengl-sample-code-for-pygame/
 import pygame
 from pygame.locals import *
 from OpenGL import GL
+from OpenGL.GL.ARB.vertex_array_object import glBindVertexArray
+
 from OpenGL import GLUT
-from math import sqrt
+
 from ctypes import c_void_p
 
 from WarrensGame.Game import Game
@@ -151,6 +153,7 @@ class GlApplication(object):
         # Send the perspective matrix to the GPU
         if self.openGlProgram is not None:
             GL.glUseProgram(self.openGlProgram)
+            glBindVertexArray(self.VAO_id.value)
             GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, matrix)
             GL.glUseProgram(0)
 
@@ -220,9 +223,12 @@ class GlApplication(object):
         self.perspectiveMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "perspectiveMatrix")
         self.cameraMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "cameraMatrix")
 
+        #Generate a Vertex Array Object
+        self.VAO_id = GL.GLuint(0)
+        GL.ARB.vertex_array_object.glGenVertexArrays(1, self.VAO_id)
+
         #Recalculate the perspective matrix
         self.calculatePerspectiveMatrix()
-#        GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, self.perspectiveMatrix)
 
         GL.glUseProgram(0)
 
@@ -235,6 +241,11 @@ class GlApplication(object):
         #Enable alpha testing
         GL.glEnable(GL.GL_ALPHA_TEST)
         GL.glAlphaFunc(GL.GL_GREATER, 0.5)
+
+        #Todo: face culling to optimize performance
+        #GL.glEnable(GL.GL_CULL_FACE)
+        #GL.glCullFace(GL.GL_BACK)
+        #GL.glFrontFace(GL.GL_CW)
 
 #        GL.glShadeModel(GL.GL_FLAT)
 #        GL.glClearColor(1.0, 1.0, 1.0, 0.0)
@@ -323,8 +334,9 @@ class GlApplication(object):
             movement = heading * movement_direction.z * movement_speed                    
             self.cameraMatrix.translate += movement * time_passed_seconds
 
-            # Load the GPU program
+            # Load the GPU program and Vertex Array Object
             GL.glUseProgram(self.openGlProgram)
+            glBindVertexArray(self.VAO_id.value)
 
             #Send the cameraMatrix to the GPU
             camMatrix = self.cameraMatrix.get_inverse().to_opengl()
@@ -396,47 +408,59 @@ class GlApplication(object):
         """
         #Create the vertex buffer on the GPU and remember the address ID
         self.VBO_level_id = GL.glGenBuffers(1)
+        self.VBO_level_elements_id = GL.glGenBuffers(1)
 
         #Construct the data array that will be loaded into the buffer
         vertexData = []
+        elementData = []
 
         #Store the vertex coordinates
         for tileRow in self.game.currentLevel.map.tiles:
             for tile in tileRow:
                 #4 components per vertex: x, y, z, w
-                #First Triangle
+                #4 vertices
                 vertexData.extend((tile.x * TILESIZE,tile.y * TILESIZE, 0.0, 1.0))
                 vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE, 0.0, 1.0))
-                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE + TILESIZE, 0.0, 1.0))
-                #Second Triangle
-                vertexData.extend((tile.x * TILESIZE,tile.y * TILESIZE, 0.0, 1.0))
                 vertexData.extend((tile.x * TILESIZE, tile.y * TILESIZE + TILESIZE, 0.0, 1.0))
                 vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE + TILESIZE, 0.0, 1.0))
 
-        self.VBO_level_color_offset = len(vertexData)
 
         #Store the vertex colors
+        self.VBO_level_color_offset = len(vertexData)
         for tileRow in self.game.currentLevel.map.tiles:
             for tile in tileRow:
                 #4 components per color: R, G, B, A
                 color = self.normalizeColor(tile.color)
-                #First Triangle
+                # one color for every vertex
                 vertexData.extend((color[0],color[1],color[2],1.0))
                 vertexData.extend((color[0],color[1],color[2],1.0))
                 vertexData.extend((color[0],color[1],color[2],1.0))
-                #Second Triangle
                 vertexData.extend((color[0],color[1],color[2],1.0))
-                vertexData.extend((color[0],color[1],color[2],1.0))
-                vertexData.extend((color[0],color[1],color[2],1.0))
-
 
         self.VBO_level_length = len(vertexData)
 
-        #Load the constructed data array into the buffer
+        #Create the element array
+        offset = 0
+        for tileRow in self.game.currentLevel.map.tiles:
+            for tile in tileRow:
+                #First triangle
+                elementData.extend((0+offset, 1+offset, 3+offset))
+                elementData.extend((0+offset, 2+offset, 3+offset))
+                offset += 4
+
+        self.VBO_level_elements_length = len(elementData)
+
+        #Load the constructed vertex data array into the created array buffer
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.VBO_level_id)
         array_type = (GL.GLfloat * len(vertexData))
         GL.glBufferData(GL.GL_ARRAY_BUFFER, len(vertexData) * SIZE_OF_FLOAT, array_type(*vertexData), GL.GL_STATIC_DRAW)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
+
+        #Load the constructed element data array into the created element array buffer
+        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_level_elements_id)
+        array_type = (GL.GLint * len(elementData))
+        GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, len(elementData) * SIZE_OF_FLOAT, array_type(*elementData), GL.GL_STATIC_DRAW)
+        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0)
 
     def loadVBOActors(self):
         """
@@ -479,14 +503,17 @@ class GlApplication(object):
 
     def drawVBOs(self):
         #Draw level VBO
+        #TODO: move out all the binding to an init VAO function
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.VBO_level_id)
         GL.glEnableVertexAttribArray(0)
         GL.glEnableVertexAttribArray(1)
         GL.glVertexAttribPointer(0, VERTEX_COMPONENTS, GL.GL_FLOAT, False, 0, None)
         colorDataStart = self.VBO_level_color_offset * SIZE_OF_FLOAT
         GL.glVertexAttribPointer(1, VERTEX_COMPONENTS, GL.GL_FLOAT, False, 0, c_void_p(colorDataStart))
-        vertices = self.VBO_level_length / 2 / VERTEX_COMPONENTS
-        GL.glDrawArrays(GL.GL_TRIANGLES, 0, vertices)
+        #Bind the element array buffer
+        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_level_elements_id)
+        #Draw elements
+        GL.glDrawElements(GL.GL_TRIANGLES, self.VBO_level_elements_length, GL.GL_UNSIGNED_INT, None)
         GL.glDisableVertexAttribArray(0)
         GL.glDisableVertexAttribArray(1)
 
