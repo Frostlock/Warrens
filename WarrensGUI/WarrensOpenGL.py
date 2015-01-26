@@ -76,6 +76,23 @@ class GlApplication(object):
         return self._game
 
     @property
+    def level(self):
+        """
+        Returns the level that is currently being shown in the GUI
+        """
+        return self._level
+
+    @level.setter
+    def level(self,level):
+        """
+        Sets the level to be shown in the GUI.
+        This will also load the vertexbuffer for the level mesh
+        """
+        self._level = level
+        #Load the mesh for the level in the vertexbuffer
+        self.loadVBOLevel()
+
+    @property
     def displaySize(self):
         """
         Returns the display size (width, height)
@@ -97,21 +114,12 @@ class GlApplication(object):
         return self.displaySize[1]
 
     @property
-    def level(self):
-        """
-        Returns the level that is currently being shown in the GUI
-        """
-        return self._level
+    def openGlProgram(self):
+        return self._openGlProgram
 
-    @level.setter
-    def level(self,level):
-        """
-        Sets the level to be shown in the GUI.
-        This will also load the vertexbuffer for the level mesh
-        """
-        self._level = level
-        #Load the mesh for the level in the vertexbuffer
-        self.loadVBOLevel()
+    @openGlProgram.setter
+    def openGlProgram(self,program):
+        self._openGlProgram = program
 
     @property
     def cameraMatrix(self):
@@ -127,67 +135,94 @@ class GlApplication(object):
         """
         self._cameraMatrix = matrix
 
+    @property
+    def perspectiveMatrix(self):
+        """
+        Returns the perspective matrix
+        """
+        return self._perspectiveMatrix
+
+    @perspectiveMatrix.setter
+    def perspectiveMatrix(self,matrix):
+        """
+        Sets the perspective matrix
+        """
+        self._perspectiveMatrix= matrix
+        # Send the perspective matrix to the GPU
+        if self.openGlProgram is not None:
+            GL.glUseProgram(self.openGlProgram)
+            GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, matrix)
+            GL.glUseProgram(0)
+
     #constructor
     def __init__(self):
         """
         Constructor to create a new GlApplication object.
         """
         #Initialize class variables
+        self._game = None
+        self._level = None
         self._displaySize = (800,600)
+        self._openGlProgram = None
+        self._cameraMatrix = None
+        self._perspectiveMatrix = None
+        #TODO: create proper properties for these
         self._dragging = False
         self._rotating = False
         self._gamePlayerTookTurn = False
-        self._level = None
         self.FPS = 0
-        
+
     #Called whenever the window is resized. The new window size is given, in pixels.
     def resizeWindow(self,displaySize):
         self._displaySize = displaySize
         width, height = displaySize
         pygame.display.set_mode(self.displaySize,RESIZABLE|HWSURFACE|DOUBLEBUF|OPENGL)
+        #Uncomment to run in fullscreen2
+        #pygame.display.set_mode(self.displaySize,FULLSCREEN|HWSURFACE|DOUBLEBUF|OPENGL)
         GL.glViewport(0, 0, width, height)
-        
+        self.calculatePerspectiveMatrix()
+
 #        GL.glMatrixMode(GL.GL_PROJECTION)
 #        GL.glLoadIdentity()
 #        GLU.gluPerspective(60.0, float(width)/height, .1, 1000.)
 #        GL.glMatrixMode(GL.GL_MODELVIEW)
 #        GL.glLoadIdentity()
-            
-    def showMainMenu(self):
-        #Init pygame
-        pygame.init()
-        self.resizeWindow((800,600))
 
-        #Initialize fonts
-        GuiUtilities.initFonts()
-            
-        #Init PyOpenGl
-        GLUT.glutInit([])
-
-        #Compile Shaders
-        from OpenGL.GL.shaders import compileShader, compileProgram
-        strVertexShader = open("WarrensGUI/Shaders/VertexShader.glsl").read()
-        strFragmentShader = open("WarrensGUI/Shaders/FragmentShader.glsl").read()
-        theProgram = compileProgram(
-            compileShader(strVertexShader, GL.GL_VERTEX_SHADER),
-            compileShader(strFragmentShader, GL.GL_FRAGMENT_SHADER)
-        )
-        GL.glUseProgram(theProgram)
-        self.perspectiveMatrixUnif = GL.glGetUniformLocation(theProgram, "perspectiveMatrix")
-        self.cameraMatrixUnif = GL.glGetUniformLocation(theProgram, "cameraMatrix")
-
-        #Create perspective matrix
-        fFrustumScale = 1.3
+    def calculatePerspectiveMatrix(self):
+        fFrustumScale = 1.0
         fzNear = 0.1
         fzFar = 1000.0
         theMatrix = [0.0 for i in range(16)]
-        theMatrix[0] = fFrustumScale
-        theMatrix[5] = fFrustumScale
+        theMatrix[0] = fFrustumScale * 1
+        theMatrix[5] = fFrustumScale * (float(self.displayWidth) / self.displayHeight)
         theMatrix[10] = (fzFar + fzNear) / (fzNear - fzFar)
         theMatrix[14] = (2 * fzFar * fzNear) / (fzNear - fzFar)
         theMatrix[11] = -1.0
-        #Send perspective matrix to the GPU
-        GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, theMatrix)
+        self.perspectiveMatrix = theMatrix
+
+    def initOpenGl(self):
+        """
+        Initializes OpenGl settings and shaders
+        """
+        GLUT.glutInit([])
+
+        #Compile Shaders into program object
+        from OpenGL.GL.shaders import compileShader, compileProgram
+        strVertexShader = open("WarrensGUI/Shaders/VertexShader.glsl").read()
+        strFragmentShader = open("WarrensGUI/Shaders/FragmentShader.glsl").read()
+        self.openGlProgram = compileProgram(
+            compileShader(strVertexShader, GL.GL_VERTEX_SHADER),
+            compileShader(strFragmentShader, GL.GL_FRAGMENT_SHADER)
+        )
+
+        #Create uniform variables for the compiled shaders
+        GL.glUseProgram(self.openGlProgram)
+        self.perspectiveMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "perspectiveMatrix")
+        self.cameraMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "cameraMatrix")
+
+        #Recalculate the perspective matrix
+        self.calculatePerspectiveMatrix()
+#        GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, self.perspectiveMatrix)
 
         GL.glUseProgram(0)
 
@@ -196,19 +231,30 @@ class GlApplication(object):
         GL.glDepthMask(GL.GL_TRUE)
         GL.glDepthFunc(GL.GL_LEQUAL)
         GL.glDepthRange(0.0, 1.0)
-        
+
         #Enable alpha testing
         GL.glEnable(GL.GL_ALPHA_TEST)
         GL.glAlphaFunc(GL.GL_GREATER, 0.5)
-        
+
 #        GL.glShadeModel(GL.GL_FLAT)
 #        GL.glClearColor(1.0, 1.0, 1.0, 0.0)
-# 
+#
 #        GL.glEnable(GL.GL_COLOR_MATERIAL)
-#     
+#
 #        GL.glEnable(GL.GL_LIGHTING)
-#        GL.glEnable(GL.GL_LIGHT0)        
-#        GL.glLight(GL.GL_LIGHT0, GL.GL_POSITION,  (0, 1, 1, 0))   
+#        GL.glEnable(GL.GL_LIGHT0)
+#        GL.glLight(GL.GL_LIGHT0, GL.GL_POSITION,  (0, 1, 1, 0))
+
+    def showMainMenu(self):
+        #Init pygame
+        pygame.init()
+        self.resizeWindow((800,600))
+
+        #Initialize fonts
+        GuiUtilities.initFonts()
+            
+        #Init OpenGl
+        self.initOpenGl()
 
         #Init Game
         self._game = Game()
@@ -278,7 +324,7 @@ class GlApplication(object):
             self.cameraMatrix.translate += movement * time_passed_seconds
 
             # Load the GPU program
-            GL.glUseProgram(theProgram)
+            GL.glUseProgram(self.openGlProgram)
 
             #Send the cameraMatrix to the GPU
             camMatrix = self.cameraMatrix.get_inverse().to_opengl()
@@ -327,7 +373,7 @@ class GlApplication(object):
         map = self.game.currentLevel.map
         x = map.width / 2
         y = map.height / 2
-        self.cameraMatrix.translate = (x * TILESIZE,y * TILESIZE-1, 13)
+        self.cameraMatrix.translate = (x * TILESIZE,y * TILESIZE-1, 10)
 
     def firstPersonCamera(self):
         """
