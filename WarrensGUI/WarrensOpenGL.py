@@ -418,20 +418,29 @@ class GlApplication(object):
         for tileRow in self.game.currentLevel.map.tiles:
             for tile in tileRow:
                 #4 components per vertex: x, y, z, w
-                #4 vertices
+                #4 vertices: bottom of the rectangular tile area
                 vertexData.extend((tile.x * TILESIZE,tile.y * TILESIZE, 0.0, 1.0))
-                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE, 0.0, 1.0))
                 vertexData.extend((tile.x * TILESIZE, tile.y * TILESIZE + TILESIZE, 0.0, 1.0))
                 vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE + TILESIZE, 0.0, 1.0))
+                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE, 0.0, 1.0))
+                #4 vertices: top of the rectangular tile area
+                vertexData.extend((tile.x * TILESIZE,tile.y * TILESIZE, 2 * TILESIZE, 1.0))
+                vertexData.extend((tile.x * TILESIZE, tile.y * TILESIZE + TILESIZE, 2 * TILESIZE, 1.0))
+                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE + TILESIZE, 2 * TILESIZE, 1.0))
+                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE, 2 * TILESIZE, 1.0))
 
-
-        #Store the vertex colors
+        # Store the vertex colors
         self.VBO_level_color_offset = len(vertexData)
         for tileRow in self.game.currentLevel.map.tiles:
             for tile in tileRow:
-                #4 components per color: R, G, B, A
+                # 4 components per color: R, G, B, A, one color for every vertex
                 color = self.normalizeColor(tile.color)
-                # one color for every vertex
+                # 4 vertices for the bottom
+                vertexData.extend((color[0],color[1],color[2],1.0))
+                vertexData.extend((color[0],color[1],color[2],1.0))
+                vertexData.extend((color[0],color[1],color[2],1.0))
+                vertexData.extend((color[0],color[1],color[2],1.0))
+                #4 vertices for the top
                 vertexData.extend((color[0],color[1],color[2],1.0))
                 vertexData.extend((color[0],color[1],color[2],1.0))
                 vertexData.extend((color[0],color[1],color[2],1.0))
@@ -439,24 +448,37 @@ class GlApplication(object):
 
         self.VBO_level_length = len(vertexData)
 
-        #Create the element array
+        # Create the element array
         offset = 0
         for tileRow in self.game.currentLevel.map.tiles:
             for tile in tileRow:
-                #First triangle
-                elementData.extend((0+offset, 1+offset, 3+offset))
-                elementData.extend((0+offset, 2+offset, 3+offset))
-                offset += 4
+
+                # 2 Triangles for the bottom square
+                elementData.extend((0+offset, 2+offset, 1+offset))
+                elementData.extend((0+offset, 3+offset, 2+offset))
+                if tile.blocked:
+                    # 10 extra triangles to create a full block
+                    elementData.extend((0+offset, 4+offset, 7+offset))
+                    elementData.extend((0+offset, 7+offset, 3+offset))
+                    elementData.extend((3+offset, 7+offset, 6+offset))
+                    elementData.extend((3+offset, 6+offset, 2+offset))
+                    elementData.extend((2+offset, 6+offset, 5+offset))
+                    elementData.extend((2+offset, 5+offset, 1+offset))
+                    elementData.extend((1+offset, 5+offset, 4+offset))
+                    elementData.extend((1+offset, 4+offset, 0+offset))
+                    elementData.extend((4+offset, 5+offset, 6+offset))
+                    elementData.extend((4+offset, 6+offset, 7+offset))
+                offset += 8
 
         self.VBO_level_elements_length = len(elementData)
 
-        #Load the constructed vertex data array into the created array buffer
+        # Load the constructed vertex data array into the created array buffer
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.VBO_level_id)
         array_type = (GL.GLfloat * len(vertexData))
         GL.glBufferData(GL.GL_ARRAY_BUFFER, len(vertexData) * SIZE_OF_FLOAT, array_type(*vertexData), GL.GL_STATIC_DRAW)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
 
-        #Load the constructed element data array into the created element array buffer
+        # Load the constructed element data array into the created element array buffer
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_level_elements_id)
         array_type = (GL.GLint * len(elementData))
         GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, len(elementData) * SIZE_OF_FLOAT, array_type(*elementData), GL.GL_STATIC_DRAW)
