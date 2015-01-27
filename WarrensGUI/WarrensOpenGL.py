@@ -150,21 +150,13 @@ class GlApplication(object):
         Sets the perspective matrix
         """
         self._perspectiveMatrix= matrix
-        # Send the perspective matrix to the GPU
-        if self.openGlProgram is not None:
-            GL.glUseProgram(self.openGlProgram)
-            glBindVertexArray(self.VAO_level)
-            GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, matrix)
-            glBindVertexArray(self.VAO_actors)
-            GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, matrix)
-            GL.glUseProgram(0)
 
     #constructor
     def __init__(self):
         """
         Constructor to create a new GlApplication object.
         """
-        #Initialize class variables
+        # Initialize class variables
         self._game = None
         self._level = None
         self._displaySize = (800,600)
@@ -177,23 +169,23 @@ class GlApplication(object):
         self._gamePlayerTookTurn = False
         self.FPS = 0
 
-    #Called whenever the window is resized. The new window size is given, in pixels.
     def resizeWindow(self,displaySize):
+        """
+        Function to be called whenever window is resized.
+        This function will ensure pygame display, glviewport and perspective matrix is recalculated
+        """
         self._displaySize = displaySize
         width, height = displaySize
         pygame.display.set_mode(self.displaySize,RESIZABLE|HWSURFACE|DOUBLEBUF|OPENGL)
-        #Uncomment to run in fullscreen2
-        #pygame.display.set_mode(self.displaySize,FULLSCREEN|HWSURFACE|DOUBLEBUF|OPENGL)
+        # Uncomment to run in fullscreen
+        # pygame.display.set_mode(self.displaySize,FULLSCREEN|HWSURFACE|DOUBLEBUF|OPENGL)
         GL.glViewport(0, 0, width, height)
         self.calculatePerspectiveMatrix()
 
-#        GL.glMatrixMode(GL.GL_PROJECTION)
-#        GL.glLoadIdentity()
-#        GLU.gluPerspective(60.0, float(width)/height, .1, 1000.)
-#        GL.glMatrixMode(GL.GL_MODELVIEW)
-#        GL.glLoadIdentity()
-
     def calculatePerspectiveMatrix(self):
+        """
+        Sets the perspective matrix
+        """
         fFrustumScale = 1.0
         fzNear = 0.1
         fzFar = 1000.0
@@ -211,7 +203,7 @@ class GlApplication(object):
         """
         GLUT.glutInit([])
 
-        #Compile Shaders into program object
+        # Compile Shaders into program object
         from OpenGL.GL.shaders import compileShader, compileProgram
         strVertexShader = open("WarrensGUI/Shaders/VertexShader.glsl").read()
         strFragmentShader = open("WarrensGUI/Shaders/FragmentShader.glsl").read()
@@ -220,47 +212,38 @@ class GlApplication(object):
             compileShader(strFragmentShader, GL.GL_FRAGMENT_SHADER)
         )
 
-        #Create uniform variables for the compiled shaders
+        # Create uniform variables for the compiled shaders
         GL.glUseProgram(self.openGlProgram)
         self.perspectiveMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "perspectiveMatrix")
         self.cameraMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "cameraMatrix")
 
-        #Generate Vertex Array Object for the level
+        # Generate Vertex Array Object for the level
         self.VAO_level = GL.GLuint(0)
         GL.ARB.vertex_array_object.glGenVertexArrays(1, self.VAO_level)
 
-        #Generate Vertex Array Object for the actors
+        # Generate Vertex Array Object for the actors
         self.VAO_actors = GL.GLuint(0)
         GL.ARB.vertex_array_object.glGenVertexArrays(1, self.VAO_actors)
 
-        #Recalculate the perspective matrix
+        # Recalculate the perspective matrix
         self.calculatePerspectiveMatrix()
 
         GL.glUseProgram(0)
 
-        #Enable depth testing
+        # Enable depth testing
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glDepthMask(GL.GL_TRUE)
         GL.glDepthFunc(GL.GL_LEQUAL)
         GL.glDepthRange(0.0, 1.0)
 
-        #Enable alpha testing
+        # Enable alpha testing
         GL.glEnable(GL.GL_ALPHA_TEST)
         GL.glAlphaFunc(GL.GL_GREATER, 0.5)
 
-        #Todo: face culling to optimize performance
-        #GL.glEnable(GL.GL_CULL_FACE)
-        #GL.glCullFace(GL.GL_BACK)
-        #GL.glFrontFace(GL.GL_CW)
-
-#        GL.glShadeModel(GL.GL_FLAT)
-#        GL.glClearColor(1.0, 1.0, 1.0, 0.0)
-#
-#        GL.glEnable(GL.GL_COLOR_MATERIAL)
-#
-#        GL.glEnable(GL.GL_LIGHTING)
-#        GL.glEnable(GL.GL_LIGHT0)
-#        GL.glLight(GL.GL_LIGHT0, GL.GL_POSITION,  (0, 1, 1, 0))
+        # Enable face culling
+        GL.glEnable(GL.GL_CULL_FACE)
+        GL.glCullFace(GL.GL_BACK) # back side of each face will be culled
+        GL.glFrontFace(GL.GL_CW) # front of the face is based on clockwise order of vertices
 
     def showMainMenu(self):
         #Init pygame
@@ -277,10 +260,7 @@ class GlApplication(object):
         self._game = Game()
         self.game.resetGame()
 
-        clock = pygame.time.Clock()    
-        
-#        GL.glMaterial(GL.GL_FRONT, GL.GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))    
-#        GL.glMaterial(GL.GL_FRONT, GL.GL_DIFFUSE, (1.0, 1.0, 1.0, 1.0)) 
+        clock = pygame.time.Clock()
 
         self.centerCameraOnMap()
         
@@ -342,9 +322,6 @@ class GlApplication(object):
 
             # Refresh the actors VAO (some actors might have moved)
             self.loadVAOActors()
-
-            # Light must be transformed as well
-#            GL.glLight(GL.GL_LIGHT0, GL.GL_POSITION,  (0, 1.5, 1, 0)) 
                     
             # Render the 3D view (Vertex Array Buffers
             self.drawVBAs()
@@ -359,8 +336,6 @@ class GlApplication(object):
             if self._gamePlayerTookTurn: 
                 self._game.playTurn()
                 self._gamePlayerTookTurn = False
-           
-
 
             
     def centerCameraOnActor(self, actor):
@@ -453,10 +428,14 @@ class GlApplication(object):
         for tileRow in self.game.currentLevel.map.tiles:
             for tile in tileRow:
 
-                # 2 Triangles for the bottom square
+                # 2 Triangles for the underside of the square
                 elementData.extend((0+offset, 2+offset, 1+offset))
                 elementData.extend((0+offset, 3+offset, 2+offset))
-                if tile.blocked:
+                if not tile.blocked:
+                    # 2 extra triangles to create the above side of the square
+                    elementData.extend((0+offset, 1+offset, 2+offset))
+                    elementData.extend((0+offset, 2+offset, 3+offset))
+                else:
                     # 10 extra triangles to create a full block
                     elementData.extend((0+offset, 4+offset, 7+offset))
                     elementData.extend((0+offset, 7+offset, 3+offset))
@@ -582,19 +561,27 @@ class GlApplication(object):
     def drawVBAs(self):
         GL.glUseProgram(self.openGlProgram)
 
-        # Draw level VBA
+        # Bind Level VAO context
         glBindVertexArray(self.VAO_level)
+        # Load uniforms
+        GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, self.perspectiveMatrix)
         camMatrix = self.cameraMatrix.get_inverse().to_opengl()
         GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, camMatrix)
+        # Bind element array
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_level_elements_id)
+        # Draw elements
         GL.glDrawElements(GL.GL_TRIANGLES, self.VBO_level_elements_length, GL.GL_UNSIGNED_INT, None)
         glBindVertexArray(0)
 
-        # Draw actors VBA
+        # Bind Actors VAO context
         glBindVertexArray(self.VAO_actors)
+        # Load uniforms
+        GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, self.perspectiveMatrix)
         camMatrix = self.cameraMatrix.get_inverse().to_opengl()
         GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, camMatrix)
+        # Bind element array
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_actors_elements_id)
+        # Draw elements
         GL.glDrawElements(GL.GL_TRIANGLES, self.VBO_actors_elements_length, GL.GL_UNSIGNED_INT, None)
         glBindVertexArray(0)
 
@@ -619,30 +606,20 @@ class GlApplication(object):
         For the HUD we use an Orthographic projection and some older style opengl code
         This is not using Vertex Buffers.
         """
-
-        # No longer needed since working with custom Shaders
-        # The relevant matrices are sent to the GPU using uniform variables
-        #         GL.glMatrixMode(GL.GL_PROJECTION)
-        #         GL.glPushMatrix()
-        #         GL.glLoadIdentity()
-        #         GL.glMatrixMode(GL.GL_MODELVIEW)
-        #         GL.glPushMatrix()
-        #         GL.glLoadIdentity()
-
-        #Switch to Orthographic projection
+        # Switch to Orthographic projection
         GL.glOrtho(0.0, self.displayWidth, self.displayHeight, 0.0, -1.0, 10.0)
         
         GL.glClear(GL.GL_DEPTH_BUFFER_BIT)
         
-        #Level name
+        # Level name
         GL.glLoadIdentity()
         self.drawText((-0.98,0.9,0), self.game.currentLevel.name,24)
         
-        #Player name
+        # Player name
         GL.glLoadIdentity()
         self.drawText((-0.98,-0.85,0), self.game.player.name + " (Lvl " + str(self.game.player.playerLevel) + ")",18)
         
-        #Health Bar
+        # Health Bar
         GL.glLoadIdentity()
         GL.glTranslatef(-0.98,-0.94,0)
         current = self.game.player.currentHitPoints
@@ -651,22 +628,24 @@ class GlApplication(object):
         barHeight =0.08
         GL.glBegin(GL.GL_QUADS);
         self.setDrawColor(GuiCONSTANTS.COLOR_BAR_HEALTH_BG)
+        # Draw vertices (clockwise for face culling!)
         GL.glVertex2f(0.0, 0.0)
-        GL.glVertex2f(barWidth, 0.0)
-        GL.glVertex2f(barWidth, barHeight)
         GL.glVertex2f(0.0, barHeight)
+        GL.glVertex2f(barWidth, barHeight)
+        GL.glVertex2f(barWidth, 0.0)
         GL.glEnd()
         if current > 0:
             filWidth = current * barWidth/maximum
             GL.glBegin(GL.GL_QUADS);
             self.setDrawColor(GuiCONSTANTS.COLOR_BAR_HEALTH)
+            # Draw vertices (clockwise for face culling!)
             GL.glVertex2f(0.0, 0.0)
-            GL.glVertex2f(filWidth, 0.0)
-            GL.glVertex2f(filWidth, barHeight)
             GL.glVertex2f(0.0, barHeight)
+            GL.glVertex2f(filWidth, barHeight)
+            GL.glVertex2f(filWidth, 0.0)
             GL.glEnd()
         
-        #Xp Bar
+        # Xp Bar
         GL.glLoadIdentity()
         GL.glTranslatef(-0.98,-0.99,0)
         current = self.game.player.xp
@@ -675,26 +654,28 @@ class GlApplication(object):
         barHeight =0.04
         GL.glBegin(GL.GL_QUADS);
         self.setDrawColor(GuiCONSTANTS.COLOR_BAR_XP_BG)
+        # Draw vertices (clockwise for face culling!)
         GL.glVertex2f(0.0, 0.0)
-        GL.glVertex2f(barWidth, 0.0)
-        GL.glVertex2f(barWidth, barHeight)
         GL.glVertex2f(0.0, barHeight)
+        GL.glVertex2f(barWidth, barHeight)
+        GL.glVertex2f(barWidth, 0.0)
         GL.glEnd()
         if current > 0:
             filWidth = current * barWidth/maximum
             GL.glBegin(GL.GL_QUADS);
             self.setDrawColor(GuiCONSTANTS.COLOR_BAR_XP)
+            # Draw vertices (clockwise for face culling!)
             GL.glVertex2f(0.0, 0.0)
-            GL.glVertex2f(filWidth, 0.0)
-            GL.glVertex2f(filWidth, barHeight)
             GL.glVertex2f(0.0, barHeight)
+            GL.glVertex2f(filWidth, barHeight)
+            GL.glVertex2f(filWidth, 0.0)
             GL.glEnd()
 
-        #FPS
+        # FPS
         GL.glLoadIdentity()
         self.drawText((-0.98,-1,0), str(self.FPS),12)
 
-        #Right side: render game messages
+        # Right side: render game messages
         GL.glLoadIdentity()
         widthOffset = 200
         heightOffset = 100
@@ -716,15 +697,6 @@ class GlApplication(object):
                 GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
 
             messageCounter += 1
-
-        # No longer needed since working with custom Shaders
-        # The relevant matrices are sent to the GPU using uniform variables
-        #        #Switch back to perspective mode
-        #        GLU.gluPerspective(60.0, (self.displayWidth/self.displayHeight), .1, 1000.)
-        #         GL.glMatrixMode(GL.GL_PROJECTION)
-        #         GL.glPopMatrix()
-        #         GL.glMatrixMode(GL.GL_MODELVIEW)
-        #         GL.glPopMatrix()
 
     def handleWarrensGameEvents(self):
         # Detect level change
@@ -805,7 +777,7 @@ class GlApplication(object):
 
     def eventDraggingStart(self):
         self._dragging = True
-        #call pygame.mouse.get_rel() to make pygame correctly register the starting point of the drag
+        # call pygame.mouse.get_rel() to make pygame correctly register the starting point of the drag
         pygame.mouse.get_rel()
 
     def eventDraggingStop(self):
@@ -813,57 +785,57 @@ class GlApplication(object):
 
     def eventRotatingStart(self):
         self._rotating = True
-        #call pygame.mouse.get_rel() to make pygame correctly register the starting point of the drag
+        # call pygame.mouse.get_rel() to make pygame correctly register the starting point of the drag
         pygame.mouse.get_rel()
 
     def eventRotatingStop(self):
         self._rotating = False
         
     def eventMouseMovement(self):
-        #check for on going drag
+        # check for on going drag
         if self._dragging:
-            #get relative distance of mouse since last call to get_rel()
+            # get relative distance of mouse since last call to get_rel()
             rel = pygame.mouse.get_rel()
             
             s= self.cameraMatrix[3,3]
             
-            #Get the left right direction of the camera from the current modelview matrix
+            # Get the left right direction of the camera from the current modelview matrix
             x= self.cameraMatrix[0,0]
             y= self.cameraMatrix[1,0]
             z= self.cameraMatrix[2,0]
             l=sqrt(x*x+y*y+z*z)
             factor = -1 * rel[0] / s/l
-            #Translate along this direction
+            # Translate along this direction
             translation = Matrix44.translation(factor * x,factor * y,factor * z)
             self.cameraMatrix *= translation
             
-            #Get the up down direction of the camera from the current modelview matrix
+            # Get the up down direction of the camera from the current modelview matrix
             x= self.cameraMatrix[0,1]
             y= self.cameraMatrix[1,1]
             z= self.cameraMatrix[2,1]
             l=sqrt(x*x+y*y+z*z)
             factor = rel[1] / s/l
-            #Translate along this direction
+            # Translate along this direction
             translation = Matrix44.translation(factor * x,factor * y,factor * z)
             self.cameraMatrix *= translation
             
         elif self._rotating:
-            #get relative distance of mouse since last call to get_rel()
+            # get relative distance of mouse since last call to get_rel()
             rel = pygame.mouse.get_rel()
 
-            #set rotation center, rotate around the center of the top map
+            # set rotation center, rotate around the center of the top map
 #             map = self.game.currentLevel.map
 #             rotation_center_x = map.width / 2
 #             rotation_center_y = map.height / 2
 #             GL.glTranslatef(rotation_center_x * tileSize,rotation_center_y * tileSize, 0)
                      
-            #Get the left right direction of the camera from the current modelview matrix
+            # Get the left right direction of the camera from the current modelview matrix
             x= self.cameraMatrix[0,0]
             y= self.cameraMatrix[1,0]
             z= self.cameraMatrix[2,0]
             rotation = Matrix44.rotation_about_axis((x,y,z), radians(1))#.translation(factor * x,factor * y,factor * z)
             self.cameraMatrix *= rotation
-            #GL.glRotatef(rel[1] ,x, y, z)
+            # GL.glRotatef(rel[1] ,x, y, z)
             
             #Get the up down direction of the camera from the current modelview matrix
             x= self.cameraMatrix[0,1]
@@ -877,21 +849,29 @@ class GlApplication(object):
             #GL.glTranslatef(-rotation_center_x * tileSize,-rotation_center_y * tileSize, 0)
             
     def eventZoomIn(self):
+        """
+        Event handler for ZoomIn event.
+        This will translate the camera matrix to zoom in.
+        """
         factor = -1
-        #Get the direction of the camera from the camera matrix
+        # Get the direction of the camera from the camera matrix
         x= self.cameraMatrix[0,2]
         y= self.cameraMatrix[1,2]
         z= self.cameraMatrix[2,2]
-        #Translate along this direction
+        # Translate along this direction
         translation = Matrix44.translation(factor * x,factor * y,factor * z)
         self.cameraMatrix *= translation
         
     def eventZoomOut(self):
+        """
+        Event handler for ZoomOut event.
+        This will translate the camera matrix to zoom out.
+        """
         factor = 1
-        #Get the direction of the camera from the current modelview matrix
+        # Get the direction of the camera from the camera matrix
         x= self.cameraMatrix[0,2]
         y= self.cameraMatrix[1,2]
         z= self.cameraMatrix[2,2]
-        #Translate along this direction        
+        # Translate along this direction
         translation = Matrix44.translation(factor * x,factor * y,factor * z)
         self.cameraMatrix *= translation
