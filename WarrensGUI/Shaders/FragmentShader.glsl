@@ -1,11 +1,10 @@
 #version 330
-//Fragment shader
 
-smooth in vec4 theColor;
+smooth in vec4 interpColor;
 
 out vec4 outputColor;
 
 void main()
 {
-	outputColor = theColor;
+	outputColor = interpColor;
 }

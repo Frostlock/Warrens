@@ -25,8 +25,9 @@ from WarrensGame.Actors import Character
 import GuiUtilities
 import GuiCONSTANTS
 
-from WarrensGUI.Utilities.matrix44 import *
-from WarrensGUI.Utilities.vector3 import *
+import numpy as np
+from math import radians, sqrt
+import WarrensGUI.OpenGlUtilities as util
 
 import sys
 
@@ -151,6 +152,24 @@ class GlApplication(object):
         """
         self._perspectiveMatrix= matrix
 
+    @property
+    def lightingMatrix(self):
+        """
+        Returns the lighting matrix
+        """
+        return self._lightingMatrix
+
+    @lightingMatrix.setter
+    def lightingMatrix(self,matrix):
+        """
+        Sets the lighting matrix
+        """
+        self._lightingMatrix = matrix
+
+    @property
+    def directionTowardTheLight(self):
+        return (0.866, 0.5, -5.001)
+
     #constructor
     def __init__(self):
         """
@@ -189,13 +208,24 @@ class GlApplication(object):
         fFrustumScale = 1.0
         fzNear = 0.1
         fzFar = 1000.0
-        theMatrix = [0.0 for i in range(16)]
-        theMatrix[0] = fFrustumScale * 1
-        theMatrix[5] = fFrustumScale * (float(self.displayWidth) / self.displayHeight)
-        theMatrix[10] = (fzFar + fzNear) / (fzNear - fzFar)
-        theMatrix[14] = (2 * fzFar * fzNear) / (fzNear - fzFar)
-        theMatrix[11] = -1.0
-        self.perspectiveMatrix = theMatrix
+
+        # theMatrix = [0.0 for i in range(16)]
+        # theMatrix[0] = fFrustumScale * 1
+        # theMatrix[5] = fFrustumScale * (float(self.displayWidth) / self.displayHeight)
+        # theMatrix[10] = (fzFar + fzNear) / (fzNear - fzFar)
+        # theMatrix[14] = (2 * fzFar * fzNear) / (fzNear - fzFar)
+        # theMatrix[11] = -1.0
+        # print theMatrix
+
+        pMat = np.zeros((4,4), 'f')
+        pMat[0,0] = fFrustumScale * 1
+        pMat[1,1] = fFrustumScale * (float(self.displayWidth) / self.displayHeight)
+        pMat[2,2] = (fzFar + fzNear) / (fzNear - fzFar)
+        pMat[3,2] = (2 * fzFar * fzNear) / (fzNear - fzFar)
+        pMat[2,3] = -1.0
+
+        print pMat
+        self.perspectiveMatrix = pMat
 
     def initOpenGl(self):
         """
@@ -216,6 +246,9 @@ class GlApplication(object):
         GL.glUseProgram(self.openGlProgram)
         self.perspectiveMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "perspectiveMatrix")
         self.cameraMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "cameraMatrix")
+        self.lightingMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "lightingMatrix")
+        self.dirToLightUnif = GL.glGetUniformLocation(self.openGlProgram, "dirToLight")
+        self.lightIntensityUnif = GL.glGetUniformLocation(self.openGlProgram, "lightIntensity")
 
         # Generate Vertex Array Object for the level
         self.VAO_level = GL.GLuint(0)
@@ -262,12 +295,13 @@ class GlApplication(object):
 
         clock = pygame.time.Clock()
 
+        #self.centerCameraOnActor(self.game.player)
         self.centerCameraOnMap()
         
         # Initialize speeds and directions
-        rotation_direction = Vector3()
+        ##rotation_direction = Vector3()
         rotation_speed = radians(90.0)
-        movement_direction = Vector3()
+        ##movement_direction = Vector3()
         movement_speed = 5.0    
     
         while True:
@@ -289,36 +323,60 @@ class GlApplication(object):
             pressed = pygame.key.get_pressed()
             
             # Reset rotation and movement directions
-            rotation_direction.set(0.0, 0.0, 0.0)
-            movement_direction.set(0.0, 0.0, 0.0)
-            
+            ##rotation_direction.set(0.0, 0.0, 0.0)
+            rotation_direction = np.array((0.0, 0.0, 0.0), 'f')
+            ##movement_direction.set(0.0, 0.0, 0.0)
+            movement_direction = np.array((0.0, 0.0, 0.0), 'f')
+
             # Modify direction vectors for key presses
             if pressed[K_LEFT]:
-                rotation_direction.y = +1.0
+                ##rotation_direction.y = +1.0
+                rotation_direction[1] = +1.0
             elif pressed[K_RIGHT]:
-                rotation_direction.y = -1.0
+                ##rotation_direction.y = -1.0
+                rotation_direction[1] = -1.0
             if pressed[K_UP]:
-                rotation_direction.x = -1.0
+                ##rotation_direction.x = -1.0
+                rotation_direction[0] = -1.0
             elif pressed[K_DOWN]:
-                rotation_direction.x = +1.0
+                ##rotation_direction.x = +1.0
+                rotation_direction[0] = +1.0
             if pressed[K_PAGEUP]:
-                rotation_direction.z = -1.0
+                ##rotation_direction.z = -1.0
+                rotation_direction[2] = -1.0
             elif pressed[K_PAGEDOWN]:
-                rotation_direction.z = +1.0            
+                ##rotation_direction.z = +1.0
+                rotation_direction[2] = +1.0
             if pressed[K_HOME]:
-                movement_direction.z = -1.0
+                ##movement_direction.z = -1.0
+                movement_direction[2] = -1.0
             elif pressed[K_END]:
-                movement_direction.z = +1.0
+                ##movement_direction.z = +1.0
+                movement_direction[2] = +1.0
             
             # Calculate rotation matrix and multiply by camera matrix    
             rotation = rotation_direction * rotation_speed * time_passed_seconds
-            rotation_matrix = Matrix44.xyz_rotation(*rotation)        
-            self.cameraMatrix *= rotation_matrix
-            
+            ##rotation_matrix = Matrix44.xyz_rotation(*rotation)
+            rotation_matrix = util.rotationMatrix44(*rotation)
+    # print self.cameraMatrix
+    # [ 1    0    0    0 ]
+    # [ 0    1    0    0 ]
+    # [ 0    0    1    0 ]
+    # [ 10   5.25 10   1 ]
+
+            ##self.cameraMatrix *= rotation_matrix
+            self.cameraMatrix = rotation_matrix.dot(self.cameraMatrix)
+
+
             # Calcluate movment and add it to camera matrix translate
-            heading = Vector3(self.cameraMatrix.forward)
-            movement = heading * movement_direction.z * movement_speed                    
-            self.cameraMatrix.translate += movement * time_passed_seconds
+            ##heading = Vector3(self.cameraMatrix.forward)
+            heading = self.cameraMatrix[:3,2] #forward
+            ##movement = heading * movement_direction.z * movement_speed
+            movement = heading * movement_direction[2] * movement_speed * time_passed_seconds
+            print movement
+            movement_matrix = util.translationMatrix44(*movement)
+            ##self.cameraMatrix.translate += movement * time_passed_seconds
+            self.cameraMatrix = self.cameraMatrix.dot(movement_matrix)
 
             # Refresh the actors VAO (some actors might have moved)
             self.loadVAOActors()
@@ -343,37 +401,38 @@ class GlApplication(object):
         Centers the camera above the given actor.
         """
         #Set a new camera transform matrix
-        self.cameraMatrix = Matrix44()
+        ##self.cameraMatrix = Matrix44()
         #Translate it above the actor
         x = actor.tile.x
         y = actor.tile.y
-        self.cameraMatrix.translate = (x * TILESIZE,y * TILESIZE, 4)
+        ##self.cameraMatrix.translate = (x * TILESIZE,y * TILESIZE, 4)
+        self.cameraMatrix = util.translationMatrix44(x * TILESIZE, y * TILESIZE, 4.0)
 
     def centerCameraOnMap(self):
         """
         Centers the camera above the current map
         """
         #Set a new camera transform matrix
-        self.cameraMatrix = Matrix44()
+        ##self.cameraMatrix = Matrix44()
         #Translate it above the center of the map
         map = self.game.currentLevel.map
         x = map.width / 2
         y = map.height / 2
-        self.cameraMatrix.translate = (x * TILESIZE,y * TILESIZE-1, 10)
+        ##self.cameraMatrix.translate = (x * TILESIZE,y * TILESIZE-1, 10)
+        #TODO: Why the minus 1?
+        self.cameraMatrix = util.translationMatrix44(x * TILESIZE,y * TILESIZE-1, 10)
 
     def firstPersonCamera(self):
         """
         Moves the camera to a first person view for the player
         """
-        #Set a new camera transform matrix
-        self.cameraMatrix = Matrix44()
-        #Translate it above the player
+        #Translate above the player
         x = self.game.player.tile.x
         y = self.game.player.tile.y
-        self.cameraMatrix.translate = (x * TILESIZE,y * TILESIZE, TILESIZE)
+        self.cameraMatrix = util.translationMatrix44(x * TILESIZE,y * TILESIZE-1, TILESIZE)
         #Rotate to look ahead
-        rotation_matrix = Matrix44.xyz_rotation(90,0,0)
-        self.cameraMatrix *= rotation_matrix
+        rotation_matrix = util.rotationMatrix44(-180,0,0)
+        self.cameraMatrix = self.cameraMatrix.dot(rotation_matrix)
 
     def loadVAOLevel(self):
         """
@@ -392,6 +451,10 @@ class GlApplication(object):
         # Store the vertex coordinates
         for tileRow in self.game.currentLevel.map.tiles:
             for tile in tileRow:
+                if tile.blocked:
+                    height = TILESIZE
+                else:
+                    height = 0.0
                 # 4 components per vertex: x, y, z, w
                 # 4 vertices: bottom of the rectangular tile area
                 vertexData.extend((tile.x * TILESIZE,tile.y * TILESIZE, 0.0, 1.0))
@@ -399,10 +462,10 @@ class GlApplication(object):
                 vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE + TILESIZE, 0.0, 1.0))
                 vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE, 0.0, 1.0))
                 # 4 vertices: top of the rectangular tile area
-                vertexData.extend((tile.x * TILESIZE,tile.y * TILESIZE, 2 * TILESIZE, 1.0))
-                vertexData.extend((tile.x * TILESIZE, tile.y * TILESIZE + TILESIZE, 2 * TILESIZE, 1.0))
-                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE + TILESIZE, 2 * TILESIZE, 1.0))
-                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE, 2 * TILESIZE, 1.0))
+                vertexData.extend((tile.x * TILESIZE,tile.y * TILESIZE, height, 1.0))
+                vertexData.extend((tile.x * TILESIZE, tile.y * TILESIZE + TILESIZE, height, 1.0))
+                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE + TILESIZE, height, 1.0))
+                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE, height, 1.0))
 
         # Store the vertex colors
         self.VBO_level_color_offset = len(vertexData)
@@ -421,32 +484,42 @@ class GlApplication(object):
                 vertexData.extend((color[0],color[1],color[2],1.0))
                 vertexData.extend((color[0],color[1],color[2],1.0))
 
+        # Store the vertex normals
+        self.VBO_level_normals_offset = len(vertexData)
+        for tileRow in self.game.currentLevel.map.tiles:
+            for tile in tileRow:
+                # 3 components per normal: x, y, z
+                # 4 vertex normals for the bottom
+                vertexData.extend((-1.0,-1.0,-0.01))
+                vertexData.extend((1.0,-1.0,-0.01))
+                vertexData.extend((1.0,1.0,-0.01))
+                vertexData.extend((-1.0,1.0,-0.01))
+                # 4 vertex normals for the top
+                vertexData.extend((-1.0,-1.0,-1.0))
+                vertexData.extend((1.0,-1.0,-1.0))
+                vertexData.extend((1.0,1.0,-1.0))
+                vertexData.extend((-1.0,1.0,-1.0))
+
+
         self.VBO_level_length = len(vertexData)
 
         # Create the element array
         offset = 0
         for tileRow in self.game.currentLevel.map.tiles:
             for tile in tileRow:
-
-                # 2 Triangles for the underside of the square
+                # 12 Triangles for a complete block
                 elementData.extend((0+offset, 2+offset, 1+offset))
                 elementData.extend((0+offset, 3+offset, 2+offset))
-                if not tile.blocked:
-                    # 2 extra triangles to create the above side of the square
-                    elementData.extend((0+offset, 1+offset, 2+offset))
-                    elementData.extend((0+offset, 2+offset, 3+offset))
-                else:
-                    # 10 extra triangles to create a full block
-                    elementData.extend((0+offset, 4+offset, 7+offset))
-                    elementData.extend((0+offset, 7+offset, 3+offset))
-                    elementData.extend((3+offset, 7+offset, 6+offset))
-                    elementData.extend((3+offset, 6+offset, 2+offset))
-                    elementData.extend((2+offset, 6+offset, 5+offset))
-                    elementData.extend((2+offset, 5+offset, 1+offset))
-                    elementData.extend((1+offset, 5+offset, 4+offset))
-                    elementData.extend((1+offset, 4+offset, 0+offset))
-                    elementData.extend((4+offset, 5+offset, 6+offset))
-                    elementData.extend((4+offset, 6+offset, 7+offset))
+                elementData.extend((0+offset, 4+offset, 7+offset))
+                elementData.extend((0+offset, 7+offset, 3+offset))
+                elementData.extend((3+offset, 7+offset, 6+offset))
+                elementData.extend((3+offset, 6+offset, 2+offset))
+                elementData.extend((2+offset, 6+offset, 5+offset))
+                elementData.extend((2+offset, 5+offset, 1+offset))
+                elementData.extend((1+offset, 5+offset, 4+offset))
+                elementData.extend((1+offset, 4+offset, 0+offset))
+                elementData.extend((4+offset, 5+offset, 6+offset))
+                elementData.extend((4+offset, 6+offset, 7+offset))
                 offset += 8
 
         self.VBO_level_elements_length = len(elementData)
@@ -466,6 +539,10 @@ class GlApplication(object):
         GL.glEnableVertexAttribArray(1)
         colorDataStart = self.VBO_level_color_offset * SIZE_OF_FLOAT
         GL.glVertexAttribPointer(1, VERTEX_COMPONENTS, GL.GL_FLOAT, False, 0, c_void_p(colorDataStart))
+        # Enable Normals inputs and define pointer
+        GL.glEnableVertexAttribArray(2)
+        normalsDataStart = self.VBO_level_normals_offset * SIZE_OF_FLOAT
+        GL.glVertexAttribPointer(2, 3, GL.GL_FLOAT, False, 0, c_void_p(normalsDataStart))
 
         # Load the constructed element data array into the created element array buffer
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_level_elements_id)
@@ -491,16 +568,16 @@ class GlApplication(object):
         elementData = []
 
         # Store the vertex coordinates
-        ActorSize = TILESIZE * 0.8
+        offset = 0.2
         for vTile in self.game.currentLevel.map.visible_tiles:
             for actor in vTile.actors:
                 tile = actor.tile
                 # 4 components per vertex: x, y, z, w
-                vertexData.extend((tile.x * ActorSize,tile.y * ActorSize, 0.0, 1.0))
-                vertexData.extend((tile.x * ActorSize + ActorSize, tile.y * ActorSize, 0.0, 1.0))
-                vertexData.extend((tile.x * ActorSize + ActorSize, tile.y * ActorSize + ActorSize, 0.0, 1.0))
-                vertexData.extend((tile.x * ActorSize , tile.y * ActorSize + ActorSize, 0.0, 1.0))
-                vertexData.extend((tile.x * ActorSize + ActorSize / 2, tile.y * ActorSize + ActorSize / 2 , TILESIZE, 1.0))
+                vertexData.extend((tile.x * TILESIZE + offset,tile.y * TILESIZE + offset, 0.0, 1.0))
+                vertexData.extend((tile.x * TILESIZE + offset, tile.y * TILESIZE + TILESIZE - offset, 0.0, 1.0))
+                vertexData.extend((tile.x * TILESIZE + TILESIZE - offset, tile.y * TILESIZE + TILESIZE - offset, 0.0, 1.0))
+                vertexData.extend((tile.x * TILESIZE + TILESIZE - offset, tile.y * TILESIZE + offset, 0.0, 1.0))
+                vertexData.extend((tile.x * TILESIZE + (TILESIZE / 2) , tile.y * TILESIZE + (TILESIZE / 2), TILESIZE, 1.0))
 
         self.VBO_actors_color_offset = len(vertexData)
 
@@ -514,6 +591,19 @@ class GlApplication(object):
                 vertexData.extend((color[0],color[1],color[2],1.0))
                 vertexData.extend((color[0],color[1],color[2],1.0))
                 vertexData.extend((color[0],color[1],color[2],1.0))
+
+        # Store the vertex normals
+        self.VBO_actors_normals_offset = len(vertexData)
+        for vTile in self.game.currentLevel.map.visible_tiles:
+            for actor in vTile.actors:
+                # 3 components per normal: x, y, z
+                # 4 vertex normals for the bottom
+                vertexData.extend((-1.0,1.0,-0.2))
+                vertexData.extend((1.0,1.0,-0.2))
+                vertexData.extend((1.0,-1.0,-0.2))
+                vertexData.extend((-1.0,-1.0,-0.2))
+                # 1 vertex normals for the top
+                vertexData.extend((0.0,0.0,-1.0))
 
         self.VBO_actors_length = len(vertexData)
 
@@ -547,6 +637,10 @@ class GlApplication(object):
         GL.glEnableVertexAttribArray(1)
         colorDataStart = self.VBO_actors_color_offset * SIZE_OF_FLOAT
         GL.glVertexAttribPointer(1, VERTEX_COMPONENTS, GL.GL_FLOAT, False, 0, c_void_p(colorDataStart))
+        # Enable Normals inputs and define pointer
+        GL.glEnableVertexAttribArray(2)
+        normalsDataStart = self.VBO_actors_normals_offset * SIZE_OF_FLOAT
+        GL.glVertexAttribPointer(2, 3, GL.GL_FLOAT, False, 0, c_void_p(normalsDataStart))
 
         # Load the constructed element data array into the created element array buffer
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_actors_elements_id)
@@ -559,14 +653,75 @@ class GlApplication(object):
         GL.glUseProgram(0)
 
     def drawVBAs(self):
+        DEBUG_GLSL = False
+        if DEBUG_GLSL: print '\n\nDEBUG MODE: Simulating GLSL calculation:\n'
+
         GL.glUseProgram(self.openGlProgram)
 
         # Bind Level VAO context
         glBindVertexArray(self.VAO_level)
         # Load uniforms
-        GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, self.perspectiveMatrix)
-        camMatrix = self.cameraMatrix.get_inverse().to_opengl()
-        GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, camMatrix)
+        GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.perspectiveMatrix,(16)))
+        if DEBUG_GLSL: print "perspectiveMatrix"
+        if DEBUG_GLSL: print self.perspectiveMatrix
+
+        ##camMatrix = self.cameraMatrix.get_inverse().to_opengl()
+        camMatrix = np.linalg.inv(self.cameraMatrix)
+
+
+        # map = self.game.currentLevel.map
+        # x = map.width / 2
+        # y = map.height / 2
+        # cam2 = util.translationMatrix44(x * TILESIZE,y * TILESIZE-1, 10)
+        # cam2 = np.linalg.inv(cam2)
+        # cam2 = np.reshape(cam2,(16))
+        # print camMatrix
+        # print cam2
+        # GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, cam2)
+
+
+        ##GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, camMatrix)
+        GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, np.reshape(camMatrix,(16)))
+        if DEBUG_GLSL: print "camMatrix"
+        if DEBUG_GLSL: print camMatrix
+
+        ## lightMatrix = [0.0 for i in range(9)]
+        ## lightMatrix[0] = camMatrix[0]
+        ## lightMatrix[1] = camMatrix[1]
+        ## lightMatrix[2] = camMatrix[2]
+        ## lightMatrix[3] = camMatrix[4]
+        ## lightMatrix[4] = camMatrix[5]
+        ## lightMatrix[5] = camMatrix[6]
+        ## lightMatrix[6] = camMatrix[8]
+        ## lightMatrix[7] = camMatrix[9]
+        ## lightMatrix[8] = camMatrix[10]
+        lightMatrix = camMatrix[:3,:3] # Extracts 3*3 matrix out of 4*4
+        if DEBUG_GLSL:
+            print "LightMatrix"
+            print lightMatrix
+        ##GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, lightMatrix)
+        GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, np.reshape(lightMatrix,(9)))
+
+        if DEBUG_GLSL: print "Light intensity: (1,1,1,1)"
+        GL.glUniform4f(self.lightIntensityUnif, 1.0, 1.0, 1.0, 1.0)
+
+        # Calculate direction of light
+        ##lightDirCameraSpace = self.cameraMatrix.transform_vec3(self.directionTowardTheLight)
+        lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
+        if DEBUG_GLSL: print "Direction to light in Camera Space"
+        if DEBUG_GLSL: print lightDirCameraSpace
+        GL.glUniform3f(self.dirToLightUnif, lightDirCameraSpace[0],lightDirCameraSpace[1],lightDirCameraSpace[2])
+
+        #LM = self.cameraMatrix.get_inverse()
+        #print LM
+        #normCamSpace = LM.transform_vec3((1,-1,-1)).normalize()
+        #if DEBUG_GLSL: print "Normalized normal in cameraspace"
+        #if DEBUG_GLSL: print normCamSpace
+        #cosAngIncidence = normCamSpace.dot(lightDirCameraSpace)
+        #if DEBUG_GLSL: print "cosine (dot product between normal and direction to light "
+        #if DEBUG_GLSL: print cosAngIncidence
+        #if DEBUG_GLSL: print "negative means no color output!"
+
         # Bind element array
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_level_elements_id)
         # Draw elements
@@ -576,9 +731,33 @@ class GlApplication(object):
         # Bind Actors VAO context
         glBindVertexArray(self.VAO_actors)
         # Load uniforms
-        GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, self.perspectiveMatrix)
-        camMatrix = self.cameraMatrix.get_inverse().to_opengl()
-        GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, camMatrix)
+        GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.perspectiveMatrix,(16)))
+
+        ##camMatrix = self.cameraMatrix.get_inverse().to_opengl()
+        camMatrix = np.linalg.inv(self.cameraMatrix)
+        ##GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, camMatrix)
+        GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, np.reshape(camMatrix,(16)))
+
+        ## lightMatrix = [0.0 for i in range(9)]
+        ## lightMatrix[0] = camMatrix[0]
+        ## lightMatrix[1] = camMatrix[1]
+        ## lightMatrix[2] = camMatrix[2]
+        ## lightMatrix[3] = camMatrix[4]
+        ## lightMatrix[4] = camMatrix[5]
+        ## lightMatrix[5] = camMatrix[6]
+        ## lightMatrix[6] = camMatrix[8]
+        ## lightMatrix[7] = camMatrix[9]
+        ## lightMatrix[8] = camMatrix[10]
+        lightMatrix = camMatrix[:3,:3] # Extracts 3*3 matrix out of 4*4
+        GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, np.reshape(lightMatrix, (9)))
+
+        GL.glUniform4f(self.lightIntensityUnif, 1.0, 1.0, 1.0, 1.0)
+
+        # Calculate direction of light
+        ##lightDirCameraSpace = self.cameraMatrix.transform_vec3(self.directionTowardTheLight)
+        lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
+        GL.glUniform3f(self.dirToLightUnif, lightDirCameraSpace[0],lightDirCameraSpace[1],lightDirCameraSpace[2])
+
         # Bind element array
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_actors_elements_id)
         # Draw elements
@@ -804,20 +983,23 @@ class GlApplication(object):
             y= self.cameraMatrix[1,0]
             z= self.cameraMatrix[2,0]
             l=sqrt(x*x+y*y+z*z)
-            factor = -1 * rel[0] / s/l
+            factor = -1 * rel[0] / s/l /100
             # Translate along this direction
-            translation = Matrix44.translation(factor * x,factor * y,factor * z)
-            self.cameraMatrix *= translation
+            ##translation = Matrix44.translation(factor * x,factor * y,factor * z)
+            translation_matrix = util.translationMatrix44(factor * x,factor * y,factor * z)
+            self.cameraMatrix = self.cameraMatrix.dot(translation_matrix)
             
             # Get the up down direction of the camera from the current modelview matrix
             x= self.cameraMatrix[0,1]
             y= self.cameraMatrix[1,1]
             z= self.cameraMatrix[2,1]
             l=sqrt(x*x+y*y+z*z)
-            factor = rel[1] / s/l
+            factor = rel[1] / s/l /100
             # Translate along this direction
-            translation = Matrix44.translation(factor * x,factor * y,factor * z)
-            self.cameraMatrix *= translation
+            ##translation = Matrix44.translation(factor * x,factor * y,factor * z)
+            translation_matrix = util.translationMatrix44(factor * x,factor * y,factor * z)
+            ##self.cameraMatrix *= translation
+            self.cameraMatrix = self.cameraMatrix.dot(translation_matrix)
             
         elif self._rotating:
             # get relative distance of mouse since last call to get_rel()
@@ -830,23 +1012,25 @@ class GlApplication(object):
 #             GL.glTranslatef(rotation_center_x * tileSize,rotation_center_y * tileSize, 0)
                      
             # Get the left right direction of the camera from the current modelview matrix
-            x= self.cameraMatrix[0,0]
-            y= self.cameraMatrix[1,0]
-            z= self.cameraMatrix[2,0]
-            rotation = Matrix44.rotation_about_axis((x,y,z), radians(1))#.translation(factor * x,factor * y,factor * z)
-            self.cameraMatrix *= rotation
+            x= self.cameraMatrix[0,0] * -1 * rel[1]
+            y= self.cameraMatrix[1,0] * -1 * rel[1]
+            z= self.cameraMatrix[2,0] * -1 * rel[1]
+            w= self.cameraMatrix[3,0] * 100
+            ##rotation = Matrix44.rotation_about_axis((x,y,z), radians(1))#.translation(factor * x,factor * y,factor * z)
+            ##self.cameraMatrix *= rotation
+            rotation_matrix = util.rotationMatrix44(x/w,y/w,z/w)
+            self.cameraMatrix = rotation_matrix.dot(self.cameraMatrix)
             # GL.glRotatef(rel[1] ,x, y, z)
             
             #Get the up down direction of the camera from the current modelview matrix
-            x= self.cameraMatrix[0,1]
-            y= self.cameraMatrix[1,1]
-            z= self.cameraMatrix[2,1]
-            rotation = Matrix44.rotation_about_axis((x,y,z), radians(-1))#.translation(factor * x,factor * y,factor * z)
-            self.cameraMatrix *= rotation
-            #GL.glRotatef(rel[0] ,x, y, z)
-
-            #unset rotation center
-            #GL.glTranslatef(-rotation_center_x * tileSize,-rotation_center_y * tileSize, 0)
+            x= self.cameraMatrix[0,1] * rel[0]
+            y= self.cameraMatrix[1,1] * rel[0]
+            z= self.cameraMatrix[2,1] * rel[0]
+            w= self.cameraMatrix[3,1] * 100
+            ##rotation = Matrix44.rotation_about_axis((x,y,z), radians(-1))#.translation(factor * x,factor * y,factor * z)
+            ##self.cameraMatrix *= rotation
+            rotation_matrix = util.rotationMatrix44(x/w,y/w,z/w)
+            self.cameraMatrix = rotation_matrix.dot(self.cameraMatrix)
             
     def eventZoomIn(self):
         """
@@ -859,9 +1043,11 @@ class GlApplication(object):
         y= self.cameraMatrix[1,2]
         z= self.cameraMatrix[2,2]
         # Translate along this direction
-        translation = Matrix44.translation(factor * x,factor * y,factor * z)
-        self.cameraMatrix *= translation
-        
+        ##translation = Matrix44.translation(factor * x,factor * y,factor * z)
+        ##self.cameraMatrix *= translation
+        translation_matrix = util.translationMatrix44(factor * x,factor * y,factor * z)
+        self.cameraMatrix = self.cameraMatrix.dot(translation_matrix)
+
     def eventZoomOut(self):
         """
         Event handler for ZoomOut event.
@@ -873,5 +1059,7 @@ class GlApplication(object):
         y= self.cameraMatrix[1,2]
         z= self.cameraMatrix[2,2]
         # Translate along this direction
-        translation = Matrix44.translation(factor * x,factor * y,factor * z)
-        self.cameraMatrix *= translation
+        ##translation = Matrix44.translation(factor * x,factor * y,factor * z)
+        ##self.cameraMatrix *= translation
+        translation_matrix = util.translationMatrix44(factor * x,factor * y,factor * z)
+        self.cameraMatrix = self.cameraMatrix.dot(translation_matrix)
