@@ -41,3 +41,13 @@ def translationMatrix44(x, y, z):
                   [0.,       0.,       1.,       0.],
                   [float(x), float(y), float(z), 1.]], 'f')
     return M
+
+
+def otranslationMatrix44(x, y, z):
+    """Makes a translation Matrix44."""
+
+    M = np.array([[1.,       0.,       0.,       float(x)],
+                  [0.,       1.,       0.,       float(y)],
+                  [0.,       0.,       1.,       float(z)],
+                  [0.,       0.,       0.,       1.]], 'f')
+    return M

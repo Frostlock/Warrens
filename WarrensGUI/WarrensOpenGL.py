@@ -205,26 +205,18 @@ class GlApplication(object):
         """
         Sets the perspective matrix
         """
+        pMat = np.zeros((4,4), 'f')
+
         fFrustumScale = 1.0
         fzNear = 0.1
         fzFar = 1000.0
 
-        # theMatrix = [0.0 for i in range(16)]
-        # theMatrix[0] = fFrustumScale * 1
-        # theMatrix[5] = fFrustumScale * (float(self.displayWidth) / self.displayHeight)
-        # theMatrix[10] = (fzFar + fzNear) / (fzNear - fzFar)
-        # theMatrix[14] = (2 * fzFar * fzNear) / (fzNear - fzFar)
-        # theMatrix[11] = -1.0
-        # print theMatrix
-
-        pMat = np.zeros((4,4), 'f')
         pMat[0,0] = fFrustumScale * 1
         pMat[1,1] = fFrustumScale * (float(self.displayWidth) / self.displayHeight)
         pMat[2,2] = (fzFar + fzNear) / (fzNear - fzFar)
         pMat[3,2] = (2 * fzFar * fzNear) / (fzNear - fzFar)
         pMat[2,3] = -1.0
 
-        print pMat
         self.perspectiveMatrix = pMat
 
     def initOpenGl(self):
@@ -298,10 +290,8 @@ class GlApplication(object):
         #self.centerCameraOnActor(self.game.player)
         self.centerCameraOnMap()
         
-        # Initialize speeds and directions
-        ##rotation_direction = Vector3()
+        # Initialize speeds
         rotation_speed = radians(90.0)
-        ##movement_direction = Vector3()
         movement_speed = 5.0    
     
         while True:
@@ -323,60 +313,49 @@ class GlApplication(object):
             pressed = pygame.key.get_pressed()
             
             # Reset rotation and movement directions
-            ##rotation_direction.set(0.0, 0.0, 0.0)
+            # rotation_direction.set(0.0, 0.0, 0.0)
             rotation_direction = np.array((0.0, 0.0, 0.0), 'f')
-            ##movement_direction.set(0.0, 0.0, 0.0)
+            # movement_direction.set(0.0, 0.0, 0.0)
             movement_direction = np.array((0.0, 0.0, 0.0), 'f')
 
             # Modify direction vectors for key presses
             if pressed[K_LEFT]:
-                ##rotation_direction.y = +1.0
+                # rotation_direction.y = +1.0
                 rotation_direction[1] = +1.0
             elif pressed[K_RIGHT]:
-                ##rotation_direction.y = -1.0
+                # rotation_direction.y = -1.0
                 rotation_direction[1] = -1.0
             if pressed[K_UP]:
-                ##rotation_direction.x = -1.0
+                # rotation_direction.x = -1.0
                 rotation_direction[0] = -1.0
             elif pressed[K_DOWN]:
-                ##rotation_direction.x = +1.0
+                # rotation_direction.x = +1.0
                 rotation_direction[0] = +1.0
             if pressed[K_PAGEUP]:
-                ##rotation_direction.z = -1.0
+                # rotation_direction.z = -1.0
                 rotation_direction[2] = -1.0
             elif pressed[K_PAGEDOWN]:
-                ##rotation_direction.z = +1.0
+                # rotation_direction.z = +1.0
                 rotation_direction[2] = +1.0
             if pressed[K_HOME]:
-                ##movement_direction.z = -1.0
+                # movement_direction.z = -1.0
                 movement_direction[2] = -1.0
             elif pressed[K_END]:
-                ##movement_direction.z = +1.0
+                # movement_direction.z = +1.0
                 movement_direction[2] = +1.0
             
             # Calculate rotation matrix and multiply by camera matrix    
             rotation = rotation_direction * rotation_speed * time_passed_seconds
-            ##rotation_matrix = Matrix44.xyz_rotation(*rotation)
             rotation_matrix = util.rotationMatrix44(*rotation)
-    # print self.cameraMatrix
-    # [ 1    0    0    0 ]
-    # [ 0    1    0    0 ]
-    # [ 0    0    1    0 ]
-    # [ 10   5.25 10   1 ]
-
-            ##self.cameraMatrix *= rotation_matrix
+            # if you do this the other way around you rotate the world before moving the camera
             self.cameraMatrix = rotation_matrix.dot(self.cameraMatrix)
 
-
             # Calcluate movment and add it to camera matrix translate
-            ##heading = Vector3(self.cameraMatrix.forward)
             heading = self.cameraMatrix[:3,2] #forward
-            ##movement = heading * movement_direction.z * movement_speed
-            movement = heading * movement_direction[2] * movement_speed * time_passed_seconds
-            print movement
+            movement = heading * movement_direction * movement_speed * time_passed_seconds
             movement_matrix = util.translationMatrix44(*movement)
-            ##self.cameraMatrix.translate += movement * time_passed_seconds
-            self.cameraMatrix = self.cameraMatrix.dot(movement_matrix)
+            # if you do this the other way around you move the world before moving the camera
+            self.cameraMatrix = movement_matrix.dot(self.cameraMatrix)
 
             # Refresh the actors VAO (some actors might have moved)
             self.loadVAOActors()
@@ -400,27 +379,18 @@ class GlApplication(object):
         """
         Centers the camera above the given actor.
         """
-        #Set a new camera transform matrix
-        ##self.cameraMatrix = Matrix44()
-        #Translate it above the actor
         x = actor.tile.x
         y = actor.tile.y
-        ##self.cameraMatrix.translate = (x * TILESIZE,y * TILESIZE, 4)
         self.cameraMatrix = util.translationMatrix44(x * TILESIZE, y * TILESIZE, 4.0)
 
     def centerCameraOnMap(self):
         """
         Centers the camera above the current map
         """
-        #Set a new camera transform matrix
-        ##self.cameraMatrix = Matrix44()
-        #Translate it above the center of the map
         map = self.game.currentLevel.map
         x = map.width / 2
         y = map.height / 2
-        ##self.cameraMatrix.translate = (x * TILESIZE,y * TILESIZE-1, 10)
-        #TODO: Why the minus 1?
-        self.cameraMatrix = util.translationMatrix44(x * TILESIZE,y * TILESIZE-1, 10)
+        self.cameraMatrix = util.translationMatrix44(x * TILESIZE,y * TILESIZE -1, 10)
 
     def firstPersonCamera(self):
         """
@@ -665,48 +635,20 @@ class GlApplication(object):
         if DEBUG_GLSL: print "perspectiveMatrix"
         if DEBUG_GLSL: print self.perspectiveMatrix
 
-        ##camMatrix = self.cameraMatrix.get_inverse().to_opengl()
         camMatrix = np.linalg.inv(self.cameraMatrix)
-
-
-        # map = self.game.currentLevel.map
-        # x = map.width / 2
-        # y = map.height / 2
-        # cam2 = util.translationMatrix44(x * TILESIZE,y * TILESIZE-1, 10)
-        # cam2 = np.linalg.inv(cam2)
-        # cam2 = np.reshape(cam2,(16))
-        # print camMatrix
-        # print cam2
-        # GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, cam2)
-
-
-        ##GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, camMatrix)
         GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, np.reshape(camMatrix,(16)))
         if DEBUG_GLSL: print "camMatrix"
         if DEBUG_GLSL: print camMatrix
 
-        ## lightMatrix = [0.0 for i in range(9)]
-        ## lightMatrix[0] = camMatrix[0]
-        ## lightMatrix[1] = camMatrix[1]
-        ## lightMatrix[2] = camMatrix[2]
-        ## lightMatrix[3] = camMatrix[4]
-        ## lightMatrix[4] = camMatrix[5]
-        ## lightMatrix[5] = camMatrix[6]
-        ## lightMatrix[6] = camMatrix[8]
-        ## lightMatrix[7] = camMatrix[9]
-        ## lightMatrix[8] = camMatrix[10]
         lightMatrix = camMatrix[:3,:3] # Extracts 3*3 matrix out of 4*4
-        if DEBUG_GLSL:
-            print "LightMatrix"
-            print lightMatrix
-        ##GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, lightMatrix)
+        if DEBUG_GLSL: print "LightMatrix"
+        if DEBUG_GLSL: print lightMatrix
         GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, np.reshape(lightMatrix,(9)))
 
         if DEBUG_GLSL: print "Light intensity: (1,1,1,1)"
         GL.glUniform4f(self.lightIntensityUnif, 1.0, 1.0, 1.0, 1.0)
 
-        # Calculate direction of light
-        ##lightDirCameraSpace = self.cameraMatrix.transform_vec3(self.directionTowardTheLight)
+        # Calculate direction of light in camera space
         lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
         if DEBUG_GLSL: print "Direction to light in Camera Space"
         if DEBUG_GLSL: print lightDirCameraSpace
@@ -733,28 +675,15 @@ class GlApplication(object):
         # Load uniforms
         GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.perspectiveMatrix,(16)))
 
-        ##camMatrix = self.cameraMatrix.get_inverse().to_opengl()
         camMatrix = np.linalg.inv(self.cameraMatrix)
-        ##GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, camMatrix)
         GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, np.reshape(camMatrix,(16)))
 
-        ## lightMatrix = [0.0 for i in range(9)]
-        ## lightMatrix[0] = camMatrix[0]
-        ## lightMatrix[1] = camMatrix[1]
-        ## lightMatrix[2] = camMatrix[2]
-        ## lightMatrix[3] = camMatrix[4]
-        ## lightMatrix[4] = camMatrix[5]
-        ## lightMatrix[5] = camMatrix[6]
-        ## lightMatrix[6] = camMatrix[8]
-        ## lightMatrix[7] = camMatrix[9]
-        ## lightMatrix[8] = camMatrix[10]
         lightMatrix = camMatrix[:3,:3] # Extracts 3*3 matrix out of 4*4
         GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, np.reshape(lightMatrix, (9)))
 
         GL.glUniform4f(self.lightIntensityUnif, 1.0, 1.0, 1.0, 1.0)
 
-        # Calculate direction of light
-        ##lightDirCameraSpace = self.cameraMatrix.transform_vec3(self.directionTowardTheLight)
+        # Calculate direction of light in camera space
         lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
         GL.glUniform3f(self.dirToLightUnif, lightDirCameraSpace[0],lightDirCameraSpace[1],lightDirCameraSpace[2])
 
@@ -974,61 +903,48 @@ class GlApplication(object):
         # check for on going drag
         if self._dragging:
             # get relative distance of mouse since last call to get_rel()
-            rel = pygame.mouse.get_rel()
-            
-            s= self.cameraMatrix[3,3]
+            mouseMove = pygame.mouse.get_rel()
             
             # Get the left right direction of the camera from the current modelview matrix
             x= self.cameraMatrix[0,0]
             y= self.cameraMatrix[1,0]
             z= self.cameraMatrix[2,0]
-            l=sqrt(x*x+y*y+z*z)
-            factor = -1 * rel[0] / s/l /100
+            w= self.cameraMatrix[3,0]
+            factor =  -1.0 * mouseMove[0] / (w*w)
             # Translate along this direction
-            ##translation = Matrix44.translation(factor * x,factor * y,factor * z)
-            translation_matrix = util.translationMatrix44(factor * x,factor * y,factor * z)
-            self.cameraMatrix = self.cameraMatrix.dot(translation_matrix)
+            translation_matrix = util.translationMatrix44(factor * x, factor * y, factor * z)
+            self.cameraMatrix = translation_matrix .dot(self.cameraMatrix)
             
             # Get the up down direction of the camera from the current modelview matrix
             x= self.cameraMatrix[0,1]
             y= self.cameraMatrix[1,1]
             z= self.cameraMatrix[2,1]
-            l=sqrt(x*x+y*y+z*z)
-            factor = rel[1] / s/l /100
+            w= self.cameraMatrix[3,1]
+            factor = 1.0 * mouseMove[1] / (w*w)
+            print self.cameraMatrix[:,1]
             # Translate along this direction
-            ##translation = Matrix44.translation(factor * x,factor * y,factor * z)
-            translation_matrix = util.translationMatrix44(factor * x,factor * y,factor * z)
-            ##self.cameraMatrix *= translation
-            self.cameraMatrix = self.cameraMatrix.dot(translation_matrix)
+            translation_matrix = util.translationMatrix44(factor * x,factor * y, factor * z)
+            self.cameraMatrix = translation_matrix .dot(self.cameraMatrix)
             
         elif self._rotating:
             # get relative distance of mouse since last call to get_rel()
-            rel = pygame.mouse.get_rel()
-
-            # set rotation center, rotate around the center of the top map
-#             map = self.game.currentLevel.map
-#             rotation_center_x = map.width / 2
-#             rotation_center_y = map.height / 2
-#             GL.glTranslatef(rotation_center_x * tileSize,rotation_center_y * tileSize, 0)
+            mouseMove = pygame.mouse.get_rel()
                      
             # Get the left right direction of the camera from the current modelview matrix
-            x= self.cameraMatrix[0,0] * -1 * rel[1]
-            y= self.cameraMatrix[1,0] * -1 * rel[1]
-            z= self.cameraMatrix[2,0] * -1 * rel[1]
+            # We'll use this as the rotation axis for the up down movement
+            x= self.cameraMatrix[0,0] * mouseMove[1]
+            y= self.cameraMatrix[1,0] * mouseMove[1]
+            z= self.cameraMatrix[2,0] * mouseMove[1]
             w= self.cameraMatrix[3,0] * 100
-            ##rotation = Matrix44.rotation_about_axis((x,y,z), radians(1))#.translation(factor * x,factor * y,factor * z)
-            ##self.cameraMatrix *= rotation
             rotation_matrix = util.rotationMatrix44(x/w,y/w,z/w)
             self.cameraMatrix = rotation_matrix.dot(self.cameraMatrix)
-            # GL.glRotatef(rel[1] ,x, y, z)
             
             #Get the up down direction of the camera from the current modelview matrix
-            x= self.cameraMatrix[0,1] * rel[0]
-            y= self.cameraMatrix[1,1] * rel[0]
-            z= self.cameraMatrix[2,1] * rel[0]
+            # We'll use this as the rotation axis for the left right movement
+            x= self.cameraMatrix[0,1] * -1.0 * mouseMove[0]
+            y= self.cameraMatrix[1,1] * -1.0 * mouseMove[0]
+            z= self.cameraMatrix[2,1] * -1.0 * mouseMove[0]
             w= self.cameraMatrix[3,1] * 100
-            ##rotation = Matrix44.rotation_about_axis((x,y,z), radians(-1))#.translation(factor * x,factor * y,factor * z)
-            ##self.cameraMatrix *= rotation
             rotation_matrix = util.rotationMatrix44(x/w,y/w,z/w)
             self.cameraMatrix = rotation_matrix.dot(self.cameraMatrix)
             
@@ -1037,29 +953,19 @@ class GlApplication(object):
         Event handler for ZoomIn event.
         This will translate the camera matrix to zoom in.
         """
-        factor = -1
         # Get the direction of the camera from the camera matrix
-        x= self.cameraMatrix[0,2]
-        y= self.cameraMatrix[1,2]
-        z= self.cameraMatrix[2,2]
-        # Translate along this direction
-        ##translation = Matrix44.translation(factor * x,factor * y,factor * z)
-        ##self.cameraMatrix *= translation
-        translation_matrix = util.translationMatrix44(factor * x,factor * y,factor * z)
-        self.cameraMatrix = self.cameraMatrix.dot(translation_matrix)
+        heading = self.cameraMatrix[:3,2] * -1 #backward
+        # Translate the camera along z component of this direction
+        translation_matrix = util.translationMatrix44(0.,0.,heading[2])
+        self.cameraMatrix = translation_matrix.dot(self.cameraMatrix)
 
     def eventZoomOut(self):
         """
         Event handler for ZoomOut event.
         This will translate the camera matrix to zoom out.
         """
-        factor = 1
         # Get the direction of the camera from the camera matrix
-        x= self.cameraMatrix[0,2]
-        y= self.cameraMatrix[1,2]
-        z= self.cameraMatrix[2,2]
-        # Translate along this direction
-        ##translation = Matrix44.translation(factor * x,factor * y,factor * z)
-        ##self.cameraMatrix *= translation
-        translation_matrix = util.translationMatrix44(factor * x,factor * y,factor * z)
-        self.cameraMatrix = self.cameraMatrix.dot(translation_matrix)
+        heading = self.cameraMatrix[:3,2] #forward
+        # Translate the camera along z component of this direction
+        translation_matrix = util.translationMatrix44(0.,0.,heading[2])
+        self.cameraMatrix = translation_matrix.dot(self.cameraMatrix)
