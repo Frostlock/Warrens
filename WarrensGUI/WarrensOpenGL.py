@@ -241,6 +241,7 @@ class GlApplication(object):
         self.lightingMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "lightingMatrix")
         self.dirToLightUnif = GL.glGetUniformLocation(self.openGlProgram, "dirToLight")
         self.lightIntensityUnif = GL.glGetUniformLocation(self.openGlProgram, "lightIntensity")
+        self.ambientIntensityUnif = GL.glGetUniformLocation(self.openGlProgram, "ambientIntensity")
 
         # Generate Vertex Array Object for the level
         self.VAO_level = GL.GLuint(0)
@@ -645,8 +646,10 @@ class GlApplication(object):
         if DEBUG_GLSL: print lightMatrix
         GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, np.reshape(lightMatrix,(9)))
 
-        if DEBUG_GLSL: print "Light intensity: (1,1,1,1)"
-        GL.glUniform4f(self.lightIntensityUnif, 1.0, 1.0, 1.0, 1.0)
+        if DEBUG_GLSL: print "Light intensity: (0.8, 0.8, 0.8, 1.0)"
+        GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
+        if DEBUG_GLSL: print "Ambient intensity: (0.2, 0.2, 0.2, 1.0)"
+        GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
 
         # Calculate direction of light in camera space
         lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
@@ -681,7 +684,8 @@ class GlApplication(object):
         lightMatrix = camMatrix[:3,:3] # Extracts 3*3 matrix out of 4*4
         GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, np.reshape(lightMatrix, (9)))
 
-        GL.glUniform4f(self.lightIntensityUnif, 1.0, 1.0, 1.0, 1.0)
+        GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
+        GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
 
         # Calculate direction of light in camera space
         lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
