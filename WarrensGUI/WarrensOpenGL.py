@@ -236,12 +236,18 @@ class GlApplication(object):
 
         # Create uniform variables for the compiled shaders
         GL.glUseProgram(self.openGlProgram)
+        # Camera and perspective projection
         self.perspectiveMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "perspectiveMatrix")
         self.cameraMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "cameraMatrix")
-        self.lightingMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "lightingMatrix")
+        # Lighting
         self.dirToLightUnif = GL.glGetUniformLocation(self.openGlProgram, "dirToLight")
         self.lightIntensityUnif = GL.glGetUniformLocation(self.openGlProgram, "lightIntensity")
         self.ambientIntensityUnif = GL.glGetUniformLocation(self.openGlProgram, "ambientIntensity")
+        self.lightingMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "lightingMatrix")
+        # Fog of War
+        self.playerPositionUnif = GL.glGetUniformLocation(self.openGlProgram, "playerPosition")
+        self.fogDistanceUnif = GL.glGetUniformLocation(self.openGlProgram, "fogDistance")
+        GL.glUniform1f(self.fogDistanceUnif, 4.0)
 
         # Generate Vertex Array Object for the level
         self.VAO_level = GL.GLuint(0)
@@ -400,10 +406,20 @@ class GlApplication(object):
         #Translate above the player
         x = self.game.player.tile.x
         y = self.game.player.tile.y
+        #TODO: Fix this routine, also why is there -1 in next line?
         self.cameraMatrix = util.translationMatrix44(x * TILESIZE,y * TILESIZE-1, TILESIZE)
         #Rotate to look ahead
         rotation_matrix = util.rotationMatrix44(-180,0,0)
         self.cameraMatrix = self.cameraMatrix.dot(rotation_matrix)
+
+    def playerPosition(self):
+        """
+        :return: The position in 3D modelspace of the player
+        """
+        playerX = self.game.player.tile.x * TILESIZE + (TILESIZE / 2)
+        playerY = self.game.player.tile.y * TILESIZE + (TILESIZE / 2)
+        playerZ = TILESIZE / 2
+        return (playerX, playerY, playerZ, 1.0)
 
     def loadVAOLevel(self):
         """
@@ -650,6 +666,7 @@ class GlApplication(object):
         GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
         if DEBUG_GLSL: print "Ambient intensity: (0.2, 0.2, 0.2, 1.0)"
         GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
+        GL.glUniform4f(self.playerPositionUnif, *self.playerPosition())
 
         # Calculate direction of light in camera space
         lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
@@ -686,6 +703,7 @@ class GlApplication(object):
 
         GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
         GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
+        GL.glUniform4f(self.playerPositionUnif, *self.playerPosition())
 
         # Calculate direction of light in camera space
         lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
