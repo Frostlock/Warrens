@@ -170,7 +170,6 @@ class GlApplication(object):
     def directionTowardTheLight(self):
         return (0.866, 0.5, -5.001)
 
-    #constructor
     def __init__(self):
         """
         Constructor to create a new GlApplication object.
@@ -381,7 +380,6 @@ class GlApplication(object):
                 self._game.playTurn()
                 self._gamePlayerTookTurn = False
 
-            
     def centerCameraOnActor(self, actor):
         """
         Centers the camera above the given actor.
@@ -392,7 +390,7 @@ class GlApplication(object):
 
     def centerCameraOnMap(self):
         """
-        Centers the camera above the current map
+        Centers the camera above the current map.
         """
         map = self.game.currentLevel.map
         x = map.width / 2
@@ -403,18 +401,19 @@ class GlApplication(object):
         """
         Moves the camera to a first person view for the player
         """
-        #Translate above the player
-        x = self.game.player.tile.x
-        y = self.game.player.tile.y
-        #TODO: Fix this routine, also why is there -1 in next line?
-        self.cameraMatrix = util.translationMatrix44(x * TILESIZE,y * TILESIZE-1, TILESIZE)
-        #Rotate to look ahead
-        rotation_matrix = util.rotationMatrix44(-180,0,0)
-        self.cameraMatrix = self.cameraMatrix.dot(rotation_matrix)
+        # Translate above the player
+        x, y, z, w = self.getPlayerPosition()
+        self.cameraMatrix = util.translationMatrix44(x , y, z)
+        # Rotate to look ahead
+        # TODO: Look in the direction of the actor, unfortunately actors don't have a direction yet :)
+        rotation_matrix = util.rotationMatrix44(radians(90),0,0)
+        self.cameraMatrix = rotation_matrix.dot(self.cameraMatrix)
 
-    def playerPosition(self):
+    def getPlayerPosition(self):
         """
-        :return: The position in 3D modelspace of the player
+        Returns the current position of the player in model space
+        :rtype : Tuple (x, y, z, w)
+        :return: The position in 3D model space of the player
         """
         playerX = self.game.player.tile.x * TILESIZE + (TILESIZE / 2)
         playerY = self.game.player.tile.y * TILESIZE + (TILESIZE / 2)
@@ -666,7 +665,7 @@ class GlApplication(object):
         GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
         if DEBUG_GLSL: print "Ambient intensity: (0.2, 0.2, 0.2, 1.0)"
         GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
-        GL.glUniform4f(self.playerPositionUnif, *self.playerPosition())
+        GL.glUniform4f(self.playerPositionUnif, *self.getPlayerPosition())
 
         # Calculate direction of light in camera space
         lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
@@ -703,7 +702,7 @@ class GlApplication(object):
 
         GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
         GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
-        GL.glUniform4f(self.playerPositionUnif, *self.playerPosition())
+        GL.glUniform4f(self.playerPositionUnif, *self.getPlayerPosition())
 
         # Calculate direction of light in camera space
         lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
