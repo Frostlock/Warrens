@@ -243,7 +243,7 @@ class GuiApplication(object):
         self.game._currentLevel = town
         
         #Create player (without a player the rendering loop fails)
-        self.game.addPlayer()
+        self.game.resetPlayer()
         
         #Show the Game
         self.mainRenderLoop()
