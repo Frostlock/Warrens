@@ -20,7 +20,7 @@ from OpenGL import GLUT
 from ctypes import c_void_p
 
 from WarrensGame.Game import Game
-from WarrensGame.Actors import Character
+from WarrensGame.Actors import Actor, Portal, Monster, Item, Character
 
 import GuiUtilities
 import GuiCONSTANTS
@@ -543,70 +543,82 @@ class GlApplication(object):
         self.VBO_actors_id = GL.glGenBuffers(1)
         self.VBO_actors_elements_id = GL.glGenBuffers(1)
 
-        # Construct the data array that will be loaded into the buffer
+        # Construct the data arrays that will be loaded into the buffer
         vertexData = []
+        colorData = []
+        normalsData = []
         elementData = []
 
-        # Store the vertex coordinates
-        offset = 0.2
+        elemOffset = 0
         for vTile in self.game.currentLevel.map.visible_tiles:
             for actor in vTile.actors:
                 tile = actor.tile
-                # 4 components per vertex: x, y, z, w
+
+                # Determine scale
+                if actor is self.game.player:
+                    scale = 0.9
+                elif isinstance(actor, Portal):
+                    scale = 0.8
+                elif isinstance(actor, Monster):
+                    scale = 0.7
+                    # TODO: When Monster is dead make it smaller or flat.
+                elif isinstance(actor, Item):
+                    scale = 0.4
+                else:
+                    scale = 0.2
+
+                # Determine height
+                offset =((1 - scale) / 2) * TILESIZE
+                assert isinstance(actor, Actor)
+                if actor. currentHitPoints > 0:
+                    height = TILESIZE - (2 * offset)
+                else:
+                    height = 0.05
+
+                # Store the vertex coordinates: 4 components per vertex: x, y, z, w
                 vertexData.extend((tile.x * TILESIZE + offset,tile.y * TILESIZE + offset, 0.0, 1.0))
                 vertexData.extend((tile.x * TILESIZE + offset, tile.y * TILESIZE + TILESIZE - offset, 0.0, 1.0))
                 vertexData.extend((tile.x * TILESIZE + TILESIZE - offset, tile.y * TILESIZE + TILESIZE - offset, 0.0, 1.0))
                 vertexData.extend((tile.x * TILESIZE + TILESIZE - offset, tile.y * TILESIZE + offset, 0.0, 1.0))
-                vertexData.extend((tile.x * TILESIZE + (TILESIZE / 2) , tile.y * TILESIZE + (TILESIZE / 2), TILESIZE, 1.0))
+                vertexData.extend((tile.x * TILESIZE + (TILESIZE / 2) , tile.y * TILESIZE + (TILESIZE / 2), height, 1.0))
 
-        self.VBO_actors_color_offset = len(vertexData)
-
-        # Store the vertex colors
-        for vTile in self.game.currentLevel.map.visible_tiles:
-            for actor in vTile.actors:
-                # 4 components per color: R, G, B, A
+                # Store the vertex color: 4 components per color: R, G, B, A
                 color = self.normalizeColor(actor.color)
-                vertexData.extend((color[0],color[1],color[2],1.0))
-                vertexData.extend((color[0],color[1],color[2],1.0))
-                vertexData.extend((color[0],color[1],color[2],1.0))
-                vertexData.extend((color[0],color[1],color[2],1.0))
-                vertexData.extend((color[0],color[1],color[2],1.0))
+                colorData.extend((color[0],color[1],color[2],1.0))
+                colorData.extend((color[0],color[1],color[2],1.0))
+                colorData.extend((color[0],color[1],color[2],1.0))
+                colorData.extend((color[0],color[1],color[2],1.0))
+                colorData.extend((color[0],color[1],color[2],1.0))
 
-        # Store the vertex normals
+                # Store the vertex normals: 3 components per normal: x, y, z
+                normalsData.extend((-1.0,1.0,-0.2))
+                normalsData.extend((1.0,1.0,-0.2))
+                normalsData.extend((1.0,-1.0,-0.2))
+                normalsData.extend((-1.0,-1.0,-0.2))
+                normalsData.extend((0.0,0.0,-1.0))
+
+                # Store the indices for the element drawing (triangles, clockwise from front)
+                elementData.extend((0+elemOffset, 2+elemOffset, 1+elemOffset))
+                elementData.extend((0+elemOffset, 3+elemOffset, 2+elemOffset))
+                elementData.extend((0+elemOffset, 4+elemOffset, 3+elemOffset))
+                elementData.extend((3+elemOffset, 4+elemOffset, 2+elemOffset))
+                elementData.extend((2+elemOffset, 4+elemOffset, 1+elemOffset))
+                elementData.extend((1+elemOffset, 4+elemOffset, 0+elemOffset))
+                elemOffset += 5
+
+        # Remember where each data set begins
+        self.VBO_actors_color_offset = len(vertexData)
+        vertexData.extend(colorData)
         self.VBO_actors_normals_offset = len(vertexData)
-        for vTile in self.game.currentLevel.map.visible_tiles:
-            for actor in vTile.actors:
-                # 3 components per normal: x, y, z
-                # 4 vertex normals for the bottom
-                vertexData.extend((-1.0,1.0,-0.2))
-                vertexData.extend((1.0,1.0,-0.2))
-                vertexData.extend((1.0,-1.0,-0.2))
-                vertexData.extend((-1.0,-1.0,-0.2))
-                # 1 vertex normals for the top
-                vertexData.extend((0.0,0.0,-1.0))
-
+        vertexData.extend(normalsData)
         self.VBO_actors_length = len(vertexData)
-
-        # Create the element array
-        offset = 0
-        for vTile in self.game.currentLevel.map.visible_tiles:
-            for actor in vTile.actors:
-                # Triangles
-                elementData.extend((0+offset, 2+offset, 1+offset))
-                elementData.extend((0+offset, 3+offset, 2+offset))
-                elementData.extend((0+offset, 4+offset, 3+offset))
-                elementData.extend((3+offset, 4+offset, 2+offset))
-                elementData.extend((2+offset, 4+offset, 1+offset))
-                elementData.extend((1+offset, 4+offset, 0+offset))
-                offset += 5
-
         self.VBO_actors_elements_length = len(elementData)
 
         # Set up the VAO context
         GL.glUseProgram(self.openGlProgram)
         glBindVertexArray(self.VAO_actors)
 
-        # Load the constructed vertex and color data array into the created array buffer
+        # Load the constructed vertex data array into the created array buffer
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.VBO_actors_id)
         array_type = (GL.GLfloat * len(vertexData))
         GL.glBufferData(GL.GL_ARRAY_BUFFER, len(vertexData) * SIZE_OF_FLOAT, array_type(*vertexData), GL.GL_STATIC_DRAW)
