@@ -184,7 +184,6 @@ class GlApplication(object):
         #TODO: create proper properties for these
         self._dragging = False
         self._rotating = False
-        self._gamePlayerTookTurn = False
         self.FPS = 0
 
     def resizeWindow(self,displaySize):
@@ -374,11 +373,6 @@ class GlApplication(object):
                     
             # Show the screen
             pygame.display.flip()
-            
-            #If the player took a turn: Let the game play a turn
-            if self._gamePlayerTookTurn: 
-                self._game.playTurn()
-                self._gamePlayerTookTurn = False
 
     def centerCameraOnActor(self, actor):
         """
@@ -828,6 +822,8 @@ class GlApplication(object):
             messageCounter += 1
 
     def handleWarrensGameEvents(self):
+        # Let the game move forward
+        self.game.play()
         # Detect level change
         if self.level is not self.game.currentLevel:
             self.level = self.game.currentLevel
@@ -880,9 +876,6 @@ class GlApplication(object):
                     global movement_keys
                     if event.key in movement_keys:
                         player.tryMoveOrAttack(*movement_keys[event.key])
-                        #TODO: Decide in the game code if turn is taken or not, tookATurn should be bool on player which can be reset by the game.
-                        self._gamePlayerTookTurn = True
-                    
                     # portal keys
                     elif event.key == pygame.K_LESS:
                         # check for shift modifier to detect ">" key.
@@ -899,10 +892,6 @@ class GlApplication(object):
                     # interact
                     elif event.key == pygame.K_COMMA:
                         player.tryPickUp()
-                    
-                    # update field of vision
-                    if self._gamePlayerTookTurn:
-                        self.game.currentLevel.map.updateFieldOfView(self.game.player.tile.x, self.game.player.tile.y)
 
     def eventDraggingStart(self):
         self._dragging = True

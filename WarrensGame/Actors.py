@@ -78,6 +78,24 @@ class Actor(object):
         self.registerWithLevel(targetLevel)
 
     @property
+    def actionTaken(self):
+        """
+        Property to indicate if the actor took an action.
+        Used by Game class to keep track of turns.
+        :return: Boolean
+        """
+        return self._actionTaken
+
+    @actionTaken.setter
+    def actionTaken(self, acted):
+        """
+        Property to indicate if the actor took an action.
+        :param acted: Boolean indicating if actor took action or not
+        :return: None
+        """
+        self._actionTaken = acted
+
+    @property
     def maxHitPoints(self):
         """
         Maximum hitpoints of this Character (overrides Actor)
@@ -120,13 +138,12 @@ class Actor(object):
         """
         return self._color
 
-    #Constructor
     def __init__(self):
         """
         Creates a new basic Actor, normally not used directly but should
         be called by subclasses.
         """
-        #initialize class properties
+        # Initialize class properties
         self._baseMaxHitPoints = 1
         self._char = '?'
         self._currentHitPoints = 1
@@ -134,6 +151,7 @@ class Actor(object):
         self._name = 'Nameless'
         self._tile = None
         self._level = None
+        self._actionTaken = False
         self._color = (255, 255, 255)
         self._inView = False
 
@@ -192,8 +210,9 @@ class Actor(object):
             #avoid out of bounds
             Utilities.clamp(targetX, 0, self.tile.map.width)
             Utilities.clamp(targetY, 0, self.tile.map.height)
-            #move
-            self.moveToTile(self.level.map.tiles[targetX][targetY])
+            targetTile = self.level.map.tiles[targetX][targetY]
+            if self.tile is not targetTile:
+                self.moveToTile(targetTile)
 
     def moveTowards(self, targetActor):
         """
@@ -511,7 +530,6 @@ class Character(Actor):
         if self.AI is not None:
             self.AI.takeTurn()
 
-
 class Player(Character):
     """
     Sub class representing a player
@@ -616,13 +634,16 @@ class Player(Character):
         """
         Player tries to move or attack in direction (dx, dy).
         This function is meant to be called from the GUI.
+        This function will also register that the player took an action
         """
-        #the coordinates the player is moving to/attacking
+        self.actionTaken = True
+
+        # The coordinates the player is moving to/attacking
         x = self.tile.x + dx
         y = self.tile.y + dy
         targetTile = self.level.map.tiles[x][y]
 
-        #try to find an attackable actor there
+        # Try to find a target actor on the target tile
         target = None
         for a in targetTile.actors:
             #only attack monsters
@@ -631,7 +652,7 @@ class Player(Character):
                 if a.state != Character.DEAD:
                     target = a
 
-        #attack if target found, move otherwise
+        # Attack if target found, move otherwise
         if target is not None:
             self.attack(target)
         else:

@@ -261,12 +261,20 @@ class Game(object):
         """
         pass
 
-    def playTurn(self):
+    def play(self):
         """
-        This function will handle one complete turn.
+        This function should be called regularly by the GUI. It waits for the player
+        to take action after which all AI controlled characters also get to act.
+        This is what moves the game forward.
         :rtype : None
         """
-        # Let characters take a turn
-        for c in self.currentLevel.characters:
-            if c.state == Character.ACTIVE:
-                c.takeTurn()
+        # Wait for player to take action
+        if self.player.actionTaken:
+            # Let characters take a turn
+            for c in self.currentLevel.characters:
+                assert isinstance(c, Character)
+                if c.state == Character.ACTIVE:
+                    c.takeTurn()
+                    c.actionTaken = False
+            # Update field of view
+            self.currentLevel.map.updateFieldOfView(self.player.tile.x, self.player.tile.y)
