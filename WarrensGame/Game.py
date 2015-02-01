@@ -129,7 +129,7 @@ class Game(object):
         self._currentLevel = town
 
         # Add some dungeon levels underneath the town
-        prefLevel = None
+        prevLevel = None
         for i in range(1, 10):
             prevLevel = self.levels[i - 1]
             self.addDungeonLevel(i, [prevLevel])
@@ -250,7 +250,7 @@ class Game(object):
         :param fileName:
         :rtype : None
         """
-        # TODO medium: implement saving and loading of gamestate
+        # TODO: Implement saving and loading of gamestate
         pass
 
     def saveGame(self, fileName):
