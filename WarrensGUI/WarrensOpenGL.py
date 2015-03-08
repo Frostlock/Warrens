@@ -165,8 +165,8 @@ class GlApplication(object):
         self._lightingMatrix = matrix
 
     @property
-    def directionTowardTheLight(self):
-        return (0.866, 0.5, -5.001)
+    def lightPosition(self):
+        return (10.866, 5, -15.001)
 
     def __init__(self):
         """
@@ -186,7 +186,7 @@ class GlApplication(object):
         # Initialize uniform class variables
         self.perspectiveMatrixUnif = None
         self.cameraMatrixUnif = None
-        self.dirToLightUnif = None
+        self.lightPosUnif = None
         self.lightIntensityUnif = None
         self.ambientIntensityUnif = None
         self.lightingMatrixUnif = None
@@ -246,7 +246,7 @@ class GlApplication(object):
         self.perspectiveMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "perspectiveMatrix")
         self.cameraMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "cameraMatrix")
         # Lighting
-        self.dirToLightUnif = GL.glGetUniformLocation(self.openGlProgram, "dirToLight")
+        self.lightPosUnif = GL.glGetUniformLocation(self.openGlProgram, "lightPos")
         self.lightIntensityUnif = GL.glGetUniformLocation(self.openGlProgram, "lightIntensity")
         self.ambientIntensityUnif = GL.glGetUniformLocation(self.openGlProgram, "ambientIntensity")
         self.lightingMatrixUnif = GL.glGetUniformLocation(self.openGlProgram, "lightingMatrix")
@@ -676,17 +676,19 @@ class GlApplication(object):
         if DEBUG_GLSL: print lightMatrix
         GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, np.reshape(lightMatrix, (9)))
 
+        if DEBUG_GLSL: print "Light position: " + self.lightPosition
+        GL.glUniform3f(self.lightPosUnif, self.lightPosition[0], self.lightPosition[1], self.lightPosition[2])
         if DEBUG_GLSL: print "Light intensity: (0.8, 0.8, 0.8, 1.0)"
         GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
         if DEBUG_GLSL: print "Ambient intensity: (0.2, 0.2, 0.2, 1.0)"
         GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
         GL.glUniform4f(self.playerPositionUnif, *self.getPlayerPosition())
 
-        # Calculate direction of light in camera space
-        lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
-        if DEBUG_GLSL: print "Direction to light in Camera Space"
-        if DEBUG_GLSL: print lightDirCameraSpace
-        GL.glUniform3f(self.dirToLightUnif, lightDirCameraSpace[0], lightDirCameraSpace[1], lightDirCameraSpace[2])
+        # MOVED TO SHADER Calculate direction of light in camera space
+        #lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
+        #if DEBUG_GLSL: print "Direction to light in Camera Space"
+        #if DEBUG_GLSL: print lightDirCameraSpace
+        #GL.glUniform3f(self.dirToLightUnif, lightDirCameraSpace[0], lightDirCameraSpace[1], lightDirCameraSpace[2])
 
         # Bind element array
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_level_elements_id)
@@ -705,13 +707,14 @@ class GlApplication(object):
         lightMatrix = camMatrix[:3, :3]  # Extracts 3*3 matrix out of 4*4
         GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, np.reshape(lightMatrix, (9)))
 
+        GL.glUniform3f(self.lightPosUnif, self.lightPosition[0], self.lightPosition[1], self.lightPosition[2])
         GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
         GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
         GL.glUniform4f(self.playerPositionUnif, *self.getPlayerPosition())
 
-        # Calculate direction of light in camera space
-        lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
-        GL.glUniform3f(self.dirToLightUnif, lightDirCameraSpace[0], lightDirCameraSpace[1], lightDirCameraSpace[2])
+        # MOVED TO SHADER Calculate direction of light in camera space
+        #lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
+        #GL.glUniform3f(self.dirToLightUnif, lightDirCameraSpace[0], lightDirCameraSpace[1], lightDirCameraSpace[2])
 
         # Bind element array
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_actors_elements_id)

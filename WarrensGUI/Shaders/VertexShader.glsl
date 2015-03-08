@@ -11,7 +11,7 @@ uniform mat4 perspectiveMatrix;
 uniform mat4 cameraMatrix;
 
 // Lighting inputs
-uniform vec3 dirToLight;
+uniform vec3 lightPos;
 uniform vec4 lightIntensity;
 uniform vec4 ambientIntensity;
 uniform mat3 lightingMatrix;
@@ -22,18 +22,23 @@ uniform float fogDistance;
 
 void main()
 {
-	gl_Position = perspectiveMatrix * cameraMatrix * position;
+	vec4 camSpacePosition = cameraMatrix * position;
+	gl_Position = perspectiveMatrix * camSpacePosition;
 
-	vec3 normCamSpace = normalize(lightingMatrix * normal);
-	
-	float cosAngIncidence = dot(normCamSpace, dirToLight);
+	vec3 camSpaceNormal = normalize(lightingMatrix * normal);
+
+    vec3 camSpaceLightPos = lightingMatrix * lightPos;
+
+	vec3 dirToLight = normalize(camSpaceLightPos - vec3(camSpacePosition));
+
+	float cosAngIncidence = dot(camSpaceNormal, dirToLight);
 	cosAngIncidence = clamp(cosAngIncidence, 0, 1);
 
     // Color coming from direct light
-	vec4 directLightColor = lightIntensity * color * cosAngIncidence;
+	vec4 directLightColor = color * lightIntensity * cosAngIncidence;
 
 	// Color coming from ambient light
-	vec4 ambientLightColor = ambientIntensity * color;
+	vec4 ambientLightColor = color * ambientIntensity;
 
     // Fog of war
     //vec4 playerPosition = vec4(1.0, 1.0, 1.0, 1.0);
