@@ -19,6 +19,7 @@ uniform mat3 lightingMatrix;
 // Fog of war inputs
 uniform vec4 playerPosition;
 uniform float fogDistance;
+uniform bool fogActive;
 
 void main()
 {
@@ -41,23 +42,26 @@ void main()
 	vec4 ambientLightColor = color * ambientIntensity;
 
     // Fog of war
-    //vec4 playerPosition = vec4(1.0, 1.0, 1.0, 1.0);
-    float myDist = distance(playerPosition, position);
-    float fullViewDist = fogDistance / 3;
-    if ( myDist <= fullViewDist )
+    interpColor = directLightColor + ambientLightColor;
+    if ( fogActive == true)
     {
-	    interpColor = directLightColor + ambientLightColor;
-	}
-	else if ( myDist <= fogDistance )
-	{
-	    float gradient = 1 - ((myDist - fullViewDist) / (fogDistance - fullViewDist));
-	    interpColor = (directLightColor + ambientLightColor) * gradient;
-	    interpColor[3] = 1.0;
-	}
-	else
-	{
-	    interpColor = vec4(0.0, 0.0, 0.0, 1.0);
-	}
+        float myDist = distance(playerPosition, position);
+        float fullViewDist = fogDistance / 3;
+        if ( myDist <= fullViewDist )
+        {
+            interpColor = directLightColor + ambientLightColor;
+        }
+        else if ( myDist <= fogDistance )
+        {
+            float gradient = 1 - ((myDist - fullViewDist) / (fogDistance - fullViewDist));
+            interpColor = (directLightColor + ambientLightColor) * gradient;
+            interpColor[3] = 1.0;
+        }
+        else
+        {
+            interpColor = vec4(0.0, 0.0, 0.0, 1.0);
+        }
+    }
 
 	// Make sure final output is in [0:1]
 	interpColor = clamp(interpColor, 0, 1);

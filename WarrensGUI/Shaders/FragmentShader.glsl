@@ -6,5 +6,8 @@ out vec4 outputColor;
 
 void main()
 {
+	// TODO: Ideally color should be calculated in the fragment shader to avoid Interpolation
+	// http://www.arcsynthesis.org/gltut/Illumination/Tut10%20Interpolation.html
+
 	outputColor = interpColor;
 }

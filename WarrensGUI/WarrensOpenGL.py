@@ -168,6 +168,10 @@ class GlApplication(object):
     def lightPosition(self):
         return (10.866, 5, -15.001)
 
+    @property
+    def fogActive(self):
+        return True
+
     def __init__(self):
         """
         Constructor to create a new GlApplication object.
@@ -192,6 +196,7 @@ class GlApplication(object):
         self.lightingMatrixUnif = None
         self.playerPositionUnif = None
         self.fogDistanceUnif = None
+        self.fogActiveUnif = None
 
     def resizeWindow(self, displaySize):
         """
@@ -254,6 +259,7 @@ class GlApplication(object):
         self.playerPositionUnif = GL.glGetUniformLocation(self.openGlProgram, "playerPosition")
         self.fogDistanceUnif = GL.glGetUniformLocation(self.openGlProgram, "fogDistance")
         GL.glUniform1f(self.fogDistanceUnif, 4.0)
+        self.fogActiveUnif = GL.glGetUniformLocation(self.openGlProgram, "fogActive")
 
         # Generate Vertex Array Object for the level
         self.VAO_level = GL.GLuint(0)
@@ -682,7 +688,9 @@ class GlApplication(object):
         GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
         if DEBUG_GLSL: print "Ambient intensity: (0.2, 0.2, 0.2, 1.0)"
         GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
+
         GL.glUniform4f(self.playerPositionUnif, *self.getPlayerPosition())
+        GL.glUniform1i(self.fogActiveUnif, 1 if self.fogActive else 0)
 
         # MOVED TO SHADER Calculate direction of light in camera space
         #lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
