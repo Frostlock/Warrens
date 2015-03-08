@@ -292,7 +292,7 @@ class Portal(Actor):
 class Character(Actor):
     """
     Base class for characters that can move around and interact
-    Should probably not be instatiated but describes the general interface of
+    Should probably not be instantiated but describes the general interface of
     a character
     Basic logic is in here, more specialised logic will be in the subclasses
     Every character has an AI that governs it
@@ -555,6 +555,18 @@ class Player(Character):
         """
         return self._playerLevel
 
+    @property
+    def direction(self):
+        """
+        Last direction in which this player moved
+        :return: (x,y) modifier that shows the direction
+        """
+        return self._direction
+
+    @direction.setter
+    def direction(self,direction):
+        self._direction = direction
+
     #constructor
     def __init__(self):
         """
@@ -581,6 +593,7 @@ class Player(Character):
         #Player properties
         self._xp = 0
         self._playerLevel = 1
+        self.direction = (1,1)
 
     def _killedBy(self, attacker):
         """
@@ -638,6 +651,7 @@ class Player(Character):
         """
         self.actionTaken = True
 
+        self.direction = (dx,dy)
         # The coordinates the player is moving to/attacking
         x = self.tile.x + dx
         y = self.tile.y + dy

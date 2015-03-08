@@ -16,7 +16,7 @@ from OpenGL import GL
 from OpenGL.GL.ARB.vertex_array_object import glBindVertexArray
 from OpenGL import GLUT
 from ctypes import c_void_p
-from math import radians
+from math import radians, degrees
 import sys
 
 import numpy as np
@@ -58,6 +58,11 @@ SIZE_OF_FLOAT = 4
 # 4 components in a vector: X, Y, Z, W
 VERTEX_COMPONENTS = 4
 
+# Camera modes
+CAM_FREE = 0
+CAM_MAP = 1
+CAM_ACTOR = 2
+CAM_FIRSTPERSON = 3
 
 class GlApplication(object):
     @property
@@ -137,6 +142,14 @@ class GlApplication(object):
         self._cameraMatrix = matrix
 
     @property
+    def cameraMode(self):
+        return self._cameraMode
+
+    @cameraMode.setter
+    def cameraMode(self, mode):
+        self._cameraMode = mode
+
+    @property
     def perspectiveMatrix(self):
         """
         Returns the perspective matrix
@@ -182,6 +195,7 @@ class GlApplication(object):
         self._displaySize = (800, 600)
         self._openGlProgram = None
         self._cameraMatrix = None
+        self._cameraMode = 0
         self._perspectiveMatrix = None
         self._lightingMatrix = None
         self._dragging = False
@@ -341,27 +355,35 @@ class GlApplication(object):
             if pressed[K_LEFT]:
                 # rotation_direction.y = +1.0
                 rotation_direction[1] = +1.0
+                self.cameraMode = CAM_FREE
             elif pressed[K_RIGHT]:
                 # rotation_direction.y = -1.0
                 rotation_direction[1] = -1.0
+                self.cameraMode = CAM_FREE
             if pressed[K_UP]:
                 # rotation_direction.x = -1.0
                 rotation_direction[0] = -1.0
+                self.cameraMode = CAM_FREE
             elif pressed[K_DOWN]:
                 # rotation_direction.x = +1.0
                 rotation_direction[0] = +1.0
+                self.cameraMode = CAM_FREE
             if pressed[K_PAGEUP]:
                 # rotation_direction.z = -1.0
                 rotation_direction[2] = -1.0
+                self.cameraMode = CAM_FREE
             elif pressed[K_PAGEDOWN]:
                 # rotation_direction.z = +1.0
                 rotation_direction[2] = +1.0
+                self.cameraMode = CAM_FREE
             if pressed[K_HOME]:
                 # movement_direction.z = -1.0
                 movement_direction[2] = -1.0
+                self.cameraMode = CAM_FREE
             elif pressed[K_END]:
                 # movement_direction.z = +1.0
                 movement_direction[2] = +1.0
+                self.cameraMode = CAM_FREE
 
             # Calculate rotation matrix and multiply by camera matrix    
             rotation = rotation_direction * rotation_speed * time_passed_seconds
@@ -375,6 +397,12 @@ class GlApplication(object):
             movement_matrix = util.translationMatrix44(*movement)
             # if you do this the other way around you move the world before moving the camera
             self.cameraMatrix = movement_matrix.dot(self.cameraMatrix)
+
+            # First person camera
+            if self.cameraMode == CAM_FIRSTPERSON:
+                self.firstPersonCamera()
+            elif self.cameraMode == CAM_ACTOR:
+                self.centerCameraOnActor(self.game.player)
 
             # Refresh the actors VAO (some actors might have moved)
             self.loadVAOActors()
@@ -392,6 +420,7 @@ class GlApplication(object):
         """
         Centers the camera above the given actor.
         """
+        self.cameraMode = CAM_ACTOR
         x = actor.tile.x
         y = actor.tile.y
         self.cameraMatrix = util.translationMatrix44(x * TILESIZE, y * TILESIZE, 4.0)
@@ -400,6 +429,7 @@ class GlApplication(object):
         """
         Centers the camera above the current map.
         """
+        self.cameraMode = CAM_MAP
         map = self.game.currentLevel.map
         x = map.width / 2
         y = map.height / 2
@@ -409,12 +439,24 @@ class GlApplication(object):
         """
         Moves the camera to a first person view for the player
         """
+        self.cameraMode = CAM_FIRSTPERSON
+
         # Translate above the player
         x, y, z, w = self.getPlayerPosition()
         self.cameraMatrix = util.translationMatrix44(x, y, z)
-        # Rotate to look ahead
-        # TODO: Look in the direction of the actor, unfortunately actors don't have a direction yet :)
-        rotation_matrix = util.rotationMatrix44(radians(90), 0, 0)
+        # Rotate to look in player direction
+        print self.game.player.direction
+        dx = self.game.player.direction[0]
+        dy = self.game.player.direction[1]
+        import numpy as np
+        directionAngle = -1 * np.arcsin(dx/(np.sqrt(dx*dx + dy*dy)))
+        if dy < 0 :
+            directionAngle= np.pi + np.arcsin(dx/(np.sqrt(dx*dx + dy*dy)))
+
+        playerRotation = util.rotationMatrix44(0, 0, directionAngle)
+        # Rotate upward to look ahead
+        rotation_matrix = util.rotationMatrix44(radians(90), 0, 0).dot(playerRotation)
+        print rotation_matrix
         self.cameraMatrix = rotation_matrix.dot(self.cameraMatrix)
 
     def getPlayerPosition(self):
@@ -692,12 +734,6 @@ class GlApplication(object):
         GL.glUniform4f(self.playerPositionUnif, *self.getPlayerPosition())
         GL.glUniform1i(self.fogActiveUnif, 1 if self.fogActive else 0)
 
-        # MOVED TO SHADER Calculate direction of light in camera space
-        #lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
-        #if DEBUG_GLSL: print "Direction to light in Camera Space"
-        #if DEBUG_GLSL: print lightDirCameraSpace
-        #GL.glUniform3f(self.dirToLightUnif, lightDirCameraSpace[0], lightDirCameraSpace[1], lightDirCameraSpace[2])
-
         # Bind element array
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_level_elements_id)
         # Draw elements
@@ -719,10 +755,6 @@ class GlApplication(object):
         GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
         GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
         GL.glUniform4f(self.playerPositionUnif, *self.getPlayerPosition())
-
-        # MOVED TO SHADER Calculate direction of light in camera space
-        #lightDirCameraSpace = lightMatrix.dot(self.directionTowardTheLight)
-        #GL.glUniform3f(self.dirToLightUnif, lightDirCameraSpace[0], lightDirCameraSpace[1], lightDirCameraSpace[2])
 
         # Bind element array
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_actors_elements_id)
