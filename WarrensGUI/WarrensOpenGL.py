@@ -12,10 +12,13 @@ http://www.willmcgugan.com/blog/tech/2007/6/4/opengl-sample-code-for-pygame/
 
 import pygame
 from pygame.locals import *
+
 from OpenGL import GL
 from OpenGL.GL.ARB.vertex_array_object import glBindVertexArray
 from OpenGL import GLUT
+
 from ctypes import c_void_p
+
 from math import radians, degrees
 import sys
 
@@ -183,7 +186,7 @@ class GlApplication(object):
 
     @property
     def fogActive(self):
-        return True
+        return False
 
     def __init__(self):
         """
@@ -211,6 +214,8 @@ class GlApplication(object):
         self.playerPositionUnif = None
         self.fogDistanceUnif = None
         self.fogActiveUnif = None
+
+        self.construct = util.plant(TILESIZE)
 
     def resizeWindow(self, displaySize):
         """
@@ -606,6 +611,14 @@ class GlApplication(object):
         elementData = []
 
         elemOffset = 0
+
+        for part in self.construct.parts:
+            vertexData.extend(part.vertexData)
+            colorData.extend(part.colorData)
+            normalsData.extend(part.normalsData)
+            elementData.extend(part.elementData)
+            elemOffset = part.elemOffset
+
         for vTile in self.game.currentLevel.map.visible_tiles:
             for actor in vTile.actors:
                 tile = actor.tile
@@ -925,6 +938,8 @@ class GlApplication(object):
                 self.centerCameraOnMap()
             elif event.key == pygame.K_o:
                 self.firstPersonCamera()
+            elif event.key == pygame.K_SPACE:
+                self.construct.grow()
             # Handle keys that are active while playing
             if self.game.state == Game.PLAYING:
                 player = self.game.player
