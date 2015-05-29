@@ -24,7 +24,7 @@ import numpy as np
 from WarrensGame.Game import Game
 from WarrensGame.Actors import Actor, Portal, Monster, Item, Character
 import GuiUtilities
-import GuiCONSTANTS
+#import GuiCONSTANTS
 
 import WarrensGUI.Util.OpenGlUtilities as og_util
 #import Util.PyGameUtilities as pg_util
@@ -32,7 +32,14 @@ import WarrensGUI.Util.SceneObject as SceneObject
 
 from WarrensGUI.Util.vec3 import vec3
 
-
+#Colors: normalized RGBA
+COLOR_BAR_HEALTH = (0.6, 0, 0, 1)
+COLOR_BAR_HEALTH_BG = (0.1, 0, 0, 1)
+COLOR_BAR_XP = (0, 0.6, 0, 1)
+COLOR_BAR_XP_BG = (0, 0.1, 0, 1)
+COLOR_MENU_BG = (0.01, 0.01, 0.01, 0.85)
+#COLOR_MENU_TEXT = (0.764, 0.764, 0.764, 1)
+#COLOR_MENU_SELECTED = (1, 0.5, 0, 1)
 
 # Movement keys
 movement_keys = {
@@ -271,6 +278,17 @@ class GlApplication(object):
 
         self.perspectiveMatrix = pMat
 
+    def initGUI(self):
+        # Init pygame
+        pygame.init()
+        self.resizeWindow((800, 600))
+
+        #Initialize fonts
+        GuiUtilities.initFonts()
+
+        #Init OpenGl
+        self.initOpenGl()
+
     def initOpenGl(self):
         """
         Initializes OpenGl settings and shaders
@@ -333,16 +351,95 @@ class GlApplication(object):
         #GL.glFrontFace(GL.GL_CW)  # front of the face is based on clockwise order of vertices
 
     def showMainMenu(self):
-        # Init pygame
-        pygame.init()
-        self.resizeWindow((800, 600))
+        self.initGUI()
 
-        #Initialize fonts
-        GuiUtilities.initFonts()
+        selected = 0
+        while True:
+            # Clear the screen, and z-buffer
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
-        #Init OpenGl
-        self.initOpenGl()
+            # show menu
+            items = ["n - New Game", "q - Quit"]
+            self.drawMenu(items, selected)
 
+            # handle pygame (GUI) events
+            events = pygame.event.get()
+            for event in events:
+                # Quit
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                # Window resize
+                elif event.type == VIDEORESIZE:
+                    self.resizeWindow(event.dict['size'])
+                # keyboard
+                elif event.type == pygame.KEYDOWN:
+                    # Select up
+                    if event.key == pygame.K_UP:
+                        selected =- 1
+                        if selected < 0 : selected = 0
+                    # Select down
+                    elif event.key == pygame.K_DOWN:
+                        selected =+ 1
+                        if selected > len(items)-1: selected = len(items) - 1
+                    # Select
+                    elif event.key == pygame.K_RETURN:
+                        if selected == 0:
+                            self.playGame()
+                        elif selected == 1:
+                            sys.exit()
+                    # New game
+                    elif event.key == pygame.K_n:
+                        self.playGame()
+                    # Quit
+                    elif event.key == pygame.K_q:
+                        sys.exit()
+                    elif event.key == pygame.K_ESCAPE:
+                        sys.exit()
+
+            # Show the screen
+            pygame.display.flip()
+
+    def drawMenu(self, items, selected):
+        """
+        Draws a menu on the screen
+        we use an Orthographic projection and some older style opengl code
+        This is not using Vertex Buffers.
+        """
+        # Switch to Orthographic projection
+        GL.glOrtho(0.0, self.displayWidth, self.displayHeight, 0.0, -1.0, 10.0)
+
+        GL.glClear(GL.GL_DEPTH_BUFFER_BIT)
+
+        GL.glEnable(GL.GL_BLEND)
+        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+
+        #print "menu"
+        # Background
+        GL.glLoadIdentity()
+        #GL.glTranslatef(-0.5, -0.5, 0)
+        width = 0.8
+        height = 0.8
+        GL.glBegin(GL.GL_QUADS)
+        GL.glColor4f(*COLOR_MENU_BG)
+        GL.glVertex2f(width, -height)
+        GL.glVertex2f(width, height)
+        GL.glVertex2f(-width, height)
+        GL.glVertex2f(-width, -height)
+        GL.glEnd()
+
+        # Items
+        heightOffset = 0
+        for i in range(0, len(items)):
+            if selected == i:
+                textSurface = GuiUtilities.FONT_PANEL.render(items[i], 1, (250,125,0))
+            else:
+                textSurface = GuiUtilities.FONT_PANEL.render(items[i], 1, (191,191,191))
+            textData = pygame.image.tostring(textSurface, "RGBA", True)
+            GL.glRasterPos3d(-0.7, 0.7 - heightOffset, 0)
+            GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
+            heightOffset =+ 0.1
+
+    def playGame(self):
         #Init Game
         self._game = Game()
         self.game.resetGame()
@@ -366,7 +463,7 @@ class GlApplication(object):
             self.handleWarrensGameEvents()
 
             # Clear the screen, and z-buffer
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
             time_passed = clock.tick()
             time_passed_seconds = time_passed / 1000.
@@ -448,6 +545,9 @@ class GlApplication(object):
 
             # Render the HUD (health bar, XP bar, etc...)
             self.drawHUD()
+
+            #Render the menu
+            #self.drawMenu()
 
             # Show the screen
             pygame.display.flip()
@@ -864,9 +964,6 @@ class GlApplication(object):
     def normalizeColor(self, color):
         return (float(color[0]) / 250, float(color[1]) / 250, float(color[2]) / 250)
 
-    def setDrawColor(self, color):
-        GL.glColor3f(*self.normalizeColor(color))
-
     def drawText(self, position, textString, textSize):
         font = pygame.font.Font(None, textSize)
         textSurface = font.render(textString, True, (255, 255, 255, 255))  # , (0,0,0,255))
@@ -899,8 +996,8 @@ class GlApplication(object):
         maximum = self.game.player.maxHitPoints
         barWidth = 0.46
         barHeight = 0.08
-        GL.glBegin(GL.GL_QUADS);
-        self.setDrawColor(GuiCONSTANTS.COLOR_BAR_HEALTH_BG)
+        GL.glBegin(GL.GL_QUADS)
+        GL.glColor4f(*COLOR_BAR_HEALTH_BG)
         # Draw vertices (counter clockwise for face culling!)
         GL.glVertex2f(barWidth, 0.0)
         GL.glVertex2f(barWidth, barHeight)
@@ -909,8 +1006,8 @@ class GlApplication(object):
         GL.glEnd()
         if current > 0:
             filWidth = current * barWidth / maximum
-            GL.glBegin(GL.GL_QUADS);
-            self.setDrawColor(GuiCONSTANTS.COLOR_BAR_HEALTH)
+            GL.glBegin(GL.GL_QUADS)
+            GL.glColor4f(*COLOR_BAR_HEALTH)
             # Draw vertices (counter clockwise for face culling!)
             GL.glVertex2f(filWidth, 0.0)
             GL.glVertex2f(filWidth, barHeight)
@@ -925,8 +1022,8 @@ class GlApplication(object):
         maximum = self.game.player.nextLevelXp
         barWidth = 0.46
         barHeight = 0.04
-        GL.glBegin(GL.GL_QUADS);
-        self.setDrawColor(GuiCONSTANTS.COLOR_BAR_XP_BG)
+        GL.glBegin(GL.GL_QUADS)
+        GL.glColor4f(*COLOR_BAR_XP_BG)
         # Draw vertices (counter clockwise for face culling!)
         GL.glVertex2f(barWidth, 0.0)
         GL.glVertex2f(barWidth, barHeight)
@@ -935,8 +1032,8 @@ class GlApplication(object):
         GL.glEnd()
         if current > 0:
             filWidth = current * barWidth / maximum
-            GL.glBegin(GL.GL_QUADS);
-            self.setDrawColor(GuiCONSTANTS.COLOR_BAR_XP)
+            GL.glBegin(GL.GL_QUADS)
+            GL.glColor4f(*COLOR_BAR_XP)
             # Draw vertices (counter clockwise for face culling!)
             GL.glVertex2f(filWidth, 0.0)
             GL.glVertex2f(filWidth, barHeight)
@@ -963,8 +1060,7 @@ class GlApplication(object):
             nbrOfLines = len(textLines)
             #blit the lines
             for l in range(1, nbrOfLines + 1):
-                textSurface = GuiUtilities.FONT_PANEL.render(textLines[nbrOfLines - l], 1,
-                                                             GuiCONSTANTS.COLOR_PANEL_FONT)
+                textSurface = GuiUtilities.FONT_PANEL.render(textLines[nbrOfLines - l], 1, (191,191,191))
                 heightOffset = heightOffset - 2 * textSurface.get_height()
                 textData = pygame.image.tostring(textSurface, "RGBA", True)
                 GL.glRasterPos3d(-0.5, -0.88 - (heightOffset / 600.), 0)
