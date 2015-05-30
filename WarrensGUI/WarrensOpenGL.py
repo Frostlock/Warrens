@@ -362,7 +362,7 @@ class GlApplication(object):
 
             # show menu
             items = ["n - New Game", "t - OpenGl test", "q - Quit"]
-            self.drawMenu(items, selected)
+            self.drawMenu("Warrens", items, selected)
 
             # handle pygame (GUI) events
             events = pygame.event.get()
@@ -406,7 +406,7 @@ class GlApplication(object):
             # Show the screen
             pygame.display.flip()
 
-    def drawMenu(self, items, selected):
+    def drawMenu(self, header, items, selected):
         """
         Draws a menu on the screen
         we use an Orthographic projection and some older style opengl code
@@ -434,6 +434,10 @@ class GlApplication(object):
         GL.glVertex2f(-width, -height)
         GL.glEnd()
 
+        # Header
+        GL.glLoadIdentity()
+        self.drawText((-0.72, 0.72, 0), header, 24)
+
         # Items
         heightOffset = 0
         for i in range(0, len(items)):
@@ -442,7 +446,7 @@ class GlApplication(object):
             else:
                 textSurface = GuiUtilities.FONT_PANEL.render(items[i], 1, (191,191,191))
             textData = pygame.image.tostring(textSurface, "RGBA", True)
-            GL.glRasterPos3d(-0.7, 0.7 - heightOffset, 0)
+            GL.glRasterPos3d(-0.6, 0.6 - heightOffset, 0)
             GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
             heightOffset += 0.1
 
@@ -1158,5 +1162,9 @@ class GlApplication(object):
         Open inventory for inspection.
         :return: None
         """
-        # TODO: Needs implementation
+        header = "Inventory"
+        items = self.game.player.inventory
+        selected = 0
+        self.drawMenu(header, items, selected)
+
         pass
