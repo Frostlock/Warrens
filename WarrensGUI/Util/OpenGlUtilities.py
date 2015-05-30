@@ -112,10 +112,20 @@ def lookAtMatrix44(eye, center, up):
 
     return M1.dot(M2)
 
+def normalizeColor(color):
+    '''
+    Utility function to normalize 255 based RGB colors to 0-1 RGB for OpenGl
+    :param color: tuple with 255 based RGB or RGBA color
+    :return: normalized RGB color tuple
+    '''
+    if len(color) == 3:
+        return (float(color[0]) / 255, float(color[1]) / 255, float(color[2]) / 255)
+    elif len(color) == 4:
+        return (float(color[0]) / 255, float(color[1]) / 255, float(color[2]) / 255, float(color[3]) / 255)
 
 if __name__ == '__main__':
     pass
-    from util.vec3 import vec3
+    from WarrensGUI.Util.vec3 import vec3
     eye = vec3(1.0, 1.0, 1.0)
     center = vec3(0.0, 0.0, 0.0)
     up = vec3(0.0, 0.0, 1.0)

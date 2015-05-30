@@ -29,10 +29,13 @@ import GuiUtilities
 import WarrensGUI.Util.OpenGlUtilities as og_util
 #import Util.PyGameUtilities as pg_util
 import WarrensGUI.Util.SceneObject as SceneObject
+from WarrensGUI.Util.LevelSceneObject import LevelSceneObject
+from WarrensGUI.Util.ActorsSceneObject import ActorsSceneObject
 
 from WarrensGUI.Util.vec3 import vec3
 
 #Colors: normalized RGBA
+#TODO: Store all colors in RGB 255 based format
 COLOR_BAR_HEALTH = (0.6, 0, 0, 1)
 COLOR_BAR_HEALTH_BG = (0.1, 0, 0, 1)
 COLOR_BAR_XP = (0, 0.6, 0, 1)
@@ -100,6 +103,10 @@ class GlApplication(object):
         This will also load the vertex buffer for the level mesh
         """
         self._level = level
+        # On level change we refresh the static objects
+        self.staticObjects = []
+        levelObj = LevelSceneObject(level, TILESIZE)
+        self.staticObjects.append(levelObj)
         # Load the mesh for the level in the vertex buffer
         self.loadVAOStaticObjects()
 
@@ -239,13 +246,8 @@ class GlApplication(object):
         self.fogDistanceUnif = None
         self.fogActiveUnif = None
 
-        plantObj = SceneObject.PlantSceneObject(1.5)
         self.dynamicObjects = []
-        self.dynamicObjects.append(plantObj)
-
-        axisObj = SceneObject.AxisSceneObject(scale=10)
         self.staticObjects = []
-        self.staticObjects.append(axisObj)
 
     def resizeWindow(self, displaySize):
         """
@@ -359,7 +361,7 @@ class GlApplication(object):
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
             # show menu
-            items = ["n - New Game", "q - Quit"]
+            items = ["n - New Game", "t - OpenGl test", "q - Quit"]
             self.drawMenu(items, selected)
 
             # handle pygame (GUI) events
@@ -375,21 +377,26 @@ class GlApplication(object):
                 elif event.type == pygame.KEYDOWN:
                     # Select up
                     if event.key == pygame.K_UP:
-                        selected =- 1
+                        selected -= 1
                         if selected < 0 : selected = 0
                     # Select down
                     elif event.key == pygame.K_DOWN:
-                        selected =+ 1
+                        selected += 1
                         if selected > len(items)-1: selected = len(items) - 1
                     # Select
                     elif event.key == pygame.K_RETURN:
                         if selected == 0:
                             self.playGame()
                         elif selected == 1:
+                            self.playTest()
+                        elif selected == 2:
                             sys.exit()
                     # New game
                     elif event.key == pygame.K_n:
                         self.playGame()
+                    # OpenGl test
+                    elif event.key == pygame.K_t:
+                        self.playTest()
                     # Quit
                     elif event.key == pygame.K_q:
                         sys.exit()
@@ -437,7 +444,64 @@ class GlApplication(object):
             textData = pygame.image.tostring(textSurface, "RGBA", True)
             GL.glRasterPos3d(-0.7, 0.7 - heightOffset, 0)
             GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
-            heightOffset =+ 0.1
+            heightOffset += 0.1
+
+    def playTest(self):
+        # Put some scene objects to test
+        self.dynamicObjects = []
+        plantObj = SceneObject.PlantSceneObject(1.5)
+        self.dynamicObjects.append(plantObj)
+
+        self.staticObjects = []
+        axisObj = SceneObject.AxisSceneObject(scale=10)
+        cubeObj = SceneObject.Cube()
+        self.staticObjects.append(axisObj)
+        self.staticObjects.append(cubeObj)
+
+        # Refresh the static objects meshes
+        self.loadVAOStaticObjects()
+
+        # Set the camera
+        self.cameraMode = CAM_LOOKAT
+        eye = vec3(10,10,10)
+        center = vec3(0,0,0)
+        up = vec3(0,0,1)
+        self.cameraMatrix = og_util.lookAtMatrix44(eye,center,up)
+
+        while True:
+            # Clear the screen, and z-buffer
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+
+            # handle pygame (GUI) events
+            events = pygame.event.get()
+            for event in events:
+                # Quit
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                # Window resize
+                elif event.type == VIDEORESIZE:
+                    self.resizeWindow(event.dict['size'])
+                # keyboard
+                elif event.type == pygame.KEYDOWN:
+                    # Quit
+                    if event.key == pygame.K_q:
+                        sys.exit()
+                    elif event.key == pygame.K_ESCAPE:
+                        sys.exit()
+                    elif event.key == pygame.K_SPACE:
+                        #Grow all plant objects
+                        for obj in self.dynamicObjects:
+                            if isinstance(obj, SceneObject.PlantSceneObject):
+                                obj.grow()
+
+            # Refresh the dynamic meshes
+            self.loadVAODynamicObjects()
+
+            # Render the 3D view (Vertex Array Buffers
+            self.drawVBAs()
+
+            # Show the screen
+            pygame.display.flip()
 
     def playGame(self):
         #Init Game
@@ -538,6 +602,7 @@ class GlApplication(object):
                 self.centerCameraOnActor(self.game.player)
 
             # Refresh the actors VAO (some actors might have moved)
+            self.refreshDynamicObjects()
             self.loadVAODynamicObjects()
 
             # Render the 3D view (Vertex Array Buffers
@@ -551,6 +616,11 @@ class GlApplication(object):
 
             # Show the screen
             pygame.display.flip()
+
+    def refreshDynamicObjects(self):
+        self.dynamicObjects = []
+        actorsObj = ActorsSceneObject(self.level, TILESIZE)
+        self.dynamicObjects.append(actorsObj)
 
     def lookAtCamera(self):
         self.cameraMode = CAM_LOOKAT
@@ -626,6 +696,7 @@ class GlApplication(object):
         :rtype : Tuple (x, y, z, w)
         :return: The position in 3D model space of the player
         """
+        if self.game is None: return (0, 0, 0, 1.0)
         playerX = self.game.player.tile.x * TILESIZE + (TILESIZE / 2)
         playerY = self.game.player.tile.y * TILESIZE + (TILESIZE / 2)
         playerZ = TILESIZE / 2
@@ -655,81 +726,6 @@ class GlApplication(object):
             for elem in obj.triangleIndices:
                  elementData.append(elem + elemOffset)
             elemOffset += obj.vertexCount
-
-        ##########
-        # TODO: generation of VAO data for level object should be moved to a sceneObject in the staticObject array above that represents the level
-        ##########
-        # Store the vertex coordinates
-        for tileRow in self.game.currentLevel.map.tiles:
-            for tile in tileRow:
-                if tile.blocked:
-                    height = TILESIZE
-                else:
-                    height = 0.0
-                # 4 components per vertex: x, y, z, w
-                # 4 vertices: bottom of the rectangular tile area
-                vertexData.extend((tile.x * TILESIZE, tile.y * TILESIZE, 0.0, 1.0))
-                vertexData.extend((tile.x * TILESIZE, tile.y * TILESIZE + TILESIZE, 0.0, 1.0))
-                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE + TILESIZE, 0.0, 1.0))
-                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE, 0.0, 1.0))
-                # 4 vertices: top of the rectangular tile area
-                vertexData.extend((tile.x * TILESIZE, tile.y * TILESIZE, height, 1.0))
-                vertexData.extend((tile.x * TILESIZE, tile.y * TILESIZE + TILESIZE, height, 1.0))
-                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE + TILESIZE, height, 1.0))
-                vertexData.extend((tile.x * TILESIZE + TILESIZE, tile.y * TILESIZE, height, 1.0))
-
-        # Store the vertex colors
-        for tileRow in self.game.currentLevel.map.tiles:
-            for tile in tileRow:
-                # 4 components per color: R, G, B, A, one color for every vertex
-                color = self.normalizeColor(tile.color)
-                # 4 vertices for the bottom
-                colorData.extend((color[0], color[1], color[2], 1.0))
-                colorData.extend((color[0], color[1], color[2], 1.0))
-                colorData.extend((color[0], color[1], color[2], 1.0))
-                colorData.extend((color[0], color[1], color[2], 1.0))
-                # 4 vertices for the top
-                colorData.extend((color[0], color[1], color[2], 1.0))
-                colorData.extend((color[0], color[1], color[2], 1.0))
-                colorData.extend((color[0], color[1], color[2], 1.0))
-                colorData.extend((color[0], color[1], color[2], 1.0))
-
-        # Store the vertex normals
-        for tileRow in self.game.currentLevel.map.tiles:
-            for tile in tileRow:
-                # 3 components per normal: x, y, z
-                # 4 vertex normals for the bottom
-                normalsData.extend((-1.0, -1.0, -0.01))
-                normalsData.extend((1.0, -1.0, -0.01))
-                normalsData.extend((1.0, 1.0, -0.01))
-                normalsData.extend((-1.0, 1.0, -0.01))
-                # 4 vertex normals for the top
-                normalsData.extend((-1.0, -1.0, -1.0))
-                normalsData.extend((1.0, -1.0, -1.0))
-                normalsData.extend((1.0, 1.0, -1.0))
-                normalsData.extend((-1.0, 1.0, -1.0))
-
-        # Create the element array (counter clockwise triangles for every face)
-        offset = elemOffset
-        for tileRow in self.game.currentLevel.map.tiles:
-            for tile in tileRow:
-                # 12 Triangles for a complete block
-                elementData.extend((0 + offset, 1 + offset, 2 + offset))
-                elementData.extend((0 + offset, 2 + offset, 3 + offset))
-                elementData.extend((0 + offset, 7 + offset, 4 + offset))
-                elementData.extend((0 + offset, 3 + offset, 7 + offset))
-                elementData.extend((3 + offset, 6 + offset, 7 + offset))
-                elementData.extend((3 + offset, 2 + offset, 6 + offset))
-                elementData.extend((2 + offset, 5 + offset, 6 + offset))
-                elementData.extend((2 + offset, 1 + offset, 5 + offset))
-                elementData.extend((1 + offset, 4 + offset, 5 + offset))
-                elementData.extend((1 + offset, 0 + offset, 4 + offset))
-                elementData.extend((4 + offset, 6 + offset, 5 + offset))
-                elementData.extend((4 + offset, 7 + offset, 6 + offset))
-                offset += 8 # 8 vertices for every tile +8 to set the elementData for the next tile
-
-        ########## END OF TODO ##########
-
 
         # Merge the datasets into one buffer object
         # Remember where each data set begins
@@ -794,68 +790,6 @@ class GlApplication(object):
             for elem in obj.triangleIndices:
                  elementData.append(elem + elemOffset)
             elemOffset += obj.vertexCount
-
-        ##########
-        # TODO: generation of VAO data for all actor objects should be moved to a sceneObject in the staticObject array above that represents the level
-        ##########
-
-        for vTile in self.game.currentLevel.map.visible_tiles:
-            for actor in vTile.actors:
-                tile = actor.tile
-
-                # Determine scale
-                if actor is self.game.player:
-                    scale = 0.9
-                elif isinstance(actor, Portal):
-                    scale = 0.8
-                elif isinstance(actor, Monster):
-                    scale = 0.7
-                elif isinstance(actor, Item):
-                    scale = 0.4
-                else:
-                    scale = 0.2
-
-                # Determine height
-                offset = ((1 - scale) / 2) * TILESIZE
-                assert isinstance(actor, Actor)
-                if actor.currentHitPoints > 0:
-                    height = TILESIZE - (2 * offset)
-                else:
-                    height = 0.05
-
-                # Store the vertex coordinates: 4 components per vertex: x, y, z, w
-                vertexData.extend((tile.x * TILESIZE + offset, tile.y * TILESIZE + offset, 0.0, 1.0))
-                vertexData.extend((tile.x * TILESIZE + offset, tile.y * TILESIZE + TILESIZE - offset, 0.0, 1.0))
-                vertexData.extend((tile.x * TILESIZE + TILESIZE - offset, tile.y * TILESIZE + TILESIZE - offset, 0.0, 1.0))
-                vertexData.extend((tile.x * TILESIZE + TILESIZE - offset, tile.y * TILESIZE + offset, 0.0, 1.0))
-                vertexData.extend((tile.x * TILESIZE + (TILESIZE / 2), tile.y * TILESIZE + (TILESIZE / 2), height, 1.0))
-
-                # Store the vertex color: 4 components per color: R, G, B, A
-                color = self.normalizeColor(actor.color)
-                colorData.extend((color[0], color[1], color[2], 1.0))
-                colorData.extend((color[0], color[1], color[2], 1.0))
-                colorData.extend((color[0], color[1], color[2], 1.0))
-                colorData.extend((color[0], color[1], color[2], 1.0))
-                colorData.extend((color[0], color[1], color[2], 1.0))
-
-                # Store the vertex normals: 3 components per normal: x, y, z
-                normalsData.extend((-1.0, 1.0, -0.2))
-                normalsData.extend((1.0, 1.0, -0.2))
-                normalsData.extend((1.0, -1.0, -0.2))
-                normalsData.extend((-1.0, -1.0, -0.2))
-                normalsData.extend((0.0, 0.0, -1.0))
-
-                # Store the indices for the element drawing (triangles, clockwise from front)
-                elementData.extend((0 + elemOffset, 1 + elemOffset, 2 + elemOffset))
-                elementData.extend((0 + elemOffset, 2 + elemOffset, 3 + elemOffset))
-                elementData.extend((0 + elemOffset, 3 + elemOffset, 4 + elemOffset))
-                elementData.extend((3 + elemOffset, 2 + elemOffset, 4 + elemOffset))
-                elementData.extend((2 + elemOffset, 1 + elemOffset, 4 + elemOffset))
-                elementData.extend((1 + elemOffset, 0 + elemOffset, 4 + elemOffset))
-                elemOffset += 5 # 5 vertices per actor so offset is 5
-
-        ########## END OF TODO ##########
-
 
         # Merge the datasets into one buffer object
         # Remember where each data set begins
@@ -959,10 +893,6 @@ class GlApplication(object):
         glBindVertexArray(0)
 
         GL.glUseProgram(0)
-
-
-    def normalizeColor(self, color):
-        return (float(color[0]) / 250, float(color[1]) / 250, float(color[2]) / 250)
 
     def drawText(self, position, textString, textSize):
         font = pygame.font.Font(None, textSize)
@@ -1119,11 +1049,6 @@ class GlApplication(object):
                 self.firstPersonCamera()
             elif event.key == pygame.K_l:
                 self.lookAtCamera()
-            elif event.key == pygame.K_SPACE:
-                #Grow all plant objects
-                for obj in self.dynamicObjects:
-                    if isinstance(obj,Util.SceneObject.PlantSceneObject):
-                        obj.grow()
             # Handle keys that are active while playing
             if self.game.state == Game.PLAYING:
                 player = self.game.player
