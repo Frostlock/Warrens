@@ -31,18 +31,9 @@ import WarrensGUI.Util.OpenGlUtilities as og_util
 import WarrensGUI.Util.SceneObject as SceneObject
 from WarrensGUI.Util.LevelSceneObject import LevelSceneObject
 from WarrensGUI.Util.ActorsSceneObject import ActorsSceneObject
-
 from WarrensGUI.Util.vec3 import vec3
-
-#Colors: normalized RGBA
-#TODO: Store all colors in RGB 255 based format
-COLOR_BAR_HEALTH = (0.6, 0, 0, 1)
-COLOR_BAR_HEALTH_BG = (0.1, 0, 0, 1)
-COLOR_BAR_XP = (0, 0.6, 0, 1)
-COLOR_BAR_XP_BG = (0, 0.1, 0, 1)
-COLOR_MENU_BG = (0.01, 0.01, 0.01, 0.85)
-#COLOR_MENU_TEXT = (0.764, 0.764, 0.764, 1)
-#COLOR_MENU_SELECTED = (1, 0.5, 0, 1)
+from WarrensGUI.Util.Colors import *
+from WarrensGUI.States.InventoryScreen import InventoryScreen
 
 # Movement keys
 movement_keys = {
@@ -249,6 +240,8 @@ class GlApplication(object):
         self.dynamicObjects = []
         self.staticObjects = []
 
+        self.openMenus = []
+
     def resizeWindow(self, displaySize):
         """
         Function to be called whenever window is resized.
@@ -406,6 +399,7 @@ class GlApplication(object):
             # Show the screen
             pygame.display.flip()
 
+    #TODO: This one is being moved to State.py we can move it there as soon as mainMenu becomes a state.
     def drawMenu(self, header, items, selected):
         """
         Draws a menu on the screen
@@ -436,18 +430,17 @@ class GlApplication(object):
 
         # Header
         GL.glLoadIdentity()
-        self.drawText((-0.72, 0.72, 0), header, 24)
+        self.drawText((-0.72, 0.72, 0), header, 24, COLOR_HUD_TEXT)
 
         # Items
         heightOffset = 0
         for i in range(0, len(items)):
             if selected == i:
-                textSurface = GuiUtilities.FONT_PANEL.render(items[i], 1, (250,125,0))
+                color = COLOR_HUD_TEXT_SELECTED
             else:
-                textSurface = GuiUtilities.FONT_PANEL.render(items[i], 1, (191,191,191))
-            textData = pygame.image.tostring(textSurface, "RGBA", True)
-            GL.glRasterPos3d(-0.6, 0.6 - heightOffset, 0)
-            GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
+                color = COLOR_HUD_TEXT
+            position=(-0.6, 0.6 - heightOffset, 0)
+            self.drawText(position, items[i], 20, color)
             heightOffset += 0.1
 
     def playTest(self):
@@ -614,9 +607,6 @@ class GlApplication(object):
 
             # Render the HUD (health bar, XP bar, etc...)
             self.drawHUD()
-
-            #Render the menu
-            #self.drawMenu()
 
             # Show the screen
             pygame.display.flip()
@@ -898,12 +888,16 @@ class GlApplication(object):
 
         GL.glUseProgram(0)
 
-    def drawText(self, position, textString, textSize):
+    def drawText(self, position, textString, textSize, color):
         font = pygame.font.Font(None, textSize)
-        textSurface = font.render(textString, True, (255, 255, 255, 255))  # , (0,0,0,255))
+        textSurface = font.render(textString, True, color)
         textData = pygame.image.tostring(textSurface, "RGBA", True)
         GL.glRasterPos3d(*position)
         GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
+
+    def loopDraw(self):
+        self.drawHUD()
+        self.drawVBAs()
 
     def drawHUD(self):
         """
@@ -917,11 +911,11 @@ class GlApplication(object):
 
         # Level name
         GL.glLoadIdentity()
-        self.drawText((-0.98, 0.9, 0), self.game.currentLevel.name, 24)
+        self.drawText((-0.98, 0.9, 0), self.game.currentLevel.name, 24, COLOR_HUD_TEXT)
 
         # Player name
         GL.glLoadIdentity()
-        self.drawText((-0.98, -0.85, 0), self.game.player.name + " (Lvl " + str(self.game.player.playerLevel) + ")", 18)
+        self.drawText((-0.98, -0.85, 0), self.game.player.name + " (Lvl " + str(self.game.player.playerLevel) + ")", 18, COLOR_HUD_TEXT)
 
         # Health Bar
         GL.glLoadIdentity()
@@ -977,7 +971,7 @@ class GlApplication(object):
 
         # FPS
         GL.glLoadIdentity()
-        self.drawText((-0.98, -1, 0), str(self.FPS), 12)
+        self.drawText((-0.98, -1, 0), str(self.FPS), 12, COLOR_HUD_TEXT)
 
         # Right side: render game messages
         GL.glLoadIdentity()
@@ -1000,7 +994,6 @@ class GlApplication(object):
                 GL.glRasterPos3d(-0.5, -0.88 - (heightOffset / 600.), 0)
                 GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE,
                                 textData)
-
             messageCounter += 1
 
     def handleWarrensGameEvents(self):
@@ -1071,7 +1064,8 @@ class GlApplication(object):
                             player.tryFollowPortalUp()
                     # inventory
                     elif event.key == pygame.K_i:
-                        self.useInventory()
+                        state = InventoryScreen(self, self, self.game.player.inventory)
+                        state.mainLoop()
                     elif event.key == pygame.K_d:
                         self.dropInventory()
                     # interact
@@ -1162,9 +1156,6 @@ class GlApplication(object):
         Open inventory for inspection.
         :return: None
         """
-        header = "Inventory"
-        items = self.game.player.inventory
-        selected = 0
-        self.drawMenu(header, items, selected)
+        #TODO: create inventory state and pass ownership to it.
 
         pass
