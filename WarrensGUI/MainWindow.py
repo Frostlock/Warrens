@@ -228,8 +228,6 @@ class MainWindow(object):
         self.dynamicObjects = []
         self.staticObjects = []
 
-        self.openMenus = []
-
     def resizeWindow(self, displaySize):
         """
         Function to be called whenever window is resized.
@@ -990,7 +988,7 @@ class MainWindow(object):
                 textSurface = font.render(textLines[nbrOfLines - l], 1, (191,191,191))
                 heightOffset = heightOffset - 2 * textSurface.get_height()
                 textData = pygame.image.tostring(textSurface, "RGBA", True)
-                GL.glRasterPos3d(-0.5, -0.88 - (heightOffset / self.displayHeight), 0)
+                GL.glRasterPos3d(-0.5, -0.88 - (heightOffset / float(self.displayHeight)), 0)
                 GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE,
                                 textData)
             messageCounter += 1
@@ -1149,12 +1147,3 @@ class MainWindow(object):
         # Translate the camera along this direction
         translation_matrix = og_util.translationMatrix44(heading.x, heading.y, heading.z)
         self.cameraMatrix = translation_matrix.dot(self.cameraMatrix)
-
-    def useInventory(self):
-        """
-        Open inventory for inspection.
-        :return: None
-        """
-        #TODO: create inventory state and pass ownership to it.
-
-        pass
