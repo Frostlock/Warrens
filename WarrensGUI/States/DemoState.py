@@ -1,9 +1,6 @@
 __author__ = 'Frost'
 
-import sys
-
 import pygame
-from pygame.locals import *
 
 from WarrensGUI.States.State import State
 from WarrensGUI.Util.Constants import *
@@ -51,21 +48,15 @@ class DemoState(State):
         # handle pygame (GUI) events
         events = pygame.event.get()
         for event in events:
-            ############################move to common
-            # Quit
-            if event.type == pygame.QUIT:
-                sys.exit()
-            # Window resize
-            elif event.type == VIDEORESIZE:
-                self.window.resizeWindow(event.dict['size'])
-            # keyboard
-            elif event.type == pygame.KEYDOWN:
+            self.handlePyGameEvent(event)
+            # keyboard events
+            if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     #Grow
                     for obj in self.window.dynamicObjects:
                         if hasattr(obj,"grow"):
                         #if isinstance(obj, SceneObject.PlantSceneObject):
                             obj.grow()
-                # Close
+                # Leave state / Close
                 elif event.key == pygame.K_ESCAPE:
                     self.loop = False

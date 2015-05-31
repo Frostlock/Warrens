@@ -35,14 +35,9 @@ class MainMenuState(State):
         # handle pygame (GUI) events
         events = pygame.event.get()
         for event in events:
-            # Quit
-            if event.type == pygame.QUIT:
-                sys.exit()
-            # Window resize
-            elif event.type == VIDEORESIZE:
-                self.window.resizeWindow(event.dict['size'])
-            # keyboard
-            elif event.type == pygame.KEYDOWN:
+            self.handlePyGameEvent(event)
+            # keyboard events
+            if event.type == pygame.KEYDOWN:
                # Select up
                 if event.key == pygame.K_UP:
                     self.selected -= 1
@@ -73,6 +68,6 @@ class MainMenuState(State):
                 # Quit
                 elif event.key == pygame.K_q:
                     sys.exit()
-                # Close
+                # Leave state / Close
                 elif event.key == pygame.K_ESCAPE:
                     self.loop = False

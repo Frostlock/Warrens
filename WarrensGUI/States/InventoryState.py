@@ -40,14 +40,9 @@ class InventoryState(State):
         # handle pygame (GUI) events
         events = pygame.event.get()
         for event in events:
-            # Quit Program
-            if event.type == pygame.QUIT:
-                sys.exit()
-            # Window resize
-            elif event.type == VIDEORESIZE:
-                self.resizeWindow(event.dict['size'])
-            # keyboard
-            elif event.type == pygame.KEYDOWN:
+            self.handlePyGameEvent(event)
+            # keyboard events
+            if event.type == pygame.KEYDOWN:
                 # Select up
                 if event.key == pygame.K_UP:
                     self.selected -= 1
@@ -66,6 +61,6 @@ class InventoryState(State):
                     else:
                         #try to use the item
                         self.window.game.player.tryUseItem(useItem)
-                # Close
+                # Leave state / Close
                 elif event.key == pygame.K_ESCAPE:
                     self.loop = False

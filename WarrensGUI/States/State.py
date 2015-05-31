@@ -1,6 +1,10 @@
 __author__ = 'pi'
 
+import sys
+
 import pygame
+from pygame.locals import *
+
 from OpenGL import GL
 from WarrensGUI.Util.Constants import *
 
@@ -68,6 +72,14 @@ class State(object):
         :return:
         '''
         raise NotImplementedError()
+
+    def handlePyGameEvent(self, event):
+        # Quit
+        if event.type == pygame.QUIT:
+            sys.exit()
+        # Window resize
+        elif event.type == VIDEORESIZE:
+            self.window.resizeWindow(event.dict['size'])
 
     def drawMenu(self, header, items, selected):
         """
