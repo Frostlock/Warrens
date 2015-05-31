@@ -434,10 +434,18 @@ class MainWindow(object):
             heightOffset += 0.1
 
     def legacyGui(self):
+        '''
+        This function switches to the legacy GUI.
+        :return:
+        '''
+        # To achieve a clean re-initialization of pygame we explicitly quit pygame before starting the legacy GUI.
+        pygame.quit()
+        #Start legacy GUI
         from WarrensGUI.Deprecated.GuiApplication import GuiApplication
         application = GuiApplication()
-        #Start application
         application.showMainMenu()
+        #Returning requires re init
+        self.initGUI()
 
     def playTest(self):
         # Put some scene objects to test
@@ -692,6 +700,17 @@ class MainWindow(object):
         playerZ = TILESIZE / 2
         return (playerX, playerY, playerZ, 1.0)
 
+    def drawText(self, position, textString, textSize, color):
+        font = pygame.font.Font(None, textSize)
+        textSurface = font.render(textString, True, color)
+        textData = pygame.image.tostring(textSurface, "RGBA", True)
+        GL.glRasterPos3d(*position)
+        GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
+
+    def loopDraw(self):
+        self.drawHUD()
+        self.drawVBAs()
+
     def loadVAOStaticObjects(self):
         """
         Initializes the context of the level VAO
@@ -883,17 +902,6 @@ class MainWindow(object):
         glBindVertexArray(0)
 
         GL.glUseProgram(0)
-
-    def drawText(self, position, textString, textSize, color):
-        font = pygame.font.Font(None, textSize)
-        textSurface = font.render(textString, True, color)
-        textData = pygame.image.tostring(textSurface, "RGBA", True)
-        GL.glRasterPos3d(*position)
-        GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
-
-    def loopDraw(self):
-        self.drawHUD()
-        self.drawVBAs()
 
     def drawHUD(self):
         """

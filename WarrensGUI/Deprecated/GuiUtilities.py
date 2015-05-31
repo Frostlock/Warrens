@@ -9,6 +9,7 @@ import pygame
 import sys
 
 from WarrensGUI.Deprecated import GuiCONSTANTS
+from WarrensGUI.Util import Utilities
 
 
 FONT_PANEL = None
@@ -52,7 +53,7 @@ def showMessage(target, header, message):
     msgHeight = line.get_rect().size[1]
 
     #Render the lines of the message
-    split_message = wrap_multi_line(message, FONT_NORMAL, msgWidth)
+    split_message = Utilities.wrap_multi_line(message, FONT_NORMAL, msgWidth)
     for part in split_message:
         line = FONT_NORMAL.render(part, 1, GuiCONSTANTS.COLOR_FONT)
         lines.append(line)
