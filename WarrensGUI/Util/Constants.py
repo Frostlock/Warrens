@@ -2,7 +2,24 @@ __author__ = 'pi'
 
 # This module contains a number of shared constants used by the GUI
 
+DISPLAY_SIZE = (800, 600)
 
+# TileSize in OpenGl space
+TILESIZE = 0.25
+
+# 4 bytes in a python float, we need to make this explicit while passing values to OpenGl
+# TODO: Find a better way to deal with this
+SIZE_OF_FLOAT = 4
+
+# 4 components in a vector: X, Y, Z, W
+VERTEX_COMPONENTS = 4
+
+# Camera modes
+CAM_FREE = 0
+CAM_LOOKAT = 1
+CAM_MAP = 2
+CAM_ACTOR = 3
+CAM_FIRSTPERSON = 4
 
 
 ##########

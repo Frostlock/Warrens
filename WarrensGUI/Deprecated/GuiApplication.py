@@ -18,7 +18,7 @@ import GuiTextures
 
 
 #movement keys
-movement_keys = {
+MOVEMENT_KEYS = {
         pygame.K_h: (-1, +0),       # vi keys
         pygame.K_l: (+1, +0),
         pygame.K_j: (+0, +1),
@@ -331,7 +331,7 @@ class GuiApplication(object):
                 player = self.game.player
                 if player.state == Character.ACTIVE:
                     #movement
-                    global movement_keys
+                    global MOVEMENT_KEYS
                     if event.key in movement_keys:
                         player.tryMoveOrAttack(*movement_keys[event.key])
                         #TODO: Decide in the game code if turn is taken or not, tookATurn should be bool on player which can be reset by the game.

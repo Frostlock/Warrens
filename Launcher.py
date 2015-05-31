@@ -1,7 +1,7 @@
 import sys
 
 from WarrensGUI.Deprecated import GuiApplication
-from WarrensGUI.WarrensOpenGL import GlApplication
+from WarrensGUI.MainWindow import MainWindow
 
 
 """
@@ -14,7 +14,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         FirstCommandLineArg = sys.argv [1]
         if FirstCommandLineArg == '-3D':
-            _application = GlApplication()
+            _application = MainWindow()
             _application.showMainMenu()
         else:
             print 'Bad commandline parameter, exiting'

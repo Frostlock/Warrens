@@ -35,7 +35,8 @@ from WarrensGUI.Util.Constants import *
 from WarrensGUI.States.InventoryScreen import InventoryScreen
 
 # Movement keys
-movement_keys = {
+# TODO: Should be moved to a State
+MOVEMENT_KEYS = {
     pygame.K_h: (-1, +0),  # vi keys
     pygame.K_l: (+1, +0),
     pygame.K_j: (+0, -1),
@@ -54,24 +55,12 @@ movement_keys = {
     pygame.K_KP3: (+1, -1),
 }
 
-# TileSize in model space
-TILESIZE = 0.25
-
-# 4 bytes in a float
-# TODO: Find a better way to deal with this
-SIZE_OF_FLOAT = 4
-
-# 4 components in a vector: X, Y, Z, W
-VERTEX_COMPONENTS = 4
-
-# Camera modes
-CAM_FREE = 0
-CAM_LOOKAT = 1
-CAM_MAP = 2
-CAM_ACTOR = 3
-CAM_FIRSTPERSON = 4
-
-class GlApplication(object):
+class MainWindow(object):
+    '''
+    This class represents the main window of the application.
+    To avoid this class becoming too big and to allow for different draw loops and key handlers within different
+    screens in the application we use State objects to govern the state of the GUI.
+    '''
     @property
     def game(self):
         """
@@ -216,7 +205,7 @@ class GlApplication(object):
         # Initialize class properties
         self._game = None
         self._level = None
-        self._displaySize = (800, 600)
+        self._displaySize = DISPLAY_SIZE
         self._openGlProgram = None
         self._cameraMatrix = None
         self._cameraMode = 0
@@ -275,7 +264,7 @@ class GlApplication(object):
     def initGUI(self):
         # Init pygame
         pygame.init()
-        self.resizeWindow((800, 600))
+        self.resizeWindow(self.displaySize)
 
         #Init OpenGl
         self.initOpenGl()
@@ -981,14 +970,14 @@ class GlApplication(object):
             # get messages from game message buffer, starting from the back
             message = self.game.messageBuffer[nbrOfMessages - messageCounter]
             #create textLines for message
-            textLines = Utilities.wrap_multi_line(message, font, 800 - widthOffset)
+            textLines = Utilities.wrap_multi_line(message, font, self.displayWidth - widthOffset)
             nbrOfLines = len(textLines)
             #blit the lines
             for l in range(1, nbrOfLines + 1):
                 textSurface = font.render(textLines[nbrOfLines - l], 1, (191,191,191))
                 heightOffset = heightOffset - 2 * textSurface.get_height()
                 textData = pygame.image.tostring(textSurface, "RGBA", True)
-                GL.glRasterPos3d(-0.5, -0.88 - (heightOffset / 600.), 0)
+                GL.glRasterPos3d(-0.5, -0.88 - (heightOffset / self.displayHeight), 0)
                 GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE,
                                 textData)
             messageCounter += 1
@@ -1048,9 +1037,9 @@ class GlApplication(object):
                 player = self.game.player
                 if player.state == Character.ACTIVE:
                     # movement
-                    global movement_keys
-                    if event.key in movement_keys:
-                        player.tryMoveOrAttack(*movement_keys[event.key])
+                    global MOVEMENT_KEYS
+                    if event.key in MOVEMENT_KEYS:
+                        player.tryMoveOrAttack(*MOVEMENT_KEYS[event.key])
                     # portal keys
                     elif event.key == pygame.K_LESS:
                         # check for shift modifier to detect ">" key.
