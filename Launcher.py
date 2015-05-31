@@ -15,7 +15,6 @@ if __name__ == '__main__':
         FirstCommandLineArg = sys.argv [1]
         if FirstCommandLineArg == '-3D':
             _application = MainWindow()
-            _application.showMainMenu()
         else:
             print 'Bad commandline parameter, exiting'
     else:

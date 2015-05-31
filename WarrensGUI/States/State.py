@@ -79,7 +79,7 @@ class State(object):
         GL.glEnable(GL.GL_BLEND)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
 
-        #print "menu"
+        #TODO: Improve clarity of Orthographic projection? Can we map it to a projection plane equal to the screen dimensions? Not -1.0 to 1.0?
         # Background
         GL.glLoadIdentity()
         #GL.glTranslatef(-0.5, -0.5, 0)
