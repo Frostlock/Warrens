@@ -328,7 +328,6 @@ class MainWindow(object):
         GL.glEnable(GL.GL_CULL_FACE)
         GL.glCullFace(GL.GL_BACK)  # back side of each face will be culled
         GL.glFrontFace(GL.GL_CCW)  # front of the face is based on counter clockwise order of vertices
-        #GL.glFrontFace(GL.GL_CW)  # front of the face is based on clockwise order of vertices
 
     def showMainMenu(self):
         self.initGUI()
@@ -339,7 +338,10 @@ class MainWindow(object):
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
             # show menu
-            items = ["n - New Game", "t - OpenGl test", "q - Quit"]
+            items = ["n - New Game",
+                     "t - OpenGl test",
+                     "l - Legacy Interface (PyGame only, no OpenGl)",
+                     "q - Quit"]
             self.drawMenu("Warrens", items, selected)
 
             # handle pygame (GUI) events
@@ -368,6 +370,8 @@ class MainWindow(object):
                         elif selected == 1:
                             self.playTest()
                         elif selected == 2:
+                            self.legacyGui()
+                        elif selected == 3:
                             sys.exit()
                     # New game
                     elif event.key == pygame.K_n:
@@ -375,6 +379,9 @@ class MainWindow(object):
                     # OpenGl test
                     elif event.key == pygame.K_t:
                         self.playTest()
+                    # Legacy GUI
+                    elif event.key == pygame.K_l:
+                        self.legacyGui()
                     # Quit
                     elif event.key == pygame.K_q:
                         sys.exit()
@@ -427,6 +434,12 @@ class MainWindow(object):
             position=(-0.6, 0.6 - heightOffset, 0)
             self.drawText(position, items[i], 20, color)
             heightOffset += 0.1
+
+    def legacyGui(self):
+        from WarrensGUI.Deprecated.GuiApplication import GuiApplication
+        application = GuiApplication()
+        #Start application
+        application.showMainMenu()
 
     def playTest(self):
         # Put some scene objects to test

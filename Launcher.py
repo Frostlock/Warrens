@@ -1,6 +1,6 @@
 import sys
 
-from WarrensGUI.Deprecated import GuiApplication
+from WarrensGUI.Deprecated.GuiApplication import GuiApplication
 from WarrensGUI.MainWindow import MainWindow
 
 

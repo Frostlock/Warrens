@@ -12,6 +12,7 @@ from WarrensGame.Game import Game
 from WarrensGame.Actors import Character
 from WarrensGame.Effects import EffectTarget
 from WarrensGUI.Deprecated import GuiCONSTANTS, GuiUtilities
+from WarrensGUI.Util import Utilities
 import GuiTextures
 
 
@@ -281,10 +282,8 @@ class GuiApplication(object):
             if GuiCONSTANTS.SHOW_PERFORMANCE_LOGGING:event_time = time.time() - start_time - render_time
 
             #If the player took a turn: Let the game play a turn
-            if self._gamePlayerTookTurn: 
-                self._game.playTurn()
-                self._gamePlayerTookTurn = False
-            
+            self.game.play()
+
             #limit framerate (kinda optimistic since with current rendering we don't achieve this framerate :) )
             frameRateLimit = 30
             clock.tick(frameRateLimit)
@@ -332,8 +331,8 @@ class GuiApplication(object):
                 if player.state == Character.ACTIVE:
                     #movement
                     global MOVEMENT_KEYS
-                    if event.key in movement_keys:
-                        player.tryMoveOrAttack(*movement_keys[event.key])
+                    if event.key in MOVEMENT_KEYS:
+                        player.tryMoveOrAttack(*MOVEMENT_KEYS[event.key])
                         #TODO: Decide in the game code if turn is taken or not, tookATurn should be bool on player which can be reset by the game.
                         self._gamePlayerTookTurn = True
                     
@@ -475,7 +474,7 @@ class GuiApplication(object):
             #get messages from game message buffer, starting from the back
             message = self.game.messageBuffer[nbrOfMessages - messageCounter]
             #create textLines for message
-            textLines = GuiUtilities.wrap_multi_line(message, GuiUtilities.FONT_PANEL,self.surfacePanel.get_width()-widthOffset)
+            textLines = Utilities.wrap_multi_line(message, GuiUtilities.FONT_PANEL,self.surfacePanel.get_width()-widthOffset)
             nbrOfLines = len(textLines)
             #blit the lines
             for l in range(1,nbrOfLines+1):
