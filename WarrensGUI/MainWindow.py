@@ -90,6 +90,23 @@ class MainWindow(object):
         self.loadVAOStaticObjects()
 
     @property
+    def state(self):
+        '''
+        Current state of this window. The state governs the key handling and drawing.
+        :return: State object
+        '''
+        return self._state
+
+    @state.setter
+    def state(self,state):
+        # Register the current state in the new state
+        state.parentState = self.state
+        self._state = state
+        # Enter main loop of the new state
+        state.mainLoop()
+
+
+    @property
     def displaySize(self):
         """
         Returns the display size (width, height)
@@ -198,6 +215,23 @@ class MainWindow(object):
     def fogActive(self):
         return False
 
+    @property
+    def staticObjects(self):
+        return self._staticObjects
+
+    @staticObjects.setter
+    def staticObjects(self, objectsArray):
+        self._staticObjects = objectsArray
+
+    @property
+    def dynamicObjects(self):
+        return self._dynamicObjects
+
+    @dynamicObjects.setter
+    def dynamicObjects(self, objectsArray):
+        self._dynamicObjects = objectsArray
+
+
     def __init__(self):
         """
         Constructor to create a new GlApplication object.
@@ -214,6 +248,7 @@ class MainWindow(object):
         self._dragging = False
         self._rotating = False
         self.FPS = 0
+        self._state = None
         # Initialize uniform class variables
         self.perspectiveMatrixUnif = None
         self.cameraMatrixUnif = None
@@ -236,8 +271,7 @@ class MainWindow(object):
         self.initOpenGl()
 
         #switch to main menu state
-        state = MainMenuState.MainMenuState(self)
-        state.mainLoop()
+        self.state = MainMenuState.MainMenuState(self)
 
     def resizeWindow(self, displaySize):
         """
@@ -335,72 +369,17 @@ class MainWindow(object):
         This function switches to the legacy GUI.
         :return:
         '''
+        # Switch to legacy GUI
         # To achieve a clean re-initialization of pygame we explicitly quit pygame before starting the legacy GUI.
         pygame.quit()
-        #Start legacy GUI
         from WarrensGUI.Deprecated.GuiApplication import GuiApplication
         application = GuiApplication()
         application.showMainMenu()
-        #Returning requires re init
-        self.initGUI()
-
-    #TODO: Move playTest to its own state
-    def playTest(self):
-        # Put some scene objects to test
-        self.dynamicObjects = []
-        plantObj = SceneObject.PlantSceneObject(1.5)
-        self.dynamicObjects.append(plantObj)
-
-        self.staticObjects = []
-        axisObj = SceneObject.AxisSceneObject(scale=10)
-        cubeObj = SceneObject.Cube()
-        self.staticObjects.append(axisObj)
-        self.staticObjects.append(cubeObj)
-
-        # Refresh the static objects meshes
-        self.loadVAOStaticObjects()
-
-        # Set the camera
-        self.cameraMode = CAM_LOOKAT
-        eye = vec3(10,10,10)
-        center = vec3(0,0,0)
-        up = vec3(0,0,1)
-        self.cameraMatrix = og_util.lookAtMatrix44(eye,center,up)
-
-        while True:
-            # Clear the screen, and z-buffer
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-
-            # handle pygame (GUI) events
-            events = pygame.event.get()
-            for event in events:
-                # Quit
-                if event.type == pygame.QUIT:
-                    sys.exit()
-                # Window resize
-                elif event.type == VIDEORESIZE:
-                    self.resizeWindow(event.dict['size'])
-                # keyboard
-                elif event.type == pygame.KEYDOWN:
-                    # Quit
-                    if event.key == pygame.K_q:
-                        sys.exit()
-                    elif event.key == pygame.K_ESCAPE:
-                        sys.exit()
-                    elif event.key == pygame.K_SPACE:
-                        #Grow all plant objects
-                        for obj in self.dynamicObjects:
-                            if isinstance(obj, SceneObject.PlantSceneObject):
-                                obj.grow()
-
-            # Refresh the dynamic meshes
-            self.loadVAODynamicObjects()
-
-            # Render the 3D view (Vertex Array Buffers
-            self.drawVBAs()
-
-            # Show the screen
-            pygame.display.flip()
+        # Switch back to regular GUI
+        pygame.quit()
+        pygame.init()
+        self.resizeWindow(self.displaySize)
+        self.initOpenGl()
 
     def playGame(self):
         #Init Game
@@ -518,7 +497,7 @@ class MainWindow(object):
         actorsObj = ActorsSceneObject(self.level, TILESIZE)
         self.dynamicObjects.append(actorsObj)
 
-    def lookAtCamera(self):
+    def isometricViewOnPlayer(self):
         self.cameraMode = CAM_LOOKAT
 
         factor = 5
@@ -527,7 +506,7 @@ class MainWindow(object):
         lookAt = vec3(x,y,z)
         up = vec3(0,0,1)
 
-        self.cameraMatrix = og_util.lookAtMatrix44(eye,lookAt,up)
+        self.lookAt(eye,lookAt,up)
 
     def centerCameraOnActor(self, actor):
         """
@@ -598,12 +577,19 @@ class MainWindow(object):
         playerZ = TILESIZE / 2
         return (playerX, playerY, playerZ, 1.0)
 
+    # Window utility functions, these are used by the window states.
+
     def drawText(self, position, textString, textSize, color):
         font = pygame.font.Font(None, textSize)
         textSurface = font.render(textString, True, color)
         textData = pygame.image.tostring(textSurface, "RGBA", True)
         GL.glRasterPos3d(*position)
         GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
+
+    def lookAt(self, eye, center, up):
+        self.cameraMatrix = og_util.lookAtMatrix44(eye, center, up)
+
+    # End of Window utility functions
 
     def loopDraw(self):
         self.drawHUD()
@@ -940,7 +926,8 @@ class MainWindow(object):
         elif event.type == pygame.KEYDOWN:
             # Handle keys that are always active
             if event.key == pygame.K_ESCAPE:
-                sys.exit()
+                #switch to main menu state
+                self.state = MainMenuState.MainMenuState(self)
             elif event.key == pygame.K_p:
                 self.centerCameraOnActor(self.game.player)
             elif event.key == pygame.K_m:
@@ -948,7 +935,7 @@ class MainWindow(object):
             elif event.key == pygame.K_o:
                 self.firstPersonCamera()
             elif event.key == pygame.K_l:
-                self.lookAtCamera()
+                self.isometricViewOnPlayer()
             # Handle keys that are active while playing
             if self.game.state == Game.PLAYING:
                 player = self.game.player

@@ -17,6 +17,10 @@ class State(object):
     def parentState(self):
         return self._parentState
 
+    @parentState.setter
+    def parentState(self, state):
+        self._parentState = state
+
     def __init__(self, window, parent=None):
         '''
         Constructor
