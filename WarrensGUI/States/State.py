@@ -2,7 +2,7 @@ __author__ = 'pi'
 
 import pygame
 from OpenGL import GL
-from WarrensGUI.Util.Colors import *
+from WarrensGUI.Util.Constants import *
 
 class State(object):
     '''
@@ -86,7 +86,7 @@ class State(object):
         width = 0.8
         height = 0.8
         GL.glBegin(GL.GL_QUADS)
-        GL.glColor4f(*COLOR_MENU_BG)
+        GL.glColor4f(*COLOR_GL_MENU_BG)
         GL.glVertex2f(width, -height)
         GL.glVertex2f(width, height)
         GL.glVertex2f(-width, height)
@@ -95,15 +95,15 @@ class State(object):
 
         # Header
         GL.glLoadIdentity()
-        self.window.drawText((-0.72, 0.72, 0), header, 24, COLOR_HUD_TEXT)
+        self.window.drawText((-0.72, 0.72, 0), header, 24, COLOR_PG_HUD_TEXT)
 
         # Items
         heightOffset = 0
         for i in range(0, len(items)):
             if selected == i:
-                color = COLOR_HUD_TEXT_SELECTED
+                color = COLOR_PG_HUD_TEXT_SELECTED
             else:
-                color = COLOR_HUD_TEXT
+                color = COLOR_PG_HUD_TEXT
             position=(-0.6, 0.6 - heightOffset, 0)
             self.window.drawText(position, items[i], 20, color)
             heightOffset += 0.1

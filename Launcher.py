@@ -1,7 +1,8 @@
-from WarrensGUI.GuiApplication import GuiApplication
+import sys
+
+from WarrensGUI.Deprecated import GuiApplication
 from WarrensGUI.WarrensOpenGL import GlApplication
 
-import sys
 
 """
 Launcher script
@@ -21,11 +22,3 @@ if __name__ == '__main__':
         _application = GuiApplication()
         #Start application
         _application.showMainMenu()
-
-
-    """
-    from dungeonGame.AI import *
-    ai = BasicMonsterAI(None)
-    ai.test()
-    
-    """

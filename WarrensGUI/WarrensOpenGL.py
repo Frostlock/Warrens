@@ -12,27 +12,26 @@ http://www.willmcgugan.com/blog/tech/2007/6/4/opengl-sample-code-for-pygame/
 
 import pygame
 from pygame.locals import *
+
 from OpenGL import GL
 from OpenGL.GL.ARB.vertex_array_object import glBindVertexArray
 from OpenGL import GLUT
 from ctypes import c_void_p
+
 from math import radians
 import sys
-
 import numpy as np
 
 from WarrensGame.Game import Game
-from WarrensGame.Actors import Actor, Portal, Monster, Item, Character
-import GuiUtilities
-#import GuiCONSTANTS
+from WarrensGame.Actors import Character
 
+from WarrensGUI.Util import Utilities
 import WarrensGUI.Util.OpenGlUtilities as og_util
-#import Util.PyGameUtilities as pg_util
 import WarrensGUI.Util.SceneObject as SceneObject
 from WarrensGUI.Util.LevelSceneObject import LevelSceneObject
 from WarrensGUI.Util.ActorsSceneObject import ActorsSceneObject
 from WarrensGUI.Util.vec3 import vec3
-from WarrensGUI.Util.Colors import *
+from WarrensGUI.Util.Constants import *
 from WarrensGUI.States.InventoryScreen import InventoryScreen
 
 # Movement keys
@@ -278,9 +277,6 @@ class GlApplication(object):
         pygame.init()
         self.resizeWindow((800, 600))
 
-        #Initialize fonts
-        GuiUtilities.initFonts()
-
         #Init OpenGl
         self.initOpenGl()
 
@@ -421,7 +417,7 @@ class GlApplication(object):
         width = 0.8
         height = 0.8
         GL.glBegin(GL.GL_QUADS)
-        GL.glColor4f(*COLOR_MENU_BG)
+        GL.glColor4f(*COLOR_GL_MENU_BG)
         GL.glVertex2f(width, -height)
         GL.glVertex2f(width, height)
         GL.glVertex2f(-width, height)
@@ -430,15 +426,15 @@ class GlApplication(object):
 
         # Header
         GL.glLoadIdentity()
-        self.drawText((-0.72, 0.72, 0), header, 24, COLOR_HUD_TEXT)
+        self.drawText((-0.72, 0.72, 0), header, 24, COLOR_PG_HUD_TEXT)
 
         # Items
         heightOffset = 0
         for i in range(0, len(items)):
             if selected == i:
-                color = COLOR_HUD_TEXT_SELECTED
+                color = COLOR_PG_HUD_TEXT_SELECTED
             else:
-                color = COLOR_HUD_TEXT
+                color = COLOR_PG_HUD_TEXT
             position=(-0.6, 0.6 - heightOffset, 0)
             self.drawText(position, items[i], 20, color)
             heightOffset += 0.1
@@ -911,11 +907,11 @@ class GlApplication(object):
 
         # Level name
         GL.glLoadIdentity()
-        self.drawText((-0.98, 0.9, 0), self.game.currentLevel.name, 24, COLOR_HUD_TEXT)
+        self.drawText((-0.98, 0.9, 0), self.game.currentLevel.name, 24, COLOR_PG_HUD_TEXT)
 
         # Player name
         GL.glLoadIdentity()
-        self.drawText((-0.98, -0.85, 0), self.game.player.name + " (Lvl " + str(self.game.player.playerLevel) + ")", 18, COLOR_HUD_TEXT)
+        self.drawText((-0.98, -0.85, 0), self.game.player.name + " (Lvl " + str(self.game.player.playerLevel) + ")", 18, COLOR_PG_HUD_TEXT)
 
         # Health Bar
         GL.glLoadIdentity()
@@ -925,7 +921,7 @@ class GlApplication(object):
         barWidth = 0.46
         barHeight = 0.08
         GL.glBegin(GL.GL_QUADS)
-        GL.glColor4f(*COLOR_BAR_HEALTH_BG)
+        GL.glColor4f(*COLOR_GL_BAR_HEALTH_BG)
         # Draw vertices (counter clockwise for face culling!)
         GL.glVertex2f(barWidth, 0.0)
         GL.glVertex2f(barWidth, barHeight)
@@ -935,7 +931,7 @@ class GlApplication(object):
         if current > 0:
             filWidth = current * barWidth / maximum
             GL.glBegin(GL.GL_QUADS)
-            GL.glColor4f(*COLOR_BAR_HEALTH)
+            GL.glColor4f(*COLOR_GL_BAR_HEALTH)
             # Draw vertices (counter clockwise for face culling!)
             GL.glVertex2f(filWidth, 0.0)
             GL.glVertex2f(filWidth, barHeight)
@@ -951,7 +947,7 @@ class GlApplication(object):
         barWidth = 0.46
         barHeight = 0.04
         GL.glBegin(GL.GL_QUADS)
-        GL.glColor4f(*COLOR_BAR_XP_BG)
+        GL.glColor4f(*COLOR_GL_BAR_XP_BG)
         # Draw vertices (counter clockwise for face culling!)
         GL.glVertex2f(barWidth, 0.0)
         GL.glVertex2f(barWidth, barHeight)
@@ -961,7 +957,7 @@ class GlApplication(object):
         if current > 0:
             filWidth = current * barWidth / maximum
             GL.glBegin(GL.GL_QUADS)
-            GL.glColor4f(*COLOR_BAR_XP)
+            GL.glColor4f(*COLOR_GL_BAR_XP)
             # Draw vertices (counter clockwise for face culling!)
             GL.glVertex2f(filWidth, 0.0)
             GL.glVertex2f(filWidth, barHeight)
@@ -971,7 +967,7 @@ class GlApplication(object):
 
         # FPS
         GL.glLoadIdentity()
-        self.drawText((-0.98, -1, 0), str(self.FPS), 12, COLOR_HUD_TEXT)
+        self.drawText((-0.98, -1, 0), str(self.FPS), 12, COLOR_PG_HUD_TEXT)
 
         # Right side: render game messages
         GL.glLoadIdentity()
@@ -979,16 +975,17 @@ class GlApplication(object):
         heightOffset = 100
         messageCounter = 1
         nbrOfMessages = len(self.game.messageBuffer)
+        font = pygame.font.Font(None, 20)
         while heightOffset > 0:
             if messageCounter > nbrOfMessages: break
             # get messages from game message buffer, starting from the back
             message = self.game.messageBuffer[nbrOfMessages - messageCounter]
             #create textLines for message
-            textLines = GuiUtilities.wrap_multi_line(message, GuiUtilities.FONT_PANEL, 800 - widthOffset)
+            textLines = Utilities.wrap_multi_line(message, font, 800 - widthOffset)
             nbrOfLines = len(textLines)
             #blit the lines
             for l in range(1, nbrOfLines + 1):
-                textSurface = GuiUtilities.FONT_PANEL.render(textLines[nbrOfLines - l], 1, (191,191,191))
+                textSurface = font.render(textLines[nbrOfLines - l], 1, (191,191,191))
                 heightOffset = heightOffset - 2 * textSurface.get_height()
                 textData = pygame.image.tostring(textSurface, "RGBA", True)
                 GL.glRasterPos3d(-0.5, -0.88 - (heightOffset / 600.), 0)

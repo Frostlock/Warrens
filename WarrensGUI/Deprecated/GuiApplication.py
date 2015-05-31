@@ -4,17 +4,18 @@ Created on Mar 16, 2014
 @author: pi
 '''
 
+import sys
+import pygame
+from pygame.locals import *
+
 from WarrensGame.Game import Game
 from WarrensGame.Actors import Character
 from WarrensGame.Effects import EffectTarget
-from WarrensGame.Maps import TileType
-
-import sys, pygame
-from pygame.locals import *
-
-import GuiUtilities
-import GuiCONSTANTS
+from WarrensGUI.Deprecated import GuiCONSTANTS, GuiUtilities
 import GuiTextures
+
+
+
 
 #movement keys
 movement_keys = {
@@ -449,20 +450,20 @@ class GuiApplication(object):
         yOffset += barHeight
         current = self.game.player.currentHitPoints
         maximum = self.game.player.maxHitPoints
-        pygame.draw.rect(self.surfacePanel,GuiCONSTANTS.COLOR_BAR_HEALTH_BG, (xOffset, yOffset,barWidth,barHeight))
+        pygame.draw.rect(self.surfacePanel, GuiCONSTANTS.COLOR_BAR_HEALTH_BG, (xOffset, yOffset,barWidth,barHeight))
         if current > 0:
             filWidth = int((current*barWidth)/maximum)
-            pygame.draw.rect(self.surfacePanel,GuiCONSTANTS.COLOR_BAR_HEALTH, (xOffset, yOffset,filWidth,barHeight))
+            pygame.draw.rect(self.surfacePanel, GuiCONSTANTS.COLOR_BAR_HEALTH, (xOffset, yOffset,filWidth,barHeight))
         blitText = GuiUtilities.FONT_PANEL.render("HP: " + str(current) + "/" + str(maximum), 1, GuiCONSTANTS.COLOR_PANEL_FONT)
         self.surfacePanel.blit(blitText, (xOffset, yOffset))
         yOffset += barHeight + spacer
         #XP bar
         current = self.game.player.xp
         maximum = self.game.player.nextLevelXp
-        pygame.draw.rect(self.surfacePanel,GuiCONSTANTS.COLOR_BAR_XP_BG, (xOffset, yOffset,barWidth,barHeight))
+        pygame.draw.rect(self.surfacePanel, GuiCONSTANTS.COLOR_BAR_XP_BG, (xOffset, yOffset,barWidth,barHeight))
         if current > 0:
             filWidth = int((current*barWidth)/maximum)
-            pygame.draw.rect(self.surfacePanel,GuiCONSTANTS.COLOR_BAR_XP, (xOffset, yOffset,filWidth,barHeight))
+            pygame.draw.rect(self.surfacePanel, GuiCONSTANTS.COLOR_BAR_XP, (xOffset, yOffset,filWidth,barHeight))
         blitText = GuiUtilities.FONT_PANEL.render("XP: " + str(current) + "/" + str(maximum), 1, GuiCONSTANTS.COLOR_PANEL_FONT)
         self.surfacePanel.blit(blitText, (xOffset, yOffset))
         
@@ -474,7 +475,7 @@ class GuiApplication(object):
             #get messages from game message buffer, starting from the back
             message = self.game.messageBuffer[nbrOfMessages - messageCounter]
             #create textLines for message
-            textLines = GuiUtilities.wrap_multi_line(message,GuiUtilities.FONT_PANEL,self.surfacePanel.get_width()-widthOffset)
+            textLines = GuiUtilities.wrap_multi_line(message, GuiUtilities.FONT_PANEL,self.surfacePanel.get_width()-widthOffset)
             nbrOfLines = len(textLines)
             #blit the lines
             for l in range(1,nbrOfLines+1):
@@ -598,7 +599,7 @@ class GuiApplication(object):
                 vpX = (tile.x - startX) * self.tileSize + self._renderViewPortXOffSet + self.tileSize/2
                 vpY = (tile.y - startY) * self.tileSize + self._renderViewPortYOffSet + self.tileSize/2
                 tileRect = pygame.Rect(vpX, vpY, self.tileSize, self.tileSize)
-                pygame.draw.circle(self.surfaceViewPort,GuiCONSTANTS.COLOR_SELECT, (vpX, vpY), self.tileSize/2, 2)
+                pygame.draw.circle(self.surfaceViewPort, GuiCONSTANTS.COLOR_SELECT, (vpX, vpY), self.tileSize/2, 2)
         else:
             #highlight selected tile
             if self._renderSelectedTile is not None:
@@ -606,11 +607,11 @@ class GuiApplication(object):
                 vpX = (tile.x - startX) * self.tileSize + self._renderViewPortXOffSet
                 vpY = (tile.y - startY) * self.tileSize + self._renderViewPortYOffSet
                 tileRect = pygame.Rect(vpX, vpY, self.tileSize, self.tileSize)
-                pygame.draw.rect(self.surfaceViewPort,GuiCONSTANTS.COLOR_SELECT, tileRect, 2)
+                pygame.draw.rect(self.surfaceViewPort, GuiCONSTANTS.COLOR_SELECT, tileRect, 2)
                 self.renderDetailSurface(tile)
                 #Show tile detail pop up
                 if self.surfaceDetails is not None: 
-                    pygame.draw.rect(self.surfaceViewPort,GuiCONSTANTS.COLOR_SELECT, tileRect)
+                    pygame.draw.rect(self.surfaceViewPort, GuiCONSTANTS.COLOR_SELECT, tileRect)
                     self.surfaceViewPort.blit(self.surfaceDetails, (tileRect.x-self.surfaceDetails.get_width(), tileRect.y))
                 
         #show level name in top left hand
@@ -644,7 +645,7 @@ class GuiApplication(object):
             self._surfaceDetails = pygame.Surface((width,height), pygame.SRCALPHA)
             self.surfaceDetails.fill((0, 0, 0, 125))
             #border in selection color
-            pygame.draw.rect(self.surfaceDetails,GuiCONSTANTS.COLOR_POPUP,(0,0,width,height),3)
+            pygame.draw.rect(self.surfaceDetails, GuiCONSTANTS.COLOR_POPUP,(0,0,width,height),3)
             #add the components
             for (x,y,s) in components:
                 self.surfaceDetails.blit(s, (x,y))
