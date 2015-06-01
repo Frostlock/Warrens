@@ -9,6 +9,9 @@ from WarrensGUI.States.State import State
 from WarrensGUI.States.DemoState import DemoState
 
 class MainMenuState(State):
+    '''
+    State to show the main menu.
+    '''
 
     def __init__(self, window, parentState=None):
         '''
@@ -49,7 +52,7 @@ class MainMenuState(State):
                 # Select
                 elif event.key == pygame.K_RETURN:
                     if self.selected == 0:
-                        self.window.playGame()
+                        self.window.playNewGame()
                     elif self.selected == 1:
                         self.window.state = DemoState(self.window, self)
                     elif self.selected == 2:
@@ -58,7 +61,7 @@ class MainMenuState(State):
                         sys.exit()
                 # New game
                 elif event.key == pygame.K_n:
-                    self.window.playGame()
+                    self.window.playNewGame()
                 # OpenGl test
                 elif event.key == pygame.K_d:
                     self.window.state = DemoState(self.window, self)

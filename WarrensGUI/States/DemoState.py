@@ -8,6 +8,9 @@ from WarrensGUI.Util.vec3 import vec3
 from WarrensGUI.Util import SceneObject
 
 class DemoState(State):
+    '''
+    State to show some OpenGl demo objects
+    '''
 
     def __init__(self, window, parentState=None):
         '''

@@ -8,6 +8,9 @@ from pygame.locals import *
 from WarrensGUI.States.State import State
 
 class InventoryState(State):
+    '''
+    State to show inventory menu.
+    '''
 
     @property
     def inventory(self):

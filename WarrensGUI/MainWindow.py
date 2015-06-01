@@ -7,7 +7,7 @@ Special thanks to these two for getting me started!
 http://www.arcsynthesis.org/gltut/
 http://www.willmcgugan.com/blog/tech/2007/6/4/opengl-sample-code-for-pygame/
 
-@author: pi
+@author: Frost
 """
 
 import pygame
@@ -27,33 +27,13 @@ from WarrensGame.Actors import Character
 
 from WarrensGUI.Util import Utilities
 import WarrensGUI.Util.OpenGlUtilities as og_util
-import WarrensGUI.Util.SceneObject as SceneObject
+
 from WarrensGUI.Util.LevelSceneObject import LevelSceneObject
 from WarrensGUI.Util.ActorsSceneObject import ActorsSceneObject
 from WarrensGUI.Util.vec3 import vec3
 from WarrensGUI.Util.Constants import *
-from WarrensGUI.States import InventoryState, MainMenuState
-
-# Movement keys
-# TODO: Should be moved to a State
-MOVEMENT_KEYS = {
-    pygame.K_h: (-1, +0),  # vi keys
-    pygame.K_l: (+1, +0),
-    pygame.K_j: (+0, -1),
-    pygame.K_k: (+0, +1),
-    pygame.K_y: (-1, +1),
-    pygame.K_u: (+1, +1),
-    pygame.K_b: (-1, -1),
-    pygame.K_n: (+1, -1),
-    pygame.K_KP4: (-1, +0),  # numerical keypad
-    pygame.K_KP6: (+1, +0),
-    pygame.K_KP2: (+0, -1),
-    pygame.K_KP8: (+0, +1),
-    pygame.K_KP7: (-1, +1),
-    pygame.K_KP9: (+1, +1),
-    pygame.K_KP1: (-1, -1),
-    pygame.K_KP3: (+1, -1),
-}
+from WarrensGUI.States.MainMenuState import MainMenuState
+from WarrensGUI.States.GameState import GameState
 
 class MainWindow(object):
     '''
@@ -68,26 +48,17 @@ class MainWindow(object):
         """
         return self._game
 
+    @game.setter
+    def game(self, game):
+        self._game = game
+        self.refreshStaticObjects()
+
     @property
     def level(self):
         """
-        Returns the level that is currently being shown in the GUI
+        Returns the current level.
         """
-        return self._level
-
-    @level.setter
-    def level(self, level):
-        """
-        Sets the level to be shown in the GUI.
-        This will also load the vertex buffer for the level mesh
-        """
-        self._level = level
-        # On level change we refresh the static objects
-        self.staticObjects = []
-        levelObj = LevelSceneObject(level, TILESIZE)
-        self.staticObjects.append(levelObj)
-        # Load the mesh for the level in the vertex buffer
-        self.loadVAOStaticObjects()
+        return self.game.currentLevel
 
     @property
     def state(self):
@@ -105,6 +76,24 @@ class MainWindow(object):
         # Enter main loop of the new state
         state.mainLoop()
 
+    @property
+    def clock(self):
+        '''
+        PyGame clock utility
+        :return: PyGame clock object
+        '''
+        return self._clock
+
+    @property
+    def FPS(self):
+        '''
+        FPS - Frames per second
+        This property returns the number of frames based on previous calls to this property.
+        :return:
+        '''
+        time_passed_seconds = self.clock.tick() / 1000.
+        if time_passed_seconds <> 0: return 1 / time_passed_seconds
+        else: return 0
 
     @property
     def displaySize(self):
@@ -234,11 +223,12 @@ class MainWindow(object):
 
     def __init__(self):
         """
-        Constructor to create a new GlApplication object.
+        Constructor to create a new main window.
         """
         # Initialize class properties
         self._game = None
         self._level = None
+        self.previousPassLevel = None
         self._displaySize = DISPLAY_SIZE
         self._openGlProgram = None
         self._cameraMatrix = None
@@ -247,8 +237,8 @@ class MainWindow(object):
         self._lightingMatrix = None
         self._dragging = False
         self._rotating = False
-        self.FPS = 0
         self._state = None
+        self._clock = pygame.time.Clock()
         # Initialize uniform class variables
         self.perspectiveMatrixUnif = None
         self.cameraMatrixUnif = None
@@ -271,7 +261,7 @@ class MainWindow(object):
         self.initOpenGl()
 
         #switch to main menu state
-        self.state = MainMenuState.MainMenuState(self)
+        self.state = MainMenuState(self)
 
     def resizeWindow(self, displaySize):
         """
@@ -381,35 +371,42 @@ class MainWindow(object):
         self.resizeWindow(self.displaySize)
         self.initOpenGl()
 
-    def playGame(self):
-        #Init Game
-        self._game = Game()
+    def playNewGame(self):
+        #Initialize a new game
+        self.game = Game()
         self.game.resetGame()
+        # Set Game state (which contains the main loop)
+        self.state = GameState(self,self.state)
 
-        clock = pygame.time.Clock()
+    def DEPRECATED_playGame(self):
+        # #Init Game
+        # self._game = Game()
+        # self.game.resetGame()
 
-        #self.centerCameraOnActor(self.game.player)
-        self.centerCameraOnMap()
+        ### clock = pygame.time.Clock()
+
+        # #self.centerCameraOnActor(self.game.player)
+        # self.centerCameraOnMap()
 
         # Initialize speeds
         rotation_speed = radians(90.0)
         movement_speed = 25.0
 
         while True:
-            # handle pygame (GUI) events
-            events = pygame.event.get()
-            for event in events:
-                self.handlePyGameEvent(event)
+            # # handle pygame (GUI) events
+            # events = pygame.event.get()
+            # for event in events:
+            #     self.handlePyGameEvent(event)
+            #
+            # # handle game events
+            # self.handleWarrensGameEvents()
 
-            # handle game events
-            self.handleWarrensGameEvents()
+            # # Clear the screen, and z-buffer
+            # GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
-            # Clear the screen, and z-buffer
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-
-            time_passed = clock.tick()
-            time_passed_seconds = time_passed / 1000.
-            if time_passed_seconds <> 0: self.FPS = 1 / time_passed_seconds
+            # time_passed = self.clock.tick()
+            # time_passed_seconds = time_passed / 1000.
+            # if time_passed_seconds <> 0: self.FPS = 1 / time_passed_seconds
 
             #get a tuple with the press status of all keys
             pressed = pygame.key.get_pressed()
@@ -473,32 +470,31 @@ class MainWindow(object):
             # "move the camera
             self.cameraMatrix = self.cameraMatrix.dot(movement_matrix)
 
-            # First person camera
-            if self.cameraMode == CAM_FIRSTPERSON:
-                self.firstPersonCamera()
-            elif self.cameraMode == CAM_ACTOR:
-                self.centerCameraOnActor(self.game.player)
+            ## MOVED # First person camera
+            ## if self.cameraMode == CAM_FIRSTPERSON:
+            ##     self.firstPersonCamera()
+            ## elif self.cameraMode == CAM_ACTOR:
+            ##     self.centerCameraOnActor(self.game.player)
 
-            # Refresh the actors VAO (some actors might have moved)
-            self.refreshDynamicObjects()
-            self.loadVAODynamicObjects()
+            # # Refresh the actors VAO (some actors might have moved)
+            # self.refreshDynamicObjects()
+            # self.loadVAODynamicObjects()
 
-            # Render the 3D view (Vertex Array Buffers
-            self.drawVBAs()
+            # # Refresh the actors VAO (some actors might have moved)
+            # self.refreshDynamicObjects()
+            # self.loadVAODynamicObjects()
+            #
+            # # Render the 3D view (Vertex Array Buffers
+            # self.drawVBAs()
+            #
+            # # Render the HUD (health bar, XP bar, etc...)
+            # self.drawHUD()
 
-            # Render the HUD (health bar, XP bar, etc...)
-            self.drawHUD()
-
-            # Show the screen
-            pygame.display.flip()
-
-    def refreshDynamicObjects(self):
-        self.dynamicObjects = []
-        actorsObj = ActorsSceneObject(self.level, TILESIZE)
-        self.dynamicObjects.append(actorsObj)
+            # # Show the screen
+            # pygame.display.flip()
 
     def isometricViewOnPlayer(self):
-        self.cameraMode = CAM_LOOKAT
+        self.cameraMode = CAM_ISOMETRIC
 
         factor = 5
         x, y, z, w = self.getPlayerPosition()
@@ -587,13 +583,18 @@ class MainWindow(object):
         GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
 
     def lookAt(self, eye, center, up):
+        self.cameraMode = CAM_FREE
         self.cameraMatrix = og_util.lookAtMatrix44(eye, center, up)
 
     # End of Window utility functions
 
-    def loopDraw(self):
-        self.drawHUD()
-        self.drawVBAs()
+    def refreshStaticObjects(self):
+        self.staticObjects = []
+        if self.level is not None:
+            levelObj = LevelSceneObject(self.level, TILESIZE)
+            self.staticObjects.append(levelObj)
+            # Load the static objects in vertex buffers
+            self.loadVAOStaticObjects()
 
     def loadVAOStaticObjects(self):
         """
@@ -602,6 +603,7 @@ class MainWindow(object):
         To optimize performance this will only be called when a new level is loaded
         """
         # Create vertex buffers on the GPU, remember the address IDs
+        #TODO: rename 'level' to static
         self.VBO_level_id = GL.glGenBuffers(1)
         self.VBO_level_elements_id = GL.glGenBuffers(1)
 
@@ -660,12 +662,21 @@ class MainWindow(object):
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0)
         GL.glUseProgram(0)
 
+    def refreshDynamicObjects(self):
+        self.dynamicObjects = []
+        if self.level is not None:
+            actorsObj = ActorsSceneObject(self.level, TILESIZE)
+            self.dynamicObjects.append(actorsObj)
+            # Load the dynamic objects in vertex buffers
+            self.loadVAODynamicObjects()
+
     def loadVAODynamicObjects(self):
         """
         Initializes the context of the actors VAO
         This should be called whenever there is a change in actor positions or visibility
         """
         # Create the vertex buffer on the GPU and remember the address ID
+        #TODO: rename 'actors' to dynamic
         self.VBO_actors_id = GL.glGenBuffers(1)
         self.VBO_actors_elements_id = GL.glGenBuffers(1)
 
@@ -724,68 +735,84 @@ class MainWindow(object):
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0)
         GL.glUseProgram(0)
 
+    def drawAll(self):
+        # TODO: Make camera modes completely dependant on the cameramode property, need change in GameState as well.
+        # update camera
+        if self.cameraMode == CAM_FIRSTPERSON:
+            self.firstPersonCamera()
+        elif self.cameraMode == CAM_ACTOR:
+            self.centerCameraOnActor(self.game.player)
+
+        # draw HUD
+        self.drawHUD()
+
+        # draw Vector Buffer Arrays
+        self.drawVBAs()
+
     def drawVBAs(self):
         DEBUG_GLSL = False
         if DEBUG_GLSL: print '\n\nDEBUG MODE: Simulating GLSL calculation:\n'
 
         GL.glUseProgram(self.openGlProgram)
 
-        # Bind Level VAO context
-        glBindVertexArray(self.VAO_level)
-        # Load uniforms
-        GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.perspectiveMatrix, (16)))
-        if DEBUG_GLSL: print "perspectiveMatrix"
-        if DEBUG_GLSL: print self.perspectiveMatrix
+        if len(self.staticObjects) > 0:
+            # Bind Level VAO context
+            glBindVertexArray(self.VAO_level)
+            # Load uniforms
+            GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.perspectiveMatrix, (16)))
+            if DEBUG_GLSL: print "perspectiveMatrix"
+            if DEBUG_GLSL: print self.perspectiveMatrix
 
-        #camMatrix = np.linalg.inv(self.cameraMatrix)
-        GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.cameraMatrix, (16)))
-        if DEBUG_GLSL: print "camMatrix"
-        if DEBUG_GLSL: print camMatrix
+            #camMatrix = np.linalg.inv(self.cameraMatrix)
+            GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.cameraMatrix, (16)))
+            if DEBUG_GLSL: print "cameraMatrix"
+            if DEBUG_GLSL: print self.cameraMatrix
 
-        lightMatrix = self.cameraMatrix[:3, :3]  # Extracts 3*3 matrix out of 4*4
-        if DEBUG_GLSL: print "LightMatrix"
-        if DEBUG_GLSL: print lightMatrix
-        GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, np.reshape(lightMatrix, (9)))
+            lightMatrix = self.cameraMatrix[:3, :3]  # Extracts 3*3 matrix out of 4*4
+            if DEBUG_GLSL: print "LightMatrix"
+            if DEBUG_GLSL: print lightMatrix
+            GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, np.reshape(lightMatrix, (9)))
 
-        if DEBUG_GLSL: print "Light position: " + self.lightPosition
-        GL.glUniform3f(self.lightPosUnif, self.lightPosition[0], self.lightPosition[1], self.lightPosition[2])
-        if DEBUG_GLSL: print "Light intensity: (0.8, 0.8, 0.8, 1.0)"
-        GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
-        if DEBUG_GLSL: print "Ambient intensity: (0.2, 0.2, 0.2, 1.0)"
-        GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
+            if DEBUG_GLSL: print "Light position: " + self.lightPosition
+            GL.glUniform3f(self.lightPosUnif, self.lightPosition[0], self.lightPosition[1], self.lightPosition[2])
+            if DEBUG_GLSL: print "Light intensity: (0.8, 0.8, 0.8, 1.0)"
+            GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
+            if DEBUG_GLSL: print "Ambient intensity: (0.2, 0.2, 0.2, 1.0)"
+            GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
 
-        GL.glUniform4f(self.playerPositionUnif, *self.getPlayerPosition())
-        GL.glUniform1i(self.fogActiveUnif, 1 if self.fogActive else 0)
+            GL.glUniform4f(self.playerPositionUnif, *self.getPlayerPosition())
+            GL.glUniform1i(self.fogActiveUnif, 1 if self.fogActive else 0)
 
-        # Bind element array
-        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_level_elements_id)
-        # Draw elements
-        GL.glDrawElements(GL.GL_TRIANGLES, self.VBO_level_elements_length, GL.GL_UNSIGNED_INT, None)
-        glBindVertexArray(0)
+            # Bind element array
+            GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_level_elements_id)
+            # Draw elements
+            GL.glDrawElements(GL.GL_TRIANGLES, self.VBO_level_elements_length, GL.GL_UNSIGNED_INT, None)
+            glBindVertexArray(0)
 
-        # Bind Actors VAO context
-        glBindVertexArray(self.VAO_actors)
-        # Load uniforms
-        GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.perspectiveMatrix, (16)))
+        if len(self.dynamicObjects) > 0:
+            # Bind Actors VAO context
+            glBindVertexArray(self.VAO_actors)
+            # Load uniforms
+            GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.perspectiveMatrix, (16)))
 
-        #camMatrix = np.linalg.inv(self.cameraMatrix)
-        GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.cameraMatrix, (16)))
+            #camMatrix = np.linalg.inv(self.cameraMatrix)
+            GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.cameraMatrix, (16)))
 
-        lightMatrix = self.cameraMatrix[:3, :3]  # Extracts 3*3 matrix out of 4*4
-        GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, np.reshape(lightMatrix, (9)))
+            lightMatrix = self.cameraMatrix[:3, :3]  # Extracts 3*3 matrix out of 4*4
+            GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, np.reshape(lightMatrix, (9)))
 
-        GL.glUniform3f(self.lightPosUnif, self.lightPosition[0], self.lightPosition[1], self.lightPosition[2])
-        GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
-        GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
-        GL.glUniform4f(self.playerPositionUnif, *self.getPlayerPosition())
+            GL.glUniform3f(self.lightPosUnif, self.lightPosition[0], self.lightPosition[1], self.lightPosition[2])
+            GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
+            GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
+            GL.glUniform4f(self.playerPositionUnif, *self.getPlayerPosition())
 
-        # Bind element array
-        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_actors_elements_id)
-        # Draw elements
-        GL.glDrawElements(GL.GL_TRIANGLES, self.VBO_actors_elements_length, GL.GL_UNSIGNED_INT, None)
-        glBindVertexArray(0)
+            # Bind element array
+            GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_actors_elements_id)
+            # Draw elements
+            GL.glDrawElements(GL.GL_TRIANGLES, self.VBO_actors_elements_length, GL.GL_UNSIGNED_INT, None)
+            glBindVertexArray(0)
 
-        GL.glUseProgram(0)
+            GL.glUseProgram(0)
 
     def drawHUD(self):
         """
@@ -885,82 +912,17 @@ class MainWindow(object):
                                 textData)
             messageCounter += 1
 
-    def handleWarrensGameEvents(self):
+    def playGame(self):
         # Let the game move forward
         self.game.play()
         # Detect level change
-        if self.level is not self.game.currentLevel:
-            self.level = self.game.currentLevel
+        if self.level is not self.previousPassLevel:
+            self.previousPassLevel = self.level
+            # On level change we refresh the static objects
+            self.refreshStaticObjects()
         # React to player death
         if self.game.player.state == Character.DEAD:
             self.centerCameraOnActor(self.game.player)
-
-    def handlePyGameEvent(self, event):
-        # Quit
-        if event.type == pygame.QUIT:
-            sys.exit()
-
-        # Window resize
-        elif event.type == VIDEORESIZE:
-            self.resizeWindow(event.dict['size'])
-
-        # mouse
-        elif event.type == MOUSEBUTTONDOWN:
-            if event.button == 1:
-                self.eventDraggingStart()
-            elif event.button == 3:
-                self.eventRotatingStart()
-            elif event.button == 4:
-                self.eventZoomIn()
-            elif event.button == 5:
-                self.eventZoomOut()
-        elif event.type == MOUSEMOTION:
-            self.eventMouseMovement()
-        elif event.type == MOUSEBUTTONUP:
-            if event.button == 1:
-                self.eventDraggingStop()
-            elif event.button == 3:
-                self.eventRotatingStop()
-
-        # keyboard
-        elif event.type == pygame.KEYDOWN:
-            # Handle keys that are always active
-            if event.key == pygame.K_ESCAPE:
-                #switch to main menu state
-                self.state = MainMenuState.MainMenuState(self)
-            elif event.key == pygame.K_p:
-                self.centerCameraOnActor(self.game.player)
-            elif event.key == pygame.K_m:
-                self.centerCameraOnMap()
-            elif event.key == pygame.K_o:
-                self.firstPersonCamera()
-            elif event.key == pygame.K_l:
-                self.isometricViewOnPlayer()
-            # Handle keys that are active while playing
-            if self.game.state == Game.PLAYING:
-                player = self.game.player
-                if player.state == Character.ACTIVE:
-                    # movement
-                    global MOVEMENT_KEYS
-                    if event.key in MOVEMENT_KEYS:
-                        player.tryMoveOrAttack(*MOVEMENT_KEYS[event.key])
-                    # portal keys
-                    elif event.key == pygame.K_LESS:
-                        # check for shift modifier to detect ">" key.
-                        mods = pygame.key.get_mods()
-                        if (mods & KMOD_LSHIFT) or (mods & KMOD_RSHIFT):
-                            player.tryFollowPortalDown()
-                        else:
-                            player.tryFollowPortalUp()
-                    # inventory
-                    elif event.key == pygame.K_i:
-                        state = InventoryState.InventoryState(self, self, self.game.player.inventory)
-                        state.mainLoop()
-                    elif event.key == pygame.K_d:
-                        self.dropInventory()
-                    # interact
-                    elif event.key == pygame.K_COMMA:
-                        player.tryPickUp()
 
     def eventDraggingStart(self):
         self._dragging = True
@@ -1025,7 +987,7 @@ class MainWindow(object):
         This will translate the camera matrix to zoom in.
         """
         # Get the direction of the camera from the camera matrix
-        heading = vec3(self.cameraMatrix[:3, 2] * -1)  # backward
+        heading = vec3(self.cameraMatrix[:3, 2])  # Forward
         # Translate the camera along this direction
         translation_matrix = og_util.translationMatrix44(heading.x, heading.y, heading.z)
         self.cameraMatrix = translation_matrix.dot(self.cameraMatrix)
@@ -1036,7 +998,7 @@ class MainWindow(object):
         This will translate the camera matrix to zoom out.
         """
         # Get the direction of the camera from the camera matrix
-        heading = vec3(self.cameraMatrix[:3, 2])  # Forward
+        heading = vec3(self.cameraMatrix[:3, 2] * -1)  # backward
         # Translate the camera along this direction
         translation_matrix = og_util.translationMatrix44(heading.x, heading.y, heading.z)
         self.cameraMatrix = translation_matrix.dot(self.cameraMatrix)
