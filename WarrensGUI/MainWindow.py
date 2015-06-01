@@ -169,6 +169,14 @@ class MainWindow(object):
         self._cameraMode = mode
 
     @property
+    def cameraDistance(self):
+        return self._cameraDistance
+
+    @cameraDistance.setter
+    def cameraDistance(self,distance):
+        self._cameraDistance = distance
+
+    @property
     def perspectiveMatrix(self):
         """
         Returns the perspective matrix
@@ -233,6 +241,7 @@ class MainWindow(object):
         self._openGlProgram = None
         self._cameraMatrix = None
         self._cameraMode = 0
+        self._cameraDistance = 4.0
         self._perspectiveMatrix = None
         self._lightingMatrix = None
         self._dragging = False
@@ -493,40 +502,57 @@ class MainWindow(object):
             # # Show the screen
             # pygame.display.flip()
 
-    def isometricViewOnPlayer(self):
+    def cycleCameraMode(self):
+        """
+        Cycle through the different camera modes.
+        :return: None
+        """
+        self.cameraMode += 1
+        if self.cameraMode > 3: self.cameraMode = 0
+
+    def setCameraIsometricView(self):
+        """
+        Sets the camera to an isometric view
+        :return: None
+        """
         self.cameraMode = CAM_ISOMETRIC
 
-        factor = 5
+        #TODO: make angles and distance for isometric view changeable using arrow keys
+
+        factor = 4
         x, y, z, w = self.getPlayerPosition()
-        eye = vec3(x + factor * TILESIZE, y - factor * TILESIZE, factor * TILESIZE)
+        eye = vec3(x, y - factor * TILESIZE, 1.75 * factor * TILESIZE)
         lookAt = vec3(x,y,z)
         up = vec3(0,0,1)
 
         self.lookAt(eye,lookAt,up)
 
-    def centerCameraOnActor(self, actor):
+    def setCameraCenterOnActor(self, actor):
         """
         Centers the camera above the given actor.
+        :return: None
         """
         self.cameraMode = CAM_ACTOR
         x = actor.tile.x
         y = actor.tile.y
-        self.cameraMatrix = og_util.translationMatrix44(-1 * x * TILESIZE, -1 * y * TILESIZE, -4.0)
+        self.cameraMatrix = og_util.translationMatrix44(-1 * x * TILESIZE, -1 * y * TILESIZE, -1 * self.cameraDistance)
 
-    def centerCameraOnMap(self):
+    def setCameraCenterOnMap(self):
         """
         Centers the camera above the current map.
+        :return: None
         """
         self.cameraMode = CAM_MAP
-        map = self.game.currentLevel.map
+        map = self.level.map
         x = map.width / 2
         y = map.height / 2
         yOffset = 1 #moves the view on the map slightly so it does not overlap with the hud
         self.cameraMatrix = og_util.translationMatrix44(-1 * x * TILESIZE, -1 * y * TILESIZE + yOffset, -10)
 
-    def firstPersonCamera(self):
+    def setCameraFirstPersonView(self):
         """
-        Moves the camera to a first person view for the player
+        Moves the camera to a first person view for the player.
+        :return: None
         """
         self.cameraMode = CAM_FIRSTPERSON
 
@@ -552,14 +578,23 @@ class MainWindow(object):
         #Eye at player position
         x, y, z, w = self.getPlayerPosition()
         eye = vec3(x,y,z)
-
         dx = self.game.player.direction[0]
         dy = self.game.player.direction[1]
         lookAt = vec3(x + dx, y + dy, z)
-
         up = vec3(0,0,1)
-
         self.cameraMatrix = og_util.lookAtMatrix44(eye,lookAt,up)
+
+    # Window utility functions, these are used by the window states.
+
+    def drawText(self, position, textString, textSize, color):
+        font = pygame.font.Font(None, textSize)
+        textSurface = font.render(textString, True, color)
+        textData = pygame.image.tostring(textSurface, "RGBA", True)
+        GL.glRasterPos3d(*position)
+        GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
+
+    def lookAt(self, eye, center, up):
+        self.cameraMatrix = og_util.lookAtMatrix44(eye, center, up)
 
     def getPlayerPosition(self):
         """
@@ -572,19 +607,6 @@ class MainWindow(object):
         playerY = self.game.player.tile.y * TILESIZE + (TILESIZE / 2)
         playerZ = TILESIZE / 2
         return (playerX, playerY, playerZ, 1.0)
-
-    # Window utility functions, these are used by the window states.
-
-    def drawText(self, position, textString, textSize, color):
-        font = pygame.font.Font(None, textSize)
-        textSurface = font.render(textString, True, color)
-        textData = pygame.image.tostring(textSurface, "RGBA", True)
-        GL.glRasterPos3d(*position)
-        GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
-
-    def lookAt(self, eye, center, up):
-        self.cameraMode = CAM_FREE
-        self.cameraMatrix = og_util.lookAtMatrix44(eye, center, up)
 
     # End of Window utility functions
 
@@ -736,16 +758,17 @@ class MainWindow(object):
         GL.glUseProgram(0)
 
     def drawAll(self):
-        # TODO: Make camera modes completely dependant on the cameramode property, need change in GameState as well.
-        # update camera
-        if self.cameraMode == CAM_FIRSTPERSON:
-            self.firstPersonCamera()
+        # set camera matrix based on current camera mode
+        if self.cameraMode == CAM_MAP:
+            self.setCameraCenterOnMap()
         elif self.cameraMode == CAM_ACTOR:
-            self.centerCameraOnActor(self.game.player)
-
+            self.setCameraCenterOnActor(self.game.player)
+        elif self.cameraMode == CAM_FIRSTPERSON:
+            self.setCameraFirstPersonView()
+        elif self.cameraMode == CAM_ISOMETRIC:
+            self.setCameraIsometricView()
         # draw HUD
         self.drawHUD()
-
         # draw Vector Buffer Arrays
         self.drawVBAs()
 
@@ -922,9 +945,10 @@ class MainWindow(object):
             self.refreshStaticObjects()
         # React to player death
         if self.game.player.state == Character.DEAD:
-            self.centerCameraOnActor(self.game.player)
+            self.setCameraCenterOnActor(self.game.player)
 
     def eventDraggingStart(self):
+        self.cameraMode = CAM_FREE
         self._dragging = True
         # call pygame.mouse.get_rel() to make pygame correctly register the starting point of the drag
         pygame.mouse.get_rel()
@@ -933,6 +957,7 @@ class MainWindow(object):
         self._dragging = False
 
     def eventRotatingStart(self):
+        self.cameraMode = CAM_FREE
         self._rotating = True
         # call pygame.mouse.get_rel() to make pygame correctly register the starting point of the drag
         pygame.mouse.get_rel()
@@ -976,7 +1001,7 @@ class MainWindow(object):
             Y = vec3(0, 1, 0)
             rotationLeftRight = og_util.rotationMatrix(mouseLeftRight, Y)
 
-            # TODO: There is some rotation along the forward axis happening as well now and then :(
+            # TODO: There is some rotation along the forward axis happening as well now and then :( Maybe better to work out the mouse movements using angle in xy, angle in xz and distance?
             # I guess it happens due to combined movements of x and y above.
 
             self.cameraMatrix = (self.cameraMatrix.dot(rotationLeftRight)).dot(rotationUpDown)
@@ -986,6 +1011,7 @@ class MainWindow(object):
         Event handler for ZoomIn event.
         This will translate the camera matrix to zoom in.
         """
+        self.cameraMode = CAM_FREE
         # Get the direction of the camera from the camera matrix
         heading = vec3(self.cameraMatrix[:3, 2])  # Forward
         # Translate the camera along this direction
@@ -997,6 +1023,7 @@ class MainWindow(object):
         Event handler for ZoomOut event.
         This will translate the camera matrix to zoom out.
         """
+        self.cameraMode = CAM_FREE
         # Get the direction of the camera from the camera matrix
         heading = vec3(self.cameraMatrix[:3, 2] * -1)  # backward
         # Translate the camera along this direction

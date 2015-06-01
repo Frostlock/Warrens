@@ -44,7 +44,7 @@ class GameState(State):
 
     def loopInit(self):
         #self.centerCameraOnActor(self.game.player)
-        self.window.centerCameraOnMap()
+        self.window.setCameraCenterOnMap()
 
     def loopDraw(self):
         # Refresh the actors VAO (some actors might have moved)
@@ -92,14 +92,8 @@ class GameState(State):
                 #TODO: There may be a memory leak here, escaping the game and creating a new one creates a chain of game, mainmenu, game, mainmenu, ... states for the mainwindow
                 #Need anoter game menu here that allows to save or quit the game, on quit we should go back to the main menu by closing this gamestate loop (self.loop = False)
 
-            elif event.key == pygame.K_p:
-                self.window.centerCameraOnActor(self.window.game.player)
-            elif event.key == pygame.K_m:
-                self.window.centerCameraOnMap()
-            elif event.key == pygame.K_o:
-                self.window.firstPersonCamera()
-            elif event.key == pygame.K_l:
-                self.window.isometricViewOnPlayer()
+            elif event.key == pygame.K_v:
+                self.window.cycleCameraMode()
 
             # Handle keys that are active while playing
             if self.window.game.state == Game.PLAYING:
