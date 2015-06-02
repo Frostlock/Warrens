@@ -18,8 +18,7 @@ from OpenGL.GL.ARB.vertex_array_object import glBindVertexArray
 from OpenGL import GLUT
 from ctypes import c_void_p
 
-from math import radians
-import sys
+from math import sin, cos, sqrt, radians
 import numpy as np
 
 from WarrensGame.Game import Game
@@ -177,6 +176,50 @@ class MainWindow(object):
         self._cameraDistance = distance
 
     @property
+    def cameraAngleXY(self):
+        """
+        Camera angle in the XY plane.
+        :return: Angle in degrees
+        """
+        return self._cameraAngleXY
+
+    @cameraAngleXY.setter
+    def cameraAngleXY(self, angle):
+        """
+        Set camera angle in the XY plane. The give angle will be normalized to a 0-360 value.
+        :param angle: New camera angle
+        :return: None
+        """
+        if angle > 360:
+            self.cameraAngleXY= angle - 360
+        elif angle < 0:
+            self.cameraAngleXY = 360 + angle
+        else:
+            self._cameraAngleXY = angle
+
+    @property
+    def cameraAngleXZ(self):
+        """
+        Camera angle in the XZ plane.
+        :return: Angle in degrees
+        """
+        return self._cameraAngleXZ
+
+    @cameraAngleXZ.setter
+    def cameraAngleXZ(self, angle):
+        """
+        Set camera angle in the XZ plane. The give angle will be normalized to a 0-90 value.
+        :param angle: New camera angle
+        :return: None
+        """
+        if angle > 90:
+            self.cameraAngleXZ= angle - 90
+        elif angle < 0:
+            self.cameraAngleXZ = 90 + angle
+        else:
+            self._cameraAngleXZ = angle
+
+    @property
     def perspectiveMatrix(self):
         """
         Returns the perspective matrix
@@ -242,6 +285,8 @@ class MainWindow(object):
         self._cameraMatrix = None
         self._cameraMode = 0
         self._cameraDistance = 4.0
+        self._cameraAngleXY = 0
+        self._cameraAngleXZ = 45
         self._perspectiveMatrix = None
         self._lightingMatrix = None
         self._dragging = False
@@ -512,17 +557,21 @@ class MainWindow(object):
 
     def setCameraIsometricView(self):
         """
-        Sets the camera to an isometric view
+        Sets the camera to an isometric view based on the current camera angle in the XY plane and the camera distance.
         :return: None
         """
         self.cameraMode = CAM_ISOMETRIC
 
-        #TODO: make angles and distance for isometric view changeable using arrow keys
-
-        factor = 4
         x, y, z, w = self.getPlayerPosition()
-        eye = vec3(x, y - factor * TILESIZE, 1.75 * factor * TILESIZE)
+
+        zOffset = sin(radians(self.cameraAngleXZ)) * self.cameraDistance
+        XYplaneDistance = sqrt(self.cameraDistance * self.cameraDistance - zOffset * zOffset)
+        xOffset = sin(radians(self.cameraAngleXY)) * XYplaneDistance
+        yOffset = cos(radians(self.cameraAngleXY)) * XYplaneDistance
+        eye = vec3(x + xOffset, y + yOffset, z + zOffset)
+
         lookAt = vec3(x,y,z)
+
         up = vec3(0,0,1)
 
         self.lookAt(eye,lookAt,up)

@@ -95,6 +95,20 @@ class GameState(State):
             elif event.key == pygame.K_v:
                 self.window.cycleCameraMode()
 
+            #TODO: these should keep working while key is still pressed
+            elif event.key == pygame.K_UP:
+                self.window.cameraDistance -= 0.1
+            elif event.key == pygame.K_DOWN:
+                self.window.cameraDistance += 0.1
+            elif event.key == pygame.K_RIGHT:
+                self.window.cameraAngleXY -= 1
+            elif event.key == pygame.K_LEFT:
+                self.window.cameraAngleXY += 1
+            elif event.key == pygame.K_PAGEDOWN:
+                self.window.cameraAngleXZ -= 1
+            elif event.key == pygame.K_PAGEUP:
+                self.window.cameraAngleXZ += 1
+
             # Handle keys that are active while playing
             if self.window.game.state == Game.PLAYING:
                 player = self.window.game.player
