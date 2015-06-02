@@ -157,7 +157,9 @@ def showMenu(target, header, items):
                     selection = None
                     loop = False
                 elif event.unicode in selectionCodes:
-                    #TODO: problem in current implementation option 10 and above can not be selected, hitting 1 will select option 1
+                    # There is a problem here
+                    # This implementation only allows one digit input.
+                    # Therefore option 10 and above can not be selected: hitting 1 for 10 will in fact select option 1
                     selection = int(event.unicode)
                     loop = False       
             
