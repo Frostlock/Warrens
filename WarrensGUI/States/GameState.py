@@ -8,7 +8,7 @@ from WarrensGame.Actors import Character
 
 from WarrensGUI.States.State import State
 from WarrensGUI.States.InventoryState import InventoryState
-from WarrensGUI.States.MainMenuState import MainMenuState
+from WarrensGUI.States.GameMenuState import GameMenuState
 
 # Movement keys
 MOVEMENT_KEYS = {
@@ -86,12 +86,8 @@ class GameState(State):
         elif event.type == pygame.KEYDOWN:
             # Handle keys that are always active
             if event.key == pygame.K_ESCAPE:
-                #switch to main menu state
-                self.window.state = MainMenuState(self.window,self)
-
-                #TODO: There may be a memory leak here, escaping the game and creating a new one creates a chain of game, mainmenu, game, mainmenu, ... states for the mainwindow
-                #Need anoter game menu here that allows to save or quit the game, on quit we should go back to the main menu by closing this gamestate loop (self.loop = False)
-
+                # Show game menu
+                GameMenuState(self.window,self).mainLoop()
             elif event.key == pygame.K_v:
                 self.window.cycleCameraMode()
 

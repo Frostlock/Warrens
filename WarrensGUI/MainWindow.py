@@ -69,8 +69,6 @@ class MainWindow(object):
 
     @state.setter
     def state(self,state):
-        # Register the current state in the new state
-        state.parentState = self.state
         self._state = state
         # Enter main loop of the new state
         state.mainLoop()
@@ -431,6 +429,13 @@ class MainWindow(object):
         self.game.resetGame()
         # Set Game state (which contains the main loop)
         self.state = GameState(self,self.state)
+
+    #TODO: loading and saving to be implemented
+    def saveGame(self):
+        pass
+
+    def loadGame(self):
+        pass
 
     def DEPRECATED_playGame(self):
         # #Init Game

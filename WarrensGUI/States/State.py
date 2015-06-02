@@ -52,6 +52,10 @@ class State(object):
             # Show the screen
             pygame.display.flip()
 
+    def close(self):
+        self.loop = False
+        #self.window.state = self.parentState
+
     def loopInit(self):
         '''
         Part of the main loop, should be implemented by subclasses.

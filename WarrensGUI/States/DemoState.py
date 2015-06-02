@@ -62,4 +62,4 @@ class DemoState(State):
                             obj.grow()
                 # Leave state / Close
                 elif event.key == pygame.K_ESCAPE:
-                    self.loop = False
+                    self.close()

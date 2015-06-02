@@ -66,4 +66,4 @@ class InventoryState(State):
                         self.window.game.player.tryUseItem(useItem)
                 # Leave state / Close
                 elif event.key == pygame.K_ESCAPE:
-                    self.loop = False
+                    self.close()

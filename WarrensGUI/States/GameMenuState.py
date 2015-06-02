@@ -1,4 +1,4 @@
-__author__ = 'Frost'
+__author__ = 'Frostlock'
 
 import sys
 
@@ -8,7 +8,7 @@ from pygame.locals import *
 from WarrensGUI.States.State import State
 from WarrensGUI.States.DemoState import DemoState
 
-class MainMenuState(State):
+class GameMenuState(State):
     '''
     State to show the main menu.
     '''
@@ -17,14 +17,20 @@ class MainMenuState(State):
         '''
         Constructor
         '''
-        super(MainMenuState, self).__init__(window, parentState)
+        super(GameMenuState, self).__init__(window, parentState)
 
     def loopInit(self):
-        self.header = "Warrens - Main Menu"
-        self.items = ["n - New Game",
-                      "d - OpenGl demo (testing purposes)",
-                      "l - Legacy Interface (PyGame only, no OpenGl)",
-                      "q - Quit"]
+        #TODO: Replicate this approach in inventory and main menu states
+        self.header = "Menu"
+        self.items = ["s - Save Game",
+                      "l - Load Game",
+                      "q - Quit Game"]
+        self.keys = [pygame.K_s,
+                     pygame.K_l,
+                     pygame.K_q]
+        self.handlers = [self.saveGame,
+                         self.loadGame,
+                         self.quitGame]
         self.selected = 0
 
     def loopDraw(self):
@@ -51,26 +57,22 @@ class MainMenuState(State):
                     if self.selected > len(self.items)-1: self.selected = len(self.items) - 1
                 # Select
                 elif event.key == pygame.K_RETURN:
-                    if self.selected == 0:
-                        self.window.playNewGame()
-                    elif self.selected == 1:
-                        self.window.state = DemoState(self.window, self)
-                    elif self.selected == 2:
-                        self.window.legacyGui()
-                    elif self.selected == 3:
-                        sys.exit()
-                # New game
-                elif event.key == pygame.K_n:
-                    self.window.playNewGame()
-                # OpenGl test
-                elif event.key == pygame.K_d:
-                    self.window.state = DemoState(self.window, self)
-                # Legacy GUI
-                elif event.key == pygame.K_l:
-                    self.window.legacyGui()
-                # Quit
-                elif event.key == pygame.K_q:
-                    sys.exit()
-                # Leave state / Close
+                    self.handlers[self.selected]()
+                elif event.key in self.keys:
+                    self.handlers[self.keys.index(event.key)]()
                 elif event.key == pygame.K_ESCAPE:
                     self.close()
+
+    def saveGame(self):
+        print "called save"
+        self.window.saveGame()
+        self.close()
+
+    def loadGame(self):
+        print "called load"
+        self.window.loadGame()
+        self.close()
+
+    def quitGame(self):
+        self.close()
+        self.parentState.close()
