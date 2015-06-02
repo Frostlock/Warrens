@@ -876,7 +876,7 @@ class GuiApplication(object):
         if self._targetType == EffectTarget.TILE:
             myTarget = targetTile
         elif self._targetType == EffectTarget.CHARACTER:
-            #TODO: currently this finds all ACTORS, not limited to CHARACTERS
+            #Currently this finds all ACTORS, not limited to CHARACTERS
             #find target actor on tile
             if len(targetTile.actors) == 0: return
             if len(targetTile.actors) == 1: 
