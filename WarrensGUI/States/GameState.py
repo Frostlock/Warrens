@@ -59,7 +59,7 @@ class GameState(State):
             self.handlePyGameEvent(event)
 
         # handle game events
-        self.window.playGame()
+        self.window.progressGame()
 
     def handlePyGameEvent(self, event):
         # Call super class event handler

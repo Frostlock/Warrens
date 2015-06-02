@@ -988,7 +988,7 @@ class MainWindow(object):
                                 textData)
             messageCounter += 1
 
-    def playGame(self):
+    def progressGame(self):
         # Let the game move forward
         self.game.play()
         # Detect level change
