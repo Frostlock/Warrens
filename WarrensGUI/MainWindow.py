@@ -432,9 +432,11 @@ class MainWindow(object):
 
     #TODO: loading and saving to be implemented
     def saveGame(self):
+        print "Called Save but not implemented yet"
         pass
 
     def loadGame(self):
+        print "Called Load but not implemented yet"
         pass
 
     def DEPRECATED_playGame(self):

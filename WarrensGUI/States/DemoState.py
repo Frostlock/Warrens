@@ -1,4 +1,4 @@
-__author__ = 'Frost'
+__author__ = 'Frostlock'
 
 import pygame
 

@@ -7,7 +7,7 @@ from WarrensGame.Game import Game
 from WarrensGame.Actors import Character
 
 from WarrensGUI.States.State import State
-from WarrensGUI.States.InventoryState import InventoryState
+from WarrensGUI.States.InventoryMenuState import InventoryMenuState
 from WarrensGUI.States.GameMenuState import GameMenuState
 
 # Movement keys
@@ -123,7 +123,7 @@ class GameState(State):
                             player.tryFollowPortalUp()
                     # inventory
                     elif event.key == pygame.K_i:
-                        state = InventoryState(self, self, player.inventory)
+                        state = InventoryMenuState(self.window, self, player.inventory)
                         state.mainLoop()
                     elif event.key == pygame.K_d:
                         raise NotImplementedError()

@@ -1,4 +1,4 @@
-__author__ = 'pi'
+__author__ = 'Frostlock'
 
 import sys
 
@@ -84,6 +84,53 @@ class State(object):
         # Window resize
         elif event.type == VIDEORESIZE:
             self.window.resizeWindow(event.dict['size'])
+
+class MenuState(State):
+    """
+    Utility state to show a menu.
+    """
+    def __init__(self, window, parentState=None):
+        """
+        Constructor
+        :param window:
+        :param parentState:
+        :return: MenuState object
+        """
+        super(MenuState, self).__init__(window, parentState)
+
+    def loopInit(self):
+        #Nothing to be done but need to override super class method to avoid error messsage.
+        pass
+
+    def loopDraw(self):
+        # Draw parent behind this inventory
+        if self.parentState is not None: self.parentState.loopDraw()
+
+        # Draw a menu with the items
+        self.drawMenu(self.header, self.items, self.selected)
+
+    def loopEvents(self):
+        # handle pygame (GUI) events
+        events = pygame.event.get()
+        for event in events:
+            self.handlePyGameEvent(event)
+            # keyboard events
+            if event.type == pygame.KEYDOWN:
+               # Select up
+                if event.key == pygame.K_UP:
+                    self.selected -= 1
+                    if self.selected < 0 : self.selected = 0
+                # Select down
+                elif event.key == pygame.K_DOWN:
+                    self.selected += 1
+                    if self.selected > len(self.items)-1: self.selected = len(self.items) - 1
+                # Select
+                elif event.key == pygame.K_RETURN:
+                    self.handlers[self.selected]()
+                elif event.key in self.keys:
+                    self.handlers[self.keys.index(event.key)]()
+                elif event.key == pygame.K_ESCAPE:
+                    self.close()
 
     def drawMenu(self, header, items, selected):
         """

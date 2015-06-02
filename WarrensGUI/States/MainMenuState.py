@@ -1,14 +1,13 @@
-__author__ = 'Frost'
+__author__ = 'Frostlock'
 
 import sys
 
 import pygame
-from pygame.locals import *
 
-from WarrensGUI.States.State import State
+from WarrensGUI.States.State import MenuState
 from WarrensGUI.States.DemoState import DemoState
 
-class MainMenuState(State):
+class MainMenuState(MenuState):
     '''
     State to show the main menu.
     '''
@@ -19,58 +18,24 @@ class MainMenuState(State):
         '''
         super(MainMenuState, self).__init__(window, parentState)
 
-    def loopInit(self):
         self.header = "Warrens - Main Menu"
         self.items = ["n - New Game",
+                      "l - Load Game",
                       "d - OpenGl demo (testing purposes)",
-                      "l - Legacy Interface (PyGame only, no OpenGl)",
+                      "i - Legacy Interface (PyGame only, no OpenGl)",
                       "q - Quit"]
+        self.keys = [pygame.K_n,
+                     pygame.K_l,
+                     pygame.K_d,
+                     pygame.K_i,
+                     pygame.K_q]
+        self.handlers = [self.window.playNewGame,
+                         self.window.loadGame,
+                         self.runDemoState,
+                         self.window.legacyGui,
+                         sys.exit]
         self.selected = 0
 
-    def loopDraw(self):
-        # Draw parent behind this inventory
-        if self.parentState is not None: self.parentState.loopDraw()
+    def runDemoState(self):
+        self.window.state = DemoState(self.window, self)
 
-        # Draw a menu with the items
-        self.drawMenu(self.header, self.items, self.selected)
-
-    def loopEvents(self):
-        # handle pygame (GUI) events
-        events = pygame.event.get()
-        for event in events:
-            self.handlePyGameEvent(event)
-            # keyboard events
-            if event.type == pygame.KEYDOWN:
-               # Select up
-                if event.key == pygame.K_UP:
-                    self.selected -= 1
-                    if self.selected < 0 : self.selected = 0
-                # Select down
-                elif event.key == pygame.K_DOWN:
-                    self.selected += 1
-                    if self.selected > len(self.items)-1: self.selected = len(self.items) - 1
-                # Select
-                elif event.key == pygame.K_RETURN:
-                    if self.selected == 0:
-                        self.window.playNewGame()
-                    elif self.selected == 1:
-                        self.window.state = DemoState(self.window, self)
-                    elif self.selected == 2:
-                        self.window.legacyGui()
-                    elif self.selected == 3:
-                        sys.exit()
-                # New game
-                elif event.key == pygame.K_n:
-                    self.window.playNewGame()
-                # OpenGl test
-                elif event.key == pygame.K_d:
-                    self.window.state = DemoState(self.window, self)
-                # Legacy GUI
-                elif event.key == pygame.K_l:
-                    self.window.legacyGui()
-                # Quit
-                elif event.key == pygame.K_q:
-                    sys.exit()
-                # Leave state / Close
-                elif event.key == pygame.K_ESCAPE:
-                    self.close()
