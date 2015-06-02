@@ -34,7 +34,7 @@ class DemoState(State):
         self.window.loadVAOStaticObjects()
 
         # Set the camera
-        self.window.cameraMode = CAM_LOOKAT
+        self.window.cameraMode = CAM_FREE
         eye = vec3(10,10,10)
         center = vec3(0,0,0)
         up = vec3(0,0,1)
