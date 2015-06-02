@@ -276,7 +276,6 @@ class MainWindow(object):
         """
         # Initialize class properties
         self._game = None
-        self._level = None
         self.previousPassLevel = None
         self._displaySize = DISPLAY_SIZE
         self._openGlProgram = None
@@ -378,13 +377,13 @@ class MainWindow(object):
         GL.glUniform1f(self.fogDistanceUnif, 4.0)
         self.fogActiveUnif = GL.glGetUniformLocation(self.openGlProgram, "fogActive")
 
-        # Generate Vertex Array Object for the level
-        self.VAO_level = GL.GLuint(0)
-        GL.ARB.vertex_array_object.glGenVertexArrays(1, self.VAO_level)
+        # Generate Vertex Array Object for the static objects
+        self.VAO_static = GL.GLuint(0)
+        GL.ARB.vertex_array_object.glGenVertexArrays(1, self.VAO_static)
 
-        # Generate Vertex Array Object for the actors
-        self.VAO_actors = GL.GLuint(0)
-        GL.ARB.vertex_array_object.glGenVertexArrays(1, self.VAO_actors)
+        # Generate Vertex Array Object for the dynamic objects
+        self.VAO_dynamic = GL.GLuint(0)
+        GL.ARB.vertex_array_object.glGenVertexArrays(1, self.VAO_dynamic)
 
         # Recalculate the perspective matrix
         self.calculatePerspectiveMatrix()
@@ -676,14 +675,13 @@ class MainWindow(object):
 
     def loadVAOStaticObjects(self):
         """
-        Initializes the context of the level VAO
+        Initializes the context of the VAO for static objects
         The level VAO contains the basic level mesh
         To optimize performance this will only be called when a new level is loaded
         """
         # Create vertex buffers on the GPU, remember the address IDs
-        #TODO: rename 'level' to static
-        self.VBO_level_id = GL.glGenBuffers(1)
-        self.VBO_level_elements_id = GL.glGenBuffers(1)
+        self.VBO_static_id = GL.glGenBuffers(1)
+        self.VBO_static_elements_id = GL.glGenBuffers(1)
 
         # Construct the data arrays that will be loaded into the buffer
         vertexData = []
@@ -702,19 +700,19 @@ class MainWindow(object):
 
         # Merge the datasets into one buffer object
         # Remember where each data set begins
-        self.VBO_level_color_offset = len(vertexData)
+        self.VBO_static_color_offset = len(vertexData)
         vertexData.extend(colorData)
-        self.VBO_level_normals_offset = len(vertexData)
+        self.VBO_static_normals_offset = len(vertexData)
         vertexData.extend(normalsData)
-        self.VBO_level_length = len(vertexData)
-        self.VBO_level_elements_length = len(elementData)
+        self.VBO_static_length = len(vertexData)
+        self.VBO_static_elements_length = len(elementData)
 
         # Set up the VAO context
         GL.glUseProgram(self.openGlProgram)
-        glBindVertexArray(self.VAO_level)
+        glBindVertexArray(self.VAO_static)
 
         # Load the constructed vertex and color data array into the created array buffer
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.VBO_level_id)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.VBO_static_id)
         array_type = (GL.GLfloat * len(vertexData))
         GL.glBufferData(GL.GL_ARRAY_BUFFER, len(vertexData) * SIZE_OF_FLOAT, array_type(*vertexData), GL.GL_STATIC_DRAW)
         # Enable Vertex inputs and define pointer
@@ -722,15 +720,15 @@ class MainWindow(object):
         GL.glVertexAttribPointer(0, VERTEX_COMPONENTS, GL.GL_FLOAT, False, 0, None)
         # Enable Color inputs and define pointer
         GL.glEnableVertexAttribArray(1)
-        colorDataStart = self.VBO_level_color_offset * SIZE_OF_FLOAT
+        colorDataStart = self.VBO_static_color_offset * SIZE_OF_FLOAT
         GL.glVertexAttribPointer(1, VERTEX_COMPONENTS, GL.GL_FLOAT, False, 0, c_void_p(colorDataStart))
         # Enable Normals inputs and define pointer
         GL.glEnableVertexAttribArray(2)
-        normalsDataStart = self.VBO_level_normals_offset * SIZE_OF_FLOAT
+        normalsDataStart = self.VBO_static_normals_offset * SIZE_OF_FLOAT
         GL.glVertexAttribPointer(2, 3, GL.GL_FLOAT, False, 0, c_void_p(normalsDataStart))
 
         # Load the constructed element data array into the created element array buffer
-        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_level_elements_id)
+        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_static_elements_id)
         array_type = (GL.GLint * len(elementData))
         GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, len(elementData) * SIZE_OF_FLOAT, array_type(*elementData),
                         GL.GL_STATIC_DRAW)
@@ -750,13 +748,12 @@ class MainWindow(object):
 
     def loadVAODynamicObjects(self):
         """
-        Initializes the context of the actors VAO
+        Initializes the context of the VAO for dynamic objects
         This should be called whenever there is a change in actor positions or visibility
         """
         # Create the vertex buffer on the GPU and remember the address ID
-        #TODO: rename 'actors' to dynamic
-        self.VBO_actors_id = GL.glGenBuffers(1)
-        self.VBO_actors_elements_id = GL.glGenBuffers(1)
+        self.VBO_dynamic_id = GL.glGenBuffers(1)
+        self.VBO_dynamic_elements_id = GL.glGenBuffers(1)
 
         # Construct the data arrays that will be loaded into the buffer
         vertexData = []
@@ -775,19 +772,19 @@ class MainWindow(object):
 
         # Merge the datasets into one buffer object
         # Remember where each data set begins
-        self.VBO_actors_color_offset = len(vertexData)
+        self.VBO_dynamic_color_offset = len(vertexData)
         vertexData.extend(colorData)
-        self.VBO_actors_normals_offset = len(vertexData)
+        self.VBO_dynamic_normals_offset = len(vertexData)
         vertexData.extend(normalsData)
-        self.VBO_actors_length = len(vertexData)
-        self.VBO_actors_elements_length = len(elementData)
+        self.VBO_dynamic_length = len(vertexData)
+        self.VBO_dynamic_elements_length = len(elementData)
 
         # Set up the VAO context
         GL.glUseProgram(self.openGlProgram)
-        glBindVertexArray(self.VAO_actors)
+        glBindVertexArray(self.VAO_dynamic)
 
         # Load the constructed vertex data array into the created array buffer
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.VBO_actors_id)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.VBO_dynamic_id)
         array_type = (GL.GLfloat * len(vertexData))
         GL.glBufferData(GL.GL_ARRAY_BUFFER, len(vertexData) * SIZE_OF_FLOAT, array_type(*vertexData), GL.GL_STATIC_DRAW)
         # Enable Vertex inputs and define pointer
@@ -795,15 +792,15 @@ class MainWindow(object):
         GL.glVertexAttribPointer(0, VERTEX_COMPONENTS, GL.GL_FLOAT, False, 0, None)
         # Enable Color inputs and define pointer
         GL.glEnableVertexAttribArray(1)
-        colorDataStart = self.VBO_actors_color_offset * SIZE_OF_FLOAT
+        colorDataStart = self.VBO_dynamic_color_offset * SIZE_OF_FLOAT
         GL.glVertexAttribPointer(1, VERTEX_COMPONENTS, GL.GL_FLOAT, False, 0, c_void_p(colorDataStart))
         # Enable Normals inputs and define pointer
         GL.glEnableVertexAttribArray(2)
-        normalsDataStart = self.VBO_actors_normals_offset * SIZE_OF_FLOAT
+        normalsDataStart = self.VBO_dynamic_normals_offset * SIZE_OF_FLOAT
         GL.glVertexAttribPointer(2, 3, GL.GL_FLOAT, False, 0, c_void_p(normalsDataStart))
 
         # Load the constructed element data array into the created element array buffer
-        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_actors_elements_id)
+        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_dynamic_elements_id)
         array_type = (GL.GLint * len(elementData))
         GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, len(elementData) * SIZE_OF_FLOAT, array_type(*elementData),
                         GL.GL_STATIC_DRAW)
@@ -835,8 +832,8 @@ class MainWindow(object):
         GL.glUseProgram(self.openGlProgram)
 
         if len(self.staticObjects) > 0:
-            # Bind Level VAO context
-            glBindVertexArray(self.VAO_level)
+            # Bind VAO context for static objects
+            glBindVertexArray(self.VAO_static)
             # Load uniforms
             GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.perspectiveMatrix, (16)))
             if DEBUG_GLSL: print "perspectiveMatrix"
@@ -863,14 +860,14 @@ class MainWindow(object):
             GL.glUniform1i(self.fogActiveUnif, 1 if self.fogActive else 0)
 
             # Bind element array
-            GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_level_elements_id)
+            GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_static_elements_id)
             # Draw elements
-            GL.glDrawElements(GL.GL_TRIANGLES, self.VBO_level_elements_length, GL.GL_UNSIGNED_INT, None)
+            GL.glDrawElements(GL.GL_TRIANGLES, self.VBO_static_elements_length, GL.GL_UNSIGNED_INT, None)
             glBindVertexArray(0)
 
         if len(self.dynamicObjects) > 0:
-            # Bind Actors VAO context
-            glBindVertexArray(self.VAO_actors)
+            # Bind VAO context for dynamic objects
+            glBindVertexArray(self.VAO_dynamic)
             # Load uniforms
             GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.perspectiveMatrix, (16)))
 
@@ -886,9 +883,9 @@ class MainWindow(object):
             GL.glUniform4f(self.playerPositionUnif, *self.getPlayerPosition())
 
             # Bind element array
-            GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_actors_elements_id)
+            GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_dynamic_elements_id)
             # Draw elements
-            GL.glDrawElements(GL.GL_TRIANGLES, self.VBO_actors_elements_length, GL.GL_UNSIGNED_INT, None)
+            GL.glDrawElements(GL.GL_TRIANGLES, self.VBO_dynamic_elements_length, GL.GL_UNSIGNED_INT, None)
             glBindVertexArray(0)
 
             GL.glUseProgram(0)
@@ -905,7 +902,7 @@ class MainWindow(object):
 
         # Level name
         GL.glLoadIdentity()
-        self.drawText((-0.98, 0.9, 0), self.game.currentLevel.name, 24, COLOR_PG_HUD_TEXT)
+        self.drawText((-0.98, 0.9, 0), self.level.name, 24, COLOR_PG_HUD_TEXT)
 
         # Player name
         GL.glLoadIdentity()
