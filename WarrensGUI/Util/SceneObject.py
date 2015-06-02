@@ -295,7 +295,6 @@ class OBJ(SceneObject):
                 self.vertices.append(1.0) #add W coord
                 self.normals.extend(OBJnormals[faceNorms[i] - 1])
                 self.colors.extend(color)
-                # TODO: very unefficient currently all vertex, normals and color data is duplicated for each face.
                 self.triangleIndices.append(ind)
                 ind += 1
             # print len(self.vertices)
