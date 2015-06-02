@@ -333,9 +333,6 @@ class GuiApplication(object):
                     global MOVEMENT_KEYS
                     if event.key in MOVEMENT_KEYS:
                         player.tryMoveOrAttack(*MOVEMENT_KEYS[event.key])
-                        #TODO: Decide in the game code if turn is taken or not, tookATurn should be bool on player which can be reset by the game.
-                        self._gamePlayerTookTurn = True
-                    
                     #portal keys
                     elif event.key == pygame.K_LESS:
                         #check for shift modifier to detect ">" key.
@@ -352,10 +349,6 @@ class GuiApplication(object):
                     #interact
                     elif event.key == pygame.K_COMMA:
                         player.tryPickUp()
-                    
-                    # update field of vision
-                    if self._gamePlayerTookTurn:
-                        self.game.currentLevel.map.updateFieldOfView(self.game.player.tile.x, self.game.player.tile.y)
         
     
     def renderGame(self):
