@@ -109,7 +109,7 @@ class MonsterLibrary():
         monster_data = self.monsterIndex[monster_key]
 
         # do not create multiple unique monsters
-        if monster_data['unique'] == 'True':
+        if eval(monster_data['unique']):
             unique_ids = []
             for unique_monster in self.uniqueMonsters:
                 unique_ids.append(unique_monster.id)
