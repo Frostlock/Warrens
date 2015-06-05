@@ -28,7 +28,7 @@ from WarrensGUI.Util import Utilities
 import WarrensGUI.Util.OpenGlUtilities as og_util
 
 from WarrensGUI.Util.LevelSceneObject import LevelSceneObject
-from WarrensGUI.Util.ActorsSceneObject import ActorsSceneObject
+from WarrensGUI.Util.ActorSceneObject import ActorSceneObject
 from WarrensGUI.Util.vec3 import vec3
 from WarrensGUI.Util.Constants import *
 from WarrensGUI.States.MainMenuState import MainMenuState
@@ -666,6 +666,24 @@ class MainWindow(object):
         playerZ = TILESIZE / 2
         return (playerX, playerY, playerZ, 1.0)
 
+    def getActorNormalizedCoords(self,actorObj):
+        '''
+        Calculates the normalized device coordinates for the give ActorSceneObject.
+        More explanation can be found here
+        https://www.opengl.org/discussion_boards/showthread.php/168819-Final-pixel-position-after-transformations
+        :param actorObj:ActorSceneObject
+        :return: Normalized Device Coordinates
+        '''
+        actorVec = actorObj.mainVertex
+        # gl_position as it is calculated in the shader
+        # This needs to be updated when the shader is updated!
+        gl_position = self.perspectiveMatrix.dot(self.cameraMatrix.dot(actorVec))
+        # Perspective divide
+        x = gl_position[0]/gl_position[3]
+        y = gl_position[1]/gl_position[3]
+        z = gl_position[2]/gl_position[3]
+        return (x, y, z)
+
     # End of Window utility functions
 
     def refreshStaticObjects(self):
@@ -741,12 +759,13 @@ class MainWindow(object):
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0)
         GL.glUseProgram(0)
 
-    lastxy = (0, 0)
     def refreshDynamicObjects(self):
         self.dynamicObjects = []
         if self.level is not None:
-            actorsObj = ActorsSceneObject(self.level, TILESIZE)
-            self.dynamicObjects.append(actorsObj)
+            for vTile in self.level.map.visible_tiles:
+                for actor in vTile.actors:
+                    actorObj = ActorSceneObject(actor, TILESIZE)
+                    self.dynamicObjects.append(actorObj)
             # Load the dynamic objects in vertex buffers
             self.loadVAODynamicObjects()
 
@@ -912,6 +931,9 @@ class MainWindow(object):
         GL.glLoadIdentity()
         self.drawText((-0.98, -0.85, 0), self.game.player.name + " (Lvl " + str(self.game.player.playerLevel) + ")", 18, COLOR_PG_HUD_TEXT)
 
+        for actorObj in self.dynamicObjects:
+            self.drawText(self.getActorNormalizedCoords(actorObj), actorObj.actor.name, 14, COLOR_PG_HUD_TEXT)
+
         # Health Bar
         GL.glLoadIdentity()
         GL.glTranslatef(-0.98, -0.94, 0)
@@ -940,7 +962,7 @@ class MainWindow(object):
 
         # Xp Bar
         GL.glLoadIdentity()
-        GL.glTranslatef(-0.98, -0.99, 0)
+        GL.glTranslatef(-0.98, -0.99, -1.0)
         current = self.game.player.xp
         maximum = self.game.player.nextLevelXp
         barWidth = 0.46

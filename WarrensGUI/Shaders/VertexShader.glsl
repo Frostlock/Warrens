@@ -23,6 +23,9 @@ uniform bool fogActive;
 
 void main()
 {
+	// Calculate the gl_Position for the vertex position
+	// Attention the same formula has to be set in the python
+	// code where normalized device coordinates are calculated.
 	vec4 camSpacePosition = cameraMatrix * position;
 	gl_Position = perspectiveMatrix * camSpacePosition;
 
