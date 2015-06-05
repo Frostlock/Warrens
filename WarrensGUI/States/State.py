@@ -162,7 +162,7 @@ class MenuState(State):
 
         # Header
         GL.glLoadIdentity()
-        self.window.drawText((-0.72, 0.72, 0), header, 24, COLOR_PG_HUD_TEXT)
+        self.window.drawText((-0.72, 0.72, 0), header, FONT_HUD_XXL, COLOR_PG_HUD_TEXT)
 
         # Items
         heightOffset = 0
@@ -172,5 +172,5 @@ class MenuState(State):
             else:
                 color = COLOR_PG_HUD_TEXT
             position=(-0.6, 0.6 - heightOffset, 0)
-            self.window.drawText(position, items[i], 20, color)
+            self.window.drawText(position, items[i], FONT_HUD_XL, color)
             heightOffset += 0.1

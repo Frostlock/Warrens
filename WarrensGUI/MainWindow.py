@@ -644,8 +644,7 @@ class MainWindow(object):
 
     # Window utility functions, these are used by the window states.
 
-    def drawText(self, position, textString, textSize, color):
-        font = pygame.font.Font(None, textSize)
+    def drawText(self, position, textString, font, color):
         textSurface = font.render(textString, True, color)
         textData = pygame.image.tostring(textSurface, "RGBA", True)
         GL.glRasterPos3d(*position)
@@ -919,24 +918,28 @@ class MainWindow(object):
         This is not using Vertex Buffers.
         """
         # Switch to Orthographic projection
-        GL.glOrtho(0.0, self.displayWidth, self.displayHeight, 0.0, -1.0, 10.0)
-
+        zNear = 0.1
+        zFar = 10.0
+        GL.glOrtho(0.0, self.displayWidth, self.displayHeight, 0.0, zNear, zFar)
         GL.glClear(GL.GL_DEPTH_BUFFER_BIT)
 
         # Level name
         GL.glLoadIdentity()
-        self.drawText((-0.98, 0.9, 0), self.level.name, 24, COLOR_PG_HUD_TEXT)
+        self.drawText((-0.98, 0.9, zNear), self.level.name, FONT_HUD_XXL, COLOR_PG_HUD_TEXT)
 
         # Player name
         GL.glLoadIdentity()
-        self.drawText((-0.98, -0.85, 0), self.game.player.name + " (Lvl " + str(self.game.player.playerLevel) + ")", 18, COLOR_PG_HUD_TEXT)
+        self.drawText((-0.98, -0.85, zNear), self.game.player.name + " (Lvl " + str(self.game.player.playerLevel) + ")", FONT_HUD_L, COLOR_PG_HUD_TEXT)
 
         for actorObj in self.dynamicObjects:
-            self.drawText(self.getActorNormalizedCoords(actorObj), actorObj.actor.name, 14, COLOR_PG_HUD_TEXT)
+            targetCoords = (self.getActorNormalizedCoords(actorObj)[0],
+                            self.getActorNormalizedCoords(actorObj)[1],
+                            zNear)
+            self.drawText(targetCoords, actorObj.actor.name, FONT_HUD_M, COLOR_PG_HUD_TEXT)
 
         # Health Bar
         GL.glLoadIdentity()
-        GL.glTranslatef(-0.98, -0.94, 0)
+        GL.glTranslatef(-0.98, -0.94, zNear)
         current = self.game.player.currentHitPoints
         maximum = self.game.player.maxHitPoints
         barWidth = 0.46
@@ -962,7 +965,7 @@ class MainWindow(object):
 
         # Xp Bar
         GL.glLoadIdentity()
-        GL.glTranslatef(-0.98, -0.99, -1.0)
+        GL.glTranslatef(-0.98, -0.99, zNear)
         current = self.game.player.xp
         maximum = self.game.player.nextLevelXp
         barWidth = 0.46
@@ -988,30 +991,29 @@ class MainWindow(object):
 
         # FPS
         GL.glLoadIdentity()
-        self.drawText((-0.98, -1, 0), str(self.FPS), 12, COLOR_PG_HUD_TEXT)
+        self.drawText((-0.98, -1, zNear), str(self.FPS), FONT_HUD_S, COLOR_PG_HUD_TEXT)
 
         # Right side: render game messages
         GL.glLoadIdentity()
+        #Offsets in pixels
         widthOffset = 200
         heightOffset = 100
         messageCounter = 1
         nbrOfMessages = len(self.game.messageBuffer)
-        font = pygame.font.Font(None, 20)
+        fontHeight = (FONT_HUD_XL.render("Dummy", 1, COLOR_PG_HUD_TEXT)).get_height()
         while heightOffset > 0:
             if messageCounter > nbrOfMessages: break
             # get messages from game message buffer, starting from the back
             message = self.game.messageBuffer[nbrOfMessages - messageCounter]
             #create textLines for message
-            textLines = Utilities.wrap_multi_line(message, font, self.displayWidth - widthOffset)
+            textLines = Utilities.wrap_multi_line(message, FONT_HUD_XL, self.displayWidth - widthOffset)
             nbrOfLines = len(textLines)
             #blit the lines
             for l in range(1, nbrOfLines + 1):
-                textSurface = font.render(textLines[nbrOfLines - l], 1, (191,191,191))
-                heightOffset = heightOffset - 2 * textSurface.get_height()
-                textData = pygame.image.tostring(textSurface, "RGBA", True)
-                GL.glRasterPos3d(-0.5, -0.88 - (heightOffset / float(self.displayHeight)), 0)
-                GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE,
-                                textData)
+                color = COLOR_PG_HUD_TEXT
+                heightOffset = heightOffset - 2 * fontHeight
+                position=(-0.5, -0.88 - (heightOffset / float(self.displayHeight)), zNear)
+                self.drawText(position, textLines[nbrOfLines - l], FONT_HUD_XL, color)
             messageCounter += 1
 
     def progressGame(self):

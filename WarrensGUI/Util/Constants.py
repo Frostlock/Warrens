@@ -1,5 +1,6 @@
 __author__ = 'pi'
 
+import pygame
 # This module contains a number of shared constants used by the GUI
 
 DISPLAY_SIZE = (800, 600)
@@ -20,6 +21,15 @@ CAM_ACTOR = 1
 CAM_ISOMETRIC = 2
 CAM_FIRSTPERSON = 3
 CAM_FREE = 4
+
+# Fonts
+# Ensure pygame is initialized (According to the pygame doc it is fine to call this multiple times)
+pygame.init()
+FONT_HUD_XXL = pygame.font.Font(None, 24)
+FONT_HUD_XL = pygame.font.Font(None, 20)
+FONT_HUD_L = pygame.font.Font(None, 18)
+FONT_HUD_M = pygame.font.Font(None, 14)
+FONT_HUD_S = pygame.font.Font(None, 12)
 
 ##########
 # COLORS #
