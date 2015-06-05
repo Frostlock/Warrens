@@ -113,6 +113,7 @@ class Map(object):
         """
         FileName of texture file for this map.
         """
+        # TODO: clean out all references to textures? Or keep it in a simplified way? (no corners etc, only 1 per tile type)
         return self._textureFile
     
     #constructor
