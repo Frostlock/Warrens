@@ -173,4 +173,4 @@ class MenuState(State):
                 color = COLOR_PG_HUD_TEXT
             position=(-0.6, 0.6 - heightOffset, 0)
             self.window.drawText(position, items[i], FONT_HUD_XL, color)
-            heightOffset += 0.1
+            heightOffset += 3 * FONT_HUD_XL_HEIGHT / float(self.window.displayHeight)

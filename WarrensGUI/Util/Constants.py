@@ -22,15 +22,6 @@ CAM_ISOMETRIC = 2
 CAM_FIRSTPERSON = 3
 CAM_FREE = 4
 
-# Fonts
-# Ensure pygame is initialized (According to the pygame doc it is fine to call this multiple times)
-pygame.init()
-FONT_HUD_XXL = pygame.font.Font(None, 24)
-FONT_HUD_XL = pygame.font.Font(None, 20)
-FONT_HUD_L = pygame.font.Font(None, 18)
-FONT_HUD_M = pygame.font.Font(None, 14)
-FONT_HUD_S = pygame.font.Font(None, 12)
-
 ##########
 # COLORS #
 ######################################################################
@@ -50,3 +41,23 @@ COLOR_GL_BAR_HEALTH_BG = (0.1, 0, 0, 1)
 COLOR_GL_BAR_XP = (0, 0.6, 0, 1)
 COLOR_GL_BAR_XP_BG = (0, 0.1, 0, 1)
 COLOR_GL_MENU_BG = (0.01, 0.01, 0.01, 0.85)
+
+################
+# PYGAME FONTS #
+################
+
+# Ensure pygame is initialized (According to the pygame doc it is fine to call this multiple times)
+pygame.init()
+
+# Attention: FONT HEIGHTS are in pixels!
+
+FONT_HUD_XXL = pygame.font.Font(None, 24)
+FONT_HUD_XXL_HEIGHT = (FONT_HUD_XXL.render("Dummy", 1, COLOR_PG_HUD_TEXT)).get_height()
+FONT_HUD_XL = pygame.font.Font(None, 20)
+FONT_HUD_XL_HEIGHT = (FONT_HUD_XL.render("Dummy", 1, COLOR_PG_HUD_TEXT)).get_height()
+FONT_HUD_L = pygame.font.Font(None, 18)
+FONT_HUD_L_HEIGHT = (FONT_HUD_L.render("Dummy", 1, COLOR_PG_HUD_TEXT)).get_height()
+FONT_HUD_M = pygame.font.Font(None, 14)
+FONT_HUD_M_HEIGHT = (FONT_HUD_M.render("Dummy", 1, COLOR_PG_HUD_TEXT)).get_height()
+FONT_HUD_S = pygame.font.Font(None, 12)
+FONT_HUD_S_HEIGHT = (FONT_HUD_S.render("Dummy", 1, COLOR_PG_HUD_TEXT)).get_height()

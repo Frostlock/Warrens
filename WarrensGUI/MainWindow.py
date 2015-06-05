@@ -995,24 +995,23 @@ class MainWindow(object):
 
         # Right side: render game messages
         GL.glLoadIdentity()
-        #Offsets in pixels
-        widthOffset = 200
-        heightOffset = 100
+        widthOffsetInPixels = 200
+        heightOffset = 100 / float(self.displayHeight)
         messageCounter = 1
         nbrOfMessages = len(self.game.messageBuffer)
-        fontHeight = (FONT_HUD_XL.render("Dummy", 1, COLOR_PG_HUD_TEXT)).get_height()
+        fontHeight = FONT_HUD_XL_HEIGHT / float(self.displayHeight)
         while heightOffset > 0:
             if messageCounter > nbrOfMessages: break
             # get messages from game message buffer, starting from the back
             message = self.game.messageBuffer[nbrOfMessages - messageCounter]
             #create textLines for message
-            textLines = Utilities.wrap_multi_line(message, FONT_HUD_XL, self.displayWidth - widthOffset)
+            textLines = Utilities.wrap_multi_line(message, FONT_HUD_XL, self.displayWidth - widthOffsetInPixels)
             nbrOfLines = len(textLines)
             #blit the lines
             for l in range(1, nbrOfLines + 1):
                 color = COLOR_PG_HUD_TEXT
                 heightOffset = heightOffset - 2 * fontHeight
-                position=(-0.5, -0.88 - (heightOffset / float(self.displayHeight)), zNear)
+                position=(-0.5, -0.88 - heightOffset, zNear)
                 self.drawText(position, textLines[nbrOfLines - l], FONT_HUD_XL, color)
             messageCounter += 1
 
