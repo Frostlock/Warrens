@@ -608,43 +608,34 @@ class MainWindow(object):
         self.cameraMatrix = og_util.translationMatrix44(-1 * x * TILESIZE, -1 * y * TILESIZE + yOffset, -10)
 
     def setCameraFirstPersonView(self):
-        """
+        '''
         Moves the camera to a first person view for the player.
         :return: None
-        """
+        '''
         self.cameraMode = CAM_FIRSTPERSON
 
-        #OLD CODE
-        # # Translate above the player
-        # x, y, z, w = self.getPlayerPosition()
-        # self.cameraMatrix = og_util.translationMatrix44(-x, -y, -z)
-        # # Rotate to look in player direction
-        # print self.game.player.direction
-        # dx = self.game.player.direction[0]
-        # dy = self.game.player.direction[1]
-        # import numpy as np
-        # directionAngle = -1 * np.arcsin(dx/(np.sqrt(dx*dx + dy*dy)))
-        # if dy < 0 :
-        #     directionAngle= np.pi + np.arcsin(dx/(np.sqrt(dx*dx + dy*dy)))
-        #
-        # playerRotation = og_util.rotationMatrix44(0, 0, directionAngle)
-        # # Rotate upward to look ahead
-        # rotation_matrix = og_util.rotationMatrix44(radians(90), 0, 0).dot(playerRotation)
-        # print rotation_matrix
-        # self.cameraMatrix = rotation_matrix.dot(self.cameraMatrix)
-
-        #Eye at player position
+        # Eye at player position
         x, y, z, w = self.getPlayerPosition()
         eye = vec3(x,y,z)
+        # Look in the direction where the player is heading
         dx = self.game.player.direction[0]
         dy = self.game.player.direction[1]
-        lookAt = vec3(x + dx, y + dy, z)
+        dz = 0.1
+        lookAt = vec3(x + dx, y + dy, z + dz)
         up = vec3(0,0,1)
         self.cameraMatrix = og_util.lookAtMatrix44(eye,lookAt,up)
 
     # Window utility functions, these are used by the window states.
 
     def drawText(self, position, textString, font, color):
+        '''
+        Draw a textstring on the screen.
+        :param position: Tuple (x, y, z) position in normalized device coordinates where string will be printed
+        :param textString: string to be printed
+        :param font: Pygame font to be used to render the text
+        :param color: Color for the printed text
+        :return: None
+        '''
         textSurface = font.render(textString, True, color)
         textData = pygame.image.tostring(textSurface, "RGBA", True)
         GL.glRasterPos3d(*position)
@@ -654,11 +645,11 @@ class MainWindow(object):
         self.cameraMatrix = og_util.lookAtMatrix44(eye, center, up)
 
     def getPlayerPosition(self):
-        """
+        '''
         Returns the current position of the player in model space
         :rtype : Tuple (x, y, z, w)
         :return: The position in 3D model space of the player
-        """
+        '''
         if self.game is None: return (0, 0, 0, 1.0)
         playerX = self.game.player.tile.x * TILESIZE + (TILESIZE / 2)
         playerY = self.game.player.tile.y * TILESIZE + (TILESIZE / 2)
@@ -938,19 +929,16 @@ class MainWindow(object):
             drawCoords = (self.getActorNormalizedCoords(actorObj)[0],
                             self.getActorNormalizedCoords(actorObj)[1],
                             self.getActorNormalizedCoords(actorObj)[2])
-            # Make sure the NormalizedCoords are indeed on the screen (switching view modes sometimes leads to spikes in the coords)
-            # TODO: figure out why switching to first person leads to spikes
-            if -1.0 <= drawCoords[0] and drawCoords[0] <= 1.0 and -1.0 <= drawCoords[1] and drawCoords[1] <= 1.0:
-                foundHeight = False
-                while not foundHeight:
-                    if usedHeights.count(int(drawCoords[1]/fontHeight)) == 0:
-                        usedHeights.append(int(drawCoords[1]/fontHeight))
-                        foundHeight = True
-                    else:
-                        drawCoords = (drawCoords[0],
-                                      drawCoords[1] + fontHeight,
-                                      drawCoords[2])
-                self.drawText(drawCoords, actorObj.actor.name, FONT_HUD_M, COLOR_PG_HUD_TEXT)
+            foundHeight = False
+            while not foundHeight:
+                if usedHeights.count(int(drawCoords[1]/fontHeight)) == 0:
+                    usedHeights.append(int(drawCoords[1]/fontHeight))
+                    foundHeight = True
+                else:
+                    drawCoords = (drawCoords[0],
+                                  drawCoords[1] + fontHeight,
+                                  drawCoords[2])
+            self.drawText(drawCoords, actorObj.actor.name, FONT_HUD_M, COLOR_PG_HUD_TEXT)
 
         # Health Bar
         GL.glLoadIdentity()
