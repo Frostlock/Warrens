@@ -1,14 +1,13 @@
 #!/usr/bin/python
 
-import CONSTANTS
-import Utilities
 from Actors import *
-import AI
 
 #library/config file implementation
 import ConfigParser  # used for config file implementation
 import json  # used to load structured data like tables from strings
 
+import csv
+import random
 
 class Library(object):
     """
@@ -61,149 +60,150 @@ class Library(object):
                 return value
         return 0
 
-class MonsterLibrary(Library):
-    """
-    This class represents a library of monsters.
-    Logic to create monsters goes here. It contains logic related to managing
-    a population of monsters.
-    """
-    
-    @property
-    def uniqueMonsters(self):
-        """
-        Returns a list of all created unique Monster objects
-        """
-        return self._uniqueMonsters
-
-    @property
-    def regularMonsters(self):
-        """
-        Returns a list of all created regular Monster objects
-        """
-        return self._regularMonsters
-
-    @property
-    def monsters(self):
-        """
-        Returns a list of all created Monster objects
-        """
-        allMonsters = []
-        for m in self.uniqueMonsters:
-            allMonsters.append(m)
-        for m in self.regularMonsters:
-            allMonsters.append(m)
-        return allMonsters
-
-    @property
-    def availableMonsters(self):
-        """
-        Returns a list of monsters that can be created.
-        """
-        return self._chancesDictionary["names"]
-    
-    def __init__(self):
-        """
-        Constructor to create a new monster library
-        """
-        #initialize configParser
-        config = ConfigParser.ConfigParser()
-        config.read(CONSTANTS.GAME_CONFIG)
-        #call super class constructor
-        super(MonsterLibrary, self).__init__(config)
-        #initialize class variables
-        self._uniqueMonsters = []
-        self._regularMonsters = []
-        monsterList = self.configParser.get('lists', 'monster list').split(', ')
-        self._initChancesDictionary(monsterList)
-
-
-    def createMonster(self, monster_key):
-        """
-        Function to create and initialize a new Monster.
-        Arguments
-            monster_key - string that identifies a monster in the config file.
-        """
-        # load the monster data from the config
-        monster_data = dict(self.configParser.items(monster_key))
-        monster_data["key"] = monster_key
-
-        # do not create multiple unique monsters
-        if monster_data['unique'] == 'True':
-            unique_ids = []
-            for unique_monster in self.uniqueMonsters:
-                unique_ids.append(unique_monster.id)
-            if monster_key in unique_ids:
-                #This unique was already created, do nothing
-                raise Utilities.GameError('Unique monster' + monster_key + ' already exists.')
-        
-        #create monster
-        newMonster = Monster(monster_data)
-
-        # register the monster
-        if monster_data['unique'] == 'True':
-            self.uniqueMonsters.append(newMonster)
-            #Avoid recreating the same unique monster in the future
-            self.chancesDictionary["names"].remove(newMonster.id)
-        else:
-            self.regularMonsters.append(newMonster)
-        return newMonster
-
-    def getMaxMonstersPerRoomForDifficulty(self, difficulty):
-        #maximum number of monsters per room
-        max_monsters = self._fromDungeonLevel(
-                json.loads(self.configParser.get('lists', 'max monsters')),
-                difficulty)
-        return max_monsters
-
-    def getRandomMonster(self, difficulty):
-        #Determine possibilities
-        possibilities = self.chancesDictionary["names"]
-            
-        #Determine chances for every possibility
-        chances = []
-        for possi in possibilities:
-            chanceTable = self.chancesDictionary[possi]
-            chance = self._fromDungeonLevel(chanceTable, difficulty)
-            chances.append(chance)
-
-        #randomly select a possibility
-        choice = possibilities[Utilities.randomChoiceIndex(chances)]
-
-        #create the monster
-        monster = self.createMonster(choice)
-        return monster
-
-    def generateMonster(self,difficulty):
-        '''
-        Completely random generation of a monster
-        '''
-        Utilities.message('generating monster from scratch', 'GENERATION')
-        
-        monster_data = {}
-        
-        #Actor components
-        monster_data['key'] = 'random'
-        monster_data['char'] = 'M'
-        monster_data['hitdie'] = str(difficulty) + 'd8'
-        monster_data['name'] = 'Unrecognizable aberation'
-        monster_data['color'] = '[65, 255, 85]'
-
-        #Character components
-        monster_data['defense'] = str(difficulty)
-        monster_data['power'] = str(difficulty)
-        monster_data['xp'] = difficulty * difficulty * 50
-        monster_data['ai'] = 'BasicMonsterAI'
-
-        #Monster components
-        monster_data['flavor'] = 'An unrecognizable aberation approaches'
-        monster_data['killed_by'] = 'The aberation wanders around your remains.'
-        
-        #create monster        
-        newMonster = Monster(monster_data)
-        
-        # register the monster
-        self.regularMonsters.append(newMonster)
-        return newMonster
+# TODO: Remove following old implementation
+# class MonsterLibrary(Library):
+#     """
+#     This class represents a library of monsters.
+#     Logic to create monsters goes here. It contains logic related to managing
+#     a population of monsters.
+#     """
+#
+#     @property
+#     def uniqueMonsters(self):
+#         """
+#         Returns a list of all created unique Monster objects
+#         """
+#         return self._uniqueMonsters
+#
+#     @property
+#     def regularMonsters(self):
+#         """
+#         Returns a list of all created regular Monster objects
+#         """
+#         return self._regularMonsters
+#
+#     @property
+#     def monsters(self):
+#         """
+#         Returns a list of all created Monster objects
+#         """
+#         allMonsters = []
+#         for m in self.uniqueMonsters:
+#             allMonsters.append(m)
+#         for m in self.regularMonsters:
+#             allMonsters.append(m)
+#         return allMonsters
+#
+#     @property
+#     def availableMonsters(self):
+#         """
+#         Returns a list of monsters that can be created.
+#         """
+#         return self._chancesDictionary["names"]
+#
+#     def __init__(self):
+#         """
+#         Constructor to create a new monster library
+#         """
+#         #initialize configParser
+#         config = ConfigParser.ConfigParser()
+#         config.read(CONSTANTS.GAME_CONFIG)
+#         #call super class constructor
+#         super(MonsterLibrary, self).__init__(config)
+#         #initialize class variables
+#         self._uniqueMonsters = []
+#         self._regularMonsters = []
+#         monsterList = self.configParser.get('lists', 'monster list').split(', ')
+#         self._initChancesDictionary(monsterList)
+#
+#
+#     def createMonster(self, monster_key):
+#         """
+#         Function to create and initialize a new Monster.
+#         Arguments
+#             monster_key - string that identifies a monster in the config file.
+#         """
+#         # load the monster data from the config
+#         monster_data = dict(self.configParser.items(monster_key))
+#         monster_data["key"] = monster_key
+#
+#         # do not create multiple unique monsters
+#         if monster_data['unique'] == 'True':
+#             unique_ids = []
+#             for unique_monster in self.uniqueMonsters:
+#                 unique_ids.append(unique_monster.id)
+#             if monster_key in unique_ids:
+#                 #This unique was already created, do nothing
+#                 raise Utilities.GameError('Unique monster' + monster_key + ' already exists.')
+#
+#         #create monster
+#         newMonster = Monster(monster_data)
+#
+#         # register the monster
+#         if monster_data['unique'] == 'True':
+#             self.uniqueMonsters.append(newMonster)
+#             #Avoid recreating the same unique monster in the future
+#             self.chancesDictionary["names"].remove(newMonster.id)
+#         else:
+#             self.regularMonsters.append(newMonster)
+#         return newMonster
+#
+#     def getMaxMonstersPerRoomForDifficulty(self, difficulty):
+#         #maximum number of monsters per room
+#         max_monsters = self._fromDungeonLevel(
+#                 json.loads(self.configParser.get('lists', 'max monsters')),
+#                 difficulty)
+#         return max_monsters
+#
+#     def getRandomMonster(self, difficulty):
+#         #Determine possibilities
+#         possibilities = self.chancesDictionary["names"]
+#
+#         #Determine chances for every possibility
+#         chances = []
+#         for possi in possibilities:
+#             chanceTable = self.chancesDictionary[possi]
+#             chance = self._fromDungeonLevel(chanceTable, difficulty)
+#             chances.append(chance)
+#
+#         #randomly select a possibility
+#         choice = possibilities[Utilities.randomChoiceIndex(chances)]
+#
+#         #create the monster
+#         monster = self.createMonster(choice)
+#         return monster
+#
+#     def generateMonster(self,difficulty):
+#         '''
+#         Completely random generation of a monster
+#         '''
+#         Utilities.message('generating monster from scratch', 'GENERATION')
+#
+#         monster_data = {}
+#
+#         #Actor components
+#         monster_data['key'] = 'random'
+#         monster_data['char'] = 'M'
+#         monster_data['hitdie'] = str(difficulty) + 'd8'
+#         monster_data['name'] = 'Unrecognizable aberation'
+#         monster_data['color'] = '[65, 255, 85]'
+#
+#         #Character components
+#         monster_data['defense'] = str(difficulty)
+#         monster_data['power'] = str(difficulty)
+#         monster_data['xp'] = difficulty * difficulty * 50
+#         monster_data['ai'] = 'BasicMonsterAI'
+#
+#         #Monster components
+#         monster_data['flavor'] = 'An unrecognizable aberation approaches'
+#         monster_data['killed_by'] = 'The aberation wanders around your remains.'
+#
+#         #create monster
+#         newMonster = Monster(monster_data)
+#
+#         # register the monster
+#         self.regularMonsters.append(newMonster)
+#         return newMonster
 
 class ItemLibrary(Library):
     """
@@ -288,3 +288,162 @@ class ItemLibrary(Library):
         #create the item
         item = self.createItem(choice)
         return item
+
+
+class MonsterLibrary():
+    '''
+    This class represents a library of monsters.
+    Logic to create monsters goes here. It contains logic related to managing
+    a population of monsters.
+    '''
+
+    @property
+    def uniqueMonsters(self):
+        """
+        Returns a list of all created unique Monster objects
+        """
+        return self._uniqueMonsters
+
+    @property
+    def regularMonsters(self):
+        """
+        Returns a list of all created regular Monster objects
+        """
+        return self._regularMonsters
+
+    @property
+    def monsters(self):
+        """
+        Returns a list of all created Monster objects
+        """
+        allMonsters = []
+        for m in self.uniqueMonsters:
+            allMonsters.append(m)
+        for m in self.regularMonsters:
+            allMonsters.append(m)
+        return allMonsters
+
+    @property
+    def availableMonsters(self):
+        """
+        Returns a list of monsters that can be created.
+        """
+        return self.monsterIndex.keys()
+
+    @property
+    def monsterIndex(self):
+        '''
+        Dictionary that contains all monster data.
+        Keys are monster keys.
+        :return: Dictionary
+        '''
+        return self._monsterIndex
+
+    @property
+    def challengeIndex(self):
+        '''
+        Dictionary that an array of monster data dictionaries per challenge rating
+        Keys are challenge rating.
+        :return: Dictionary of arrays
+        '''
+        return self._challengeIndex
+
+    def __init__(self):
+        #initialize class variables
+        self._uniqueMonsters = []
+        self._regularMonsters = []
+        self._monsterIndex = {}
+        self._challengeIndex = {}
+
+        # read data from CSV file
+        with open("./WarrensGame/monsters.csv", "rb") as csvfile:
+            reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
+            for monsterDataDict in reader:
+                # Register the monster data in the data dictionary
+                self._monsterIndex[monsterDataDict['key']]=monsterDataDict
+                # Register the monster data in the challenge dictionary
+                if not int(monsterDataDict['challengeRating']) in self.challengeIndex.keys():
+                    self.challengeIndex[int(monsterDataDict['challengeRating'])] = []
+                self.challengeIndex[int(monsterDataDict['challengeRating'])].append(monsterDataDict)
+
+    def getMaxMonstersPerRoomForDifficulty(self, difficulty):
+        #maximum number of monsters per room
+        max_monsters = difficulty / 2
+        if max_monsters == 0: max_monsters = 1
+        return max_monsters
+
+    def getRandomMonster(self, maxChallengeRating):
+        # Determine possibilities
+        while not maxChallengeRating in self.challengeIndex.keys():
+            maxChallengeRating -= 1
+            if maxChallengeRating <= 0: raise Utilities.GameError("No monsters available below the give challenge rating")
+        # Make a random choice
+        possibilities = self.challengeIndex[maxChallengeRating]
+        selection = random.choice(possibilities)
+        # create the monster
+        monster = self.createMonster(selection["key"])
+        return monster
+
+    def createMonster(self, monster_key):
+        '''
+        Function to create and initialize a new Monster.
+        :param monster_key: string that identifies a monster in the config file.
+        :return: Monster
+        '''
+        # load the monster data from the config
+        monster_data = self.monsterIndex[monster_key]
+
+        # do not create multiple unique monsters
+        if monster_data['unique'] == 'True':
+            unique_ids = []
+            for unique_monster in self.uniqueMonsters:
+                unique_ids.append(unique_monster.id)
+            if monster_key in unique_ids:
+                #This unique was already created, do nothing
+                raise Utilities.GameError('Unique monster' + monster_key + ' already exists.')
+
+        #create monster
+        newMonster = Monster(monster_data)
+
+        # register the monster
+        if monster_data['unique'] == 'True':
+            self.uniqueMonsters.append(newMonster)
+            #Avoid randomly recreating the same unique monster in the future
+            self.challengeIndex[int(monster_data["challengeRating"])].remove(monster_data)
+            if len(self.challengeIndex[int(monster_data["challengeRating"])]) == 0:
+                del self.challengeIndex[int(monster_data["challengeRating"])]
+        else:
+            self.regularMonsters.append(newMonster)
+        return newMonster
+
+    def generateMonster(self,difficulty):
+        '''
+        Completely random generation of a monster
+        '''
+        Utilities.message('generating monster from scratch', 'GENERATION')
+
+        monster_data = {}
+
+        #Actor components
+        monster_data['key'] = 'random'
+        monster_data['char'] = 'M'
+        monster_data['hitdie'] = str(difficulty) + 'd8'
+        monster_data['name'] = 'Unrecognizable aberation'
+        monster_data['color'] = '[65, 255, 85]'
+
+        #Character components
+        monster_data['defense'] = str(difficulty)
+        monster_data['power'] = str(difficulty)
+        monster_data['xp'] = difficulty * difficulty * 50
+        monster_data['ai'] = 'BasicMonsterAI'
+
+        #Monster components
+        monster_data['flavor'] = 'An unrecognizable aberation approaches'
+        monster_data['killed_by'] = 'The aberation wanders around your remains.'
+
+        #create monster
+        newMonster = Monster(monster_data)
+
+        # register the monster
+        self.regularMonsters.append(newMonster)
+        return newMonster

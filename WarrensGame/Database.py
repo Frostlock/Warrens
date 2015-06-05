@@ -2,6 +2,10 @@
 Created on Apr 14, 2014
 
 @author: pi
+
+This file contains some testing code to access a sqlite database.
+It should not be used.
+Currently there are no plans to store the game data in sqlite.
 '''
 import sqlite3
 
