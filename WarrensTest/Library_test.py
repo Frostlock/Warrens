@@ -113,6 +113,17 @@ class TestItemLibrary(unittest.TestCase):
         """
         item = self.ilib.getRandomItem(5)
         #print 'Created random item: ' + item.name
+        with self.assertRaises(GameError):
+            self.ilib.getRandomItem(0)
+
+    def test_modifiedItem(self):
+        """
+        Test if we can create modified items
+        """
+        with self.assertRaises(GameError):
+            self.ilib.createItem("dagger","minor")
+        with self.assertRaises(GameError):
+            self.ilib.createItem("firenova","soldier")
 
 if __name__ == "__main__":
     unittest.main()

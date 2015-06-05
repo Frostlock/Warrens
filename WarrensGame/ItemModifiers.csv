@@ -1,0 +1,19 @@
+key,type,position,name,modifierLevel,effect,targeted,effectradius,effecthitdie,effectduration,effectcolor,defense_bonus,power_bonus,hitdie_bonus
+minor,Consumable,prefix,Minor,-1,,,,-1,,,,,
+major,Consumable,prefix,Major,1,,,,1,,,,,
+exquisite,Consumable,prefix,Exquisite,2,,,,2,,,,,
+tiny,Equipment,prefix,Tiny,-2,,,,,,,-1,-1,-2
+small,Equipment,prefix,Small,-1,,,,,,,0,0,-1
+large,Equipment,prefix,Large,1,,,,,,,0,0,1
+huge,Equipment,prefix,Huge,2,,,,,,,1,1,2
+giant,Equipment,prefix,Giant,3,,,,,,,2,2,3
+rusty,Equipment,prefix,Rusty,-1,,,,,,,0,-1,0
+ancient,Equipment,prefix,Ancient,0,,,,,,,0,0,0
+soldier,Equipment,suffix,of the soldier,1,,,,,,,0,1,0
+slaying,Equipment,suffix,of slaying,3,,,,,,,-2,3,0
+minorProtection,Equipment,suffix,of minor protection,1,,,,,,,1,0,0
+protection,Equipment,suffix,of protection,2,,,,,,,2,0,0
+majorProtection,Equipment,suffix,of major protection,3,,,,,,,3,0,0
+bear,Equipment,suffix,of the bear,1,,,,,,,0,0,2
+elephant,Equipment,suffix,of the elephant,2,,,,,,,0,0,4
+whale,Equipment,suffix,of the whale,3,,,,,,,0,0,6

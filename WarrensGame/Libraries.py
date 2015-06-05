@@ -1,6 +1,7 @@
 
 from Actors import *
 from CONSTANTS import *
+from Utilities import GameError
 
 import csv
 import random
@@ -75,7 +76,7 @@ class MonsterLibrary():
             reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for monsterDataDict in reader:
                 # Register the monster data in the data dictionary
-                self._monsterIndex[monsterDataDict['key']]=monsterDataDict
+                self.monsterIndex[monsterDataDict['key']]=monsterDataDict
                 # Register the monster data in the challenge dictionary
                 if not int(monsterDataDict['challengeRating']) in self.challengeIndex.keys():
                     self.challengeIndex[int(monsterDataDict['challengeRating'])] = []
@@ -115,7 +116,7 @@ class MonsterLibrary():
                 unique_ids.append(unique_monster.id)
             if monster_key in unique_ids:
                 #This unique was already created, do nothing
-                raise Utilities.GameError('Unique monster' + monster_key + ' already exists.')
+                raise GameError('Unique monster' + monster_key + ' already exists.')
 
         #create monster
         newMonster = Monster(monster_data)
@@ -186,7 +187,8 @@ class ItemLibrary():
     @property
     def itemIndex(self):
         '''
-        Returns a list of the items that this library has created.
+        Returns a dictionary of the items that this library can create.
+        :return: Dictionary
         '''
         return self._itemIndex
 
@@ -200,6 +202,30 @@ class ItemLibrary():
         '''
         return self._itemLevelIndex
 
+    @property
+    def availableModifiers(self):
+        '''
+        Returns a list of item modifiers that can be applied.
+        '''
+        return self.modifierIndex.keys()
+
+    @property
+    def modifierIndex(self):
+        '''
+        Returns a dictionary of item modifiers that this library can apply.
+        :return: Dictionary
+        '''
+        return self._modifierIndex
+
+    @property
+    def modifierLevelIndex(self):
+        '''
+        Dictionary with an array of item modifier data dictionaries per modifier level
+        Keys are Modifier Level.
+        :return: Dictionary of arrays
+        '''
+        return self._modifierLevelIndex
+
     def __init__(self):
         '''
         Constructor to create a new item library
@@ -208,22 +234,36 @@ class ItemLibrary():
         self._items = []
         self._itemIndex = {}
         self._itemLevelIndex = {}
+        self._modifierIndex = {}
+        self._modifierLevelIndex = {}
 
-        # read data from CSV file
+        # read item data from CSV file
         with open(DATA_ITEMS, "rb") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for itemDataDict in reader:
                 # Register the item data in the data dictionary
-                self._itemIndex[itemDataDict['key']]=itemDataDict
+                self.itemIndex[itemDataDict['key']]=itemDataDict
                 # Register the item data in the item level dictionary
                 if not int(itemDataDict['itemLevel']) in self.itemLevelIndex.keys():
                     self.itemLevelIndex[int(itemDataDict['itemLevel'])] = []
                 self.itemLevelIndex[int(itemDataDict['itemLevel'])].append(itemDataDict)
 
-    def createItem(self, item_key):
+        # read item modifier data from CSV file
+        with open(DATA_ITEM_MODIFIERS, "rb") as csvfile:
+            reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
+            for modifierDataDict in reader:
+                # Register the item modifier data in the data dictionary
+                self.modifierIndex[modifierDataDict['key']]=modifierDataDict
+                # Register the item modifier data in the modifier level dictionary
+                if not int(modifierDataDict['modifierLevel']) in self.modifierLevelIndex.keys():
+                    self.modifierLevelIndex[int(modifierDataDict['modifierLevel'])] = []
+                self.modifierLevelIndex[int(modifierDataDict['modifierLevel'])].append(modifierDataDict)
+
+    def createItem(self, item_key, modifier_key=None):
         '''
         Function to create and initialize a new Item.
         :param item_key: string that identifies the item
+        :param modifier_key: string that identifies the item modifier
         :return: Item object
         '''
         # load the monster data from the config
@@ -233,7 +273,15 @@ class ItemLibrary():
         item_class = eval(item_data['type'])
         newItem = item_class and item_class(item_data) or None
         if newItem is None:
-            raise Utilities.GameError('Failed to create item with key: ' + item_key + '; unknown item type: ' + item_data['type'])
+            raise GameError('Failed to create item with key: ' + item_key + '; unknown item type: ' + item_data['type'])
+
+        if modifier_key is not None:
+            modifier_data = self.modifierIndex[modifier_key]
+            if modifier_data["type"] == item_data["type"]:
+                #TODO: Apply the modifier
+                pass
+            else:
+                raise GameError("Incompatible item modifier type. Can not apply " + modifier_key + " to " + item_key)
 
         # register the new item
         self.items.append(newItem)
@@ -249,10 +297,11 @@ class ItemLibrary():
         # Determine possibilities
         while not maxItemLevel in self.itemLevelIndex.keys():
             maxItemLevel -= 1
-            if maxItemLevel <= 0: raise Utilities.GameError("No items available below the give item level")
+            if maxItemLevel <= 0: raise GameError("No items available below the give item level")
         # Make a random choice
         possibilities = self.itemLevelIndex[maxItemLevel]
         selection = random.choice(possibilities)
+        #TODO: include items for lower levels and make up with modifiers
         # Create the item
         newItem = self.createItem(selection["key"])
         return newItem

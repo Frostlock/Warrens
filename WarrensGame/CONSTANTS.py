@@ -45,8 +45,9 @@ LEVEL_UP_BASE = 200
 LEVEL_UP_FACTOR = 150
 
 #data files
-DATA_MONSTERS = "./WarrensGame/monsters.csv"
-DATA_ITEMS = "./WarrensGame/items.csv"
+DATA_MONSTERS = "./WarrensGame/Monsters.csv"
+DATA_ITEMS = "./WarrensGame/Items.csv"
+DATA_ITEM_MODIFIERS = "./WarrensGame/ItemModifiers.csv"
 
 #config switches
 SHOW_GAME_LOGGING = False
