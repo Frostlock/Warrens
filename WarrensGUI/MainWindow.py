@@ -931,11 +931,26 @@ class MainWindow(object):
         GL.glLoadIdentity()
         self.drawText((-0.98, -0.85, zNear), self.game.player.name + " (Lvl " + str(self.game.player.playerLevel) + ")", FONT_HUD_L, COLOR_PG_HUD_TEXT)
 
+        # Labels for dynamic objects
+        usedHeights = []
+        fontHeight = FONT_HUD_M_HEIGHT / float(self.displayHeight)
         for actorObj in self.dynamicObjects:
-            targetCoords = (self.getActorNormalizedCoords(actorObj)[0],
+            drawCoords = (self.getActorNormalizedCoords(actorObj)[0],
                             self.getActorNormalizedCoords(actorObj)[1],
-                            zNear)
-            self.drawText(targetCoords, actorObj.actor.name, FONT_HUD_M, COLOR_PG_HUD_TEXT)
+                            self.getActorNormalizedCoords(actorObj)[2])
+            # Make sure the NormalizedCoords are indeed on the screen (switching view modes sometimes leads to spikes in the coords)
+            # TODO: figure out why switching to first person leads to spikes
+            if -1.0 <= drawCoords[0] and drawCoords[0] <= 1.0 and -1.0 <= drawCoords[1] and drawCoords[1] <= 1.0:
+                foundHeight = False
+                while not foundHeight:
+                    if usedHeights.count(int(drawCoords[1]/fontHeight)) == 0:
+                        usedHeights.append(int(drawCoords[1]/fontHeight))
+                        foundHeight = True
+                    else:
+                        drawCoords = (drawCoords[0],
+                                      drawCoords[1] + fontHeight,
+                                      drawCoords[2])
+                self.drawText(drawCoords, actorObj.actor.name, FONT_HUD_M, COLOR_PG_HUD_TEXT)
 
         # Health Bar
         GL.glLoadIdentity()
@@ -1002,12 +1017,12 @@ class MainWindow(object):
         fontHeight = FONT_HUD_XL_HEIGHT / float(self.displayHeight)
         while heightOffset > 0:
             if messageCounter > nbrOfMessages: break
-            # get messages from game message buffer, starting from the back
+            # Retrieve messages from game message buffer, starting from the back
             message = self.game.messageBuffer[nbrOfMessages - messageCounter]
-            #create textLines for message
+            # Wrap message in multiple lines
             textLines = Utilities.wrap_multi_line(message, FONT_HUD_XL, self.displayWidth - widthOffsetInPixels)
             nbrOfLines = len(textLines)
-            #blit the lines
+            # Draw lines
             for l in range(1, nbrOfLines + 1):
                 color = COLOR_PG_HUD_TEXT
                 heightOffset = heightOffset - 2 * fontHeight
