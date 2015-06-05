@@ -1,7 +1,7 @@
 key,char,name,power,hitdie,defense,xp,unique,challengeRating,color,flavor,killed_by,ai
-jelly,j,jelly,3,2d6,2,25,False,2,"[255,255,0]","Ew,a nasty sticky substance crawling toward you.","Jelly completely absorbs you... Blub.",BasicMonsterAI
-rat,r,rat,6,1d6,0,50,False,1,"[240,240,240]","A big rat scuttling around.","The rat crawls up your arm and rips out your throat.",BasicMonsterAI
-troll,T,troll,8,5d6,2,100,False,3,"[0,128,0]",,"The trolls wicked grin is the last thing you see before everything goes dark.",BasicMonsterAI
-zombie,z,zombie,4,3d8,0,35,False,1,"[64,128,64]","It looks like a walking corpse that has seen better days.","Zombie grunts happily at your corpse and starts eating.",BasicMonsterAI
-zombie_master,Z,"Zombie Master",10,5d8,5,5000,True,5,"[164,228,164]","This walking corpse appears to be a lot faster and agile than you would expect.","Zombie Masters kicks your corpse one final time and calmly walks away.",BasicMonsterAI
-zombie_bob,b,"Bob the zombie",4,5d8,0,100,True,1,"[64,128,164]","This zombie is wearing a sign that reads:'Hi, my name is Bob'","Bob grunts.",BasicMonsterAI
+jelly,j,jelly,3,2d6,2,25,False,2,"[255,255,0]","Ew,a nasty sticky substance crawling toward you.",Jelly completely absorbs you... Blub.,BasicMonsterAI
+rat,r,rat,6,1d6,0,50,False,1,"[240,240,240]",A big rat scuttling around.,The rat crawls up your arm and rips out your throat.,BasicMonsterAI
+troll,T,troll,8,5d6,2,100,False,3,"[0,128,0]",,The trolls wicked grin is the last thing you see before everything goes dark.,BasicMonsterAI
+zombie,z,zombie,4,3d8,0,35,False,1,"[64,128,64]",It looks like a walking corpse that has seen better days.,Zombie grunts happily at your corpse and starts eating.,BasicMonsterAI
+zombie_master,Z,Zombie Master,10,5d8,5,5000,True,5,"[164,228,164]",This walking corpse appears to be a lot faster and agile than you would expect.,Zombie Masters kicks your corpse one final time and calmly walks away.,BasicMonsterAI
+zombie_bob,b,Bob the zombie,4,5d8,0,100,True,1,"[64,128,164]","This zombie is wearing a sign that reads:'Hi, my name is Bob'",Bob grunts.,BasicMonsterAI
