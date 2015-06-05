@@ -282,7 +282,7 @@ class MainWindow(object):
         self._cameraMatrix = None
         self._cameraMode = 0
         self._cameraDistance = 4.0
-        self._cameraAngleXY = 0
+        self._cameraAngleXY = 180
         self._cameraAngleXZ = 45
         self._perspectiveMatrix = None
         self._lightingMatrix = None
@@ -333,16 +333,19 @@ class MainWindow(object):
         """
         pMat = np.zeros((4, 4), 'f')
 
-        fFrustumScale = 1.0
+        fFrustumScale = 1.0 # for a frustrum angle of 45 degrees
         fzNear = 0.1
-        fzFar = 1000.0
+        fzFar = 100.0
+
+        #Attention with the indices the numpy array is ROW MAJOR!
 
         pMat[0, 0] = fFrustumScale * 1
         pMat[1, 1] = fFrustumScale * (float(self.displayWidth) / self.displayHeight)
+        # pMat[0, 0] = fFrustumScale / (float(self.displayWidth) / self.displayHeight)
+        # pMat[1, 1] = fFrustumScale
         pMat[2, 2] = (fzFar + fzNear) / (fzNear - fzFar)
-        pMat[3, 2] = (2 * fzFar * fzNear) / (fzNear - fzFar)
-        pMat[2, 3] = -1.0
-
+        pMat[2, 3] = (2 * fzFar * fzNear) / (fzNear - fzFar)
+        pMat[3, 2] = -1.0
         self.perspectiveMatrix = pMat
 
     def initOpenGl(self):
@@ -513,7 +516,7 @@ class MainWindow(object):
 
             # Calculate rotation matrix and multiply by camera matrix    
             rotation = rotation_direction * rotation_speed * time_passed_seconds
-            rotation_matrix = og_util.rotationMatrix44(*rotation)
+            rotation_matrix = og_util.rotationMatrix3Axes44(*rotation)
             #print rotation_matrix
             # "rotate the world around the origin"
             #self.cameraMatrix = rotation_matrix.dot(self.cameraMatrix)
@@ -738,6 +741,7 @@ class MainWindow(object):
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0)
         GL.glUseProgram(0)
 
+    lastxy = (0, 0)
     def refreshDynamicObjects(self):
         self.dynamicObjects = []
         if self.level is not None:
@@ -835,19 +839,19 @@ class MainWindow(object):
             # Bind VAO context for static objects
             glBindVertexArray(self.VAO_static)
             # Load uniforms
-            GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.perspectiveMatrix, (16)))
+            # Attention: when loading numpy arrays to opengl we need to set GL.GL_TRUE to transpose from row major to column major.
+            GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_TRUE, np.reshape(self.perspectiveMatrix, (16)))
             if DEBUG_GLSL: print "perspectiveMatrix"
             if DEBUG_GLSL: print self.perspectiveMatrix
 
-            #camMatrix = np.linalg.inv(self.cameraMatrix)
-            GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.cameraMatrix, (16)))
+            GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_TRUE, np.reshape(self.cameraMatrix, (16)))
             if DEBUG_GLSL: print "cameraMatrix"
             if DEBUG_GLSL: print self.cameraMatrix
 
             lightMatrix = self.cameraMatrix[:3, :3]  # Extracts 3*3 matrix out of 4*4
             if DEBUG_GLSL: print "LightMatrix"
             if DEBUG_GLSL: print lightMatrix
-            GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, np.reshape(lightMatrix, (9)))
+            GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_TRUE, np.reshape(lightMatrix, (9)))
 
             if DEBUG_GLSL: print "Light position: " + self.lightPosition
             GL.glUniform3f(self.lightPosUnif, self.lightPosition[0], self.lightPosition[1], self.lightPosition[2])
@@ -869,13 +873,13 @@ class MainWindow(object):
             # Bind VAO context for dynamic objects
             glBindVertexArray(self.VAO_dynamic)
             # Load uniforms
-            GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.perspectiveMatrix, (16)))
+            GL.glUniformMatrix4fv(self.perspectiveMatrixUnif, 1, GL.GL_TRUE, np.reshape(self.perspectiveMatrix, (16)))
 
             #camMatrix = np.linalg.inv(self.cameraMatrix)
-            GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_FALSE, np.reshape(self.cameraMatrix, (16)))
+            GL.glUniformMatrix4fv(self.cameraMatrixUnif, 1, GL.GL_TRUE, np.reshape(self.cameraMatrix, (16)))
 
             lightMatrix = self.cameraMatrix[:3, :3]  # Extracts 3*3 matrix out of 4*4
-            GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_FALSE, np.reshape(lightMatrix, (9)))
+            GL.glUniformMatrix3fv(self.lightingMatrixUnif, 1, GL.GL_TRUE, np.reshape(lightMatrix, (9)))
 
             GL.glUniform3f(self.lightPosUnif, self.lightPosition[0], self.lightPosition[1], self.lightPosition[2])
             GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
@@ -1024,16 +1028,16 @@ class MainWindow(object):
             # get relative distance of mouse since last call to get_rel()
             mouseMove = pygame.mouse.get_rel()
 
-            cameraTranslation = vec3(self.cameraMatrix[3, :3])
+            cameraTranslation = vec3(self.cameraMatrix[:3, 3])
             mouseSensitivity = 1 / cameraTranslation.length()
 
             # Get the left right direction of the camera from the current camera matrix
-            right = vec3(self.cameraMatrix[:3, 0])
+            right = vec3(self.cameraMatrix[0, :3])
             mouseFactor = mouseMove[0] * mouseSensitivity
             right_translate = og_util.translationMatrix44(right.x * mouseFactor, right.y * mouseFactor, right.z * mouseFactor)
 
             # Get the up down direction of the camera from the current camera matrix
-            up = vec3(self.cameraMatrix[:3, 1])
+            up = vec3(self.cameraMatrix[1, :3])
             mouseFactor = -1 * mouseMove[1] * mouseSensitivity
             up_translate = og_util.translationMatrix44(up.x * mouseFactor, up.y * mouseFactor, up.z * mouseFactor)
 
@@ -1048,16 +1052,17 @@ class MainWindow(object):
 
             # Rotate the camera up-down: since the camera is fixed in OpenGl we need to rotate on the X axis
             X = vec3(1, 0, 0)
-            rotationUpDown = og_util.rotationMatrix(mouseUpDown, X)
+            rotationUpDown = og_util.rotationMatrix44(mouseUpDown, X)
 
             # Rotate the camera left-right: since the camera is fixed in OpenGl we need to rotate on the Y axis
             Y = vec3(0, 1, 0)
-            rotationLeftRight = og_util.rotationMatrix(mouseLeftRight, Y)
+            rotationLeftRight = og_util.rotationMatrix44(mouseLeftRight, Y)
 
             # TODO: There is some rotation along the forward axis happening as well now and then :( Maybe better to work out the mouse movements using angle in xy, angle in xz and distance?
             # I guess it happens due to combined movements of x and y above.
 
-            self.cameraMatrix = (self.cameraMatrix.dot(rotationLeftRight)).dot(rotationUpDown)
+            #self.cameraMatrix = (self.cameraMatrix.dot(rotationLeftRight)).dot(rotationUpDown)
+            self.cameraMatrix = rotationLeftRight.dot(rotationUpDown.dot(self.cameraMatrix))
 
     def eventZoomIn(self):
         """
@@ -1066,7 +1071,7 @@ class MainWindow(object):
         """
         self.cameraMode = CAM_FREE
         # Get the direction of the camera from the camera matrix
-        heading = vec3(self.cameraMatrix[:3, 2])  # Forward
+        heading = vec3(self.cameraMatrix[2, :3])  # Forward
         # Translate the camera along this direction
         translation_matrix = og_util.translationMatrix44(heading.x, heading.y, heading.z)
         self.cameraMatrix = translation_matrix.dot(self.cameraMatrix)
@@ -1078,7 +1083,7 @@ class MainWindow(object):
         """
         self.cameraMode = CAM_FREE
         # Get the direction of the camera from the camera matrix
-        heading = vec3(self.cameraMatrix[:3, 2] * -1)  # backward
+        heading = vec3(self.cameraMatrix[2, :3] * -1)  # backward
         # Translate the camera along this direction
         translation_matrix = og_util.translationMatrix44(heading.x, heading.y, heading.z)
         self.cameraMatrix = translation_matrix.dot(self.cameraMatrix)

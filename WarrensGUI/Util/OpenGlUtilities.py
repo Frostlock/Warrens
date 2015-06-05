@@ -4,10 +4,7 @@ import numpy as np
 # For single values the math variants are faster
 from math import sin, cos
 
-import random
-#from math import cos,sin
-
-def rotationMatrix44(angle_x, angle_y, angle_z):
+def rotationMatrix3Axes44(angle_x, angle_y, angle_z):
     """Makes a rotation Matrix44 about 3 axis."""
 
     cx = cos(angle_x)
@@ -33,13 +30,20 @@ def rotationMatrix44(angle_x, angle_y, angle_z):
     #     | -ADE+BF   ADF+BE   AC  0 |
     #     |  0        0        0   1 |
 
-    M = np.array([[cy*cz,  sxsy*cz+cx*sz,  -cxsy*cz+sx*sz, 0.0],
-                  [-cy*sz, -sxsy*sz+cx*cz, cxsy*sz+sx*cz,  0.0],
-                  [sy,     -sx*cy,         cx*cy,          0.0],
-                  [0.,     0.,             0.,             1.0]], 'f')
+    # BAD order! Remeber that numpy is row major
+    # M = np.array([[cy*cz,  sxsy*cz+cx*sz,  -cxsy*cz+sx*sz, 0.0],
+    #               [-cy*sz, -sxsy*sz+cx*cz, cxsy*sz+sx*cz,  0.0],
+    #               [sy,     -sx*cy,         cx*cy,          0.0],
+    #               [0.,     0.,             0.,             1.0]], 'f')
+    # return M
+
+    M = np.array([[cy*cz,          -cy*sz,          sy,     0.0],
+                  [sxsy*cz+cx*sz,  -sxsy*sz+cx*cz,  -sx*cy, 0.0],
+                  [-cxsy*cz+sx*sz, cxsy*sz+sx*cz,   cx*cy,  0.0],
+                  [0.,             0.,              0.,     1.0]], 'f')
     return M
 
-def rotationMatrix(angle, axis):
+def rotationMatrix44(angle, axis):
     '''
     http://www.arcsynthesis.org/gltut/Positioning/Tut06%20Rotation.html
     :param angle: Angle of rotation in radians
@@ -55,9 +59,9 @@ def rotationMatrix(angle, axis):
     yy = y*y
     zz = z*z
 
-    R = np.array([[xx+(1-xx)*C,  iC*x*y+z*S,   iC*x*z-y*S,   0.0],
-                  [iC*x*y-z*S,   yy+(1-yy)*C,  iC*y*z+x*S,   0.0],
-                  [iC*x*z+y*S,   iC*y*z-x*S,   zz+(1-zz)*C,  0.0],
+    R = np.array([[xx+(1-xx)*C,  iC*x*y-z*S,   iC*x*z+y*S,   0.0],
+                  [iC*x*y+z*S,   yy+(1-yy)*C,  iC*y*z-x*S,   0.0],
+                  [iC*x*z-y*S,   iC*y*z+x*S,   zz+(1-zz)*C,  0.0],
                   [0.0,          0.0,          0.0,          1.0]], 'f')
 
     return R
@@ -72,20 +76,11 @@ def translationMatrix44(x, y, z):
     #     | 0  0  1  z |
     #     | 0  0  0  1 |
 
-    T = np.array([[1.,       0.,       0.,       0.],
-                  [0.,       1.,       0.,       0.],
-                  [0.,       0.,       1.,       0.],
-                  [float(x), float(y), float(z), 1.]], 'f')
-    return T
-
-# def old_translationMatrix44(x, y, z):
-#     """Makes a translation Matrix44."""
-#
-#     M = np.array([[1.,       0.,       0.,       float(x)],
-#                   [0.,       1.,       0.,       float(y)],
-#                   [0.,       0.,       1.,       float(z)],
-#                   [0.,       0.,       0.,       1.]], 'f')
-#     return M
+    M = np.array([[1.,       0.,       0.,       float(x)],
+                  [0.,       1.,       0.,       float(y)],
+                  [0.,       0.,       1.,       float(z)],
+                  [0.,       0.,       0.,       1.]], 'f')
+    return M
 
 def lookAtMatrix44(eye, center, up):
     '''
@@ -95,22 +90,20 @@ def lookAtMatrix44(eye, center, up):
     :param up: vec3 - x,y,z coordinate used to determine what is up for the camera
     :return:
     '''
-    M1 = np.array([[1.,       0.,       0.,       0.],
-                  [ 0.,       1.,       0.,       0.],
-                  [ 0.,       0.,       1.,       0.],
-                  [ -eye.x,   -eye.y,   -eye.z,   1.]], 'f')
-
+    M1 = np.array([[1.,       0.,       0.,       -eye.x],
+                  [ 0.,       1.,       0.,       -eye.y],
+                  [ 0.,       0.,       1.,       -eye.z],
+                  [ 0.,       0.,       0.,       1.]], 'f')
 
     D = (eye - center).normalize()
     R = up.cross(D).normalize()
     U = D.cross(R)
 
-    M2 = np.array([[R.x,      U.x,      D.x,      0.],
-                  [ R.y,      U.y,      D.y,      0.],
-                  [ R.z,      U.z,      D.z,      0.],
+    M2 = np.array([[R.x,      R.y,      R.z,      0.],
+                  [ U.x,      U.y,      U.z,      0.],
+                  [ D.x,      D.y,      D.z,      0.],
                   [ 0.,       0.,       0.,       1.]], 'f')
-
-    return M1.dot(M2)
+    return M2.dot(M1)
 
 def normalizeColor(color):
     '''
