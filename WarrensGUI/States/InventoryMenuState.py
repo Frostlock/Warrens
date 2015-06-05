@@ -35,7 +35,7 @@ class InventoryMenuState(MenuState):
     def useItem(self):
         myItem = self.inventory.items[self.selected]
         if myItem.targeted:
-            # TODO: targeting to be implemented
+            # TODO: targeting to be implemented, can we go from normalised device coordinates to a tile?
             # self.eventTargetingStart(useItem)
             raise NotImplementedError()
         else:

@@ -625,6 +625,8 @@ class MainWindow(object):
         up = vec3(0,0,1)
         self.cameraMatrix = og_util.lookAtMatrix44(eye,lookAt,up)
 
+        # TODO: need to switch movement keys when in first person view
+
     # Window utility functions, these are used by the window states.
 
     def drawText(self, position, textString, font, color):
