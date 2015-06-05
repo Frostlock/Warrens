@@ -44,8 +44,9 @@ TOWN_RADIUS = 30
 LEVEL_UP_BASE = 200
 LEVEL_UP_FACTOR = 150
 
-#config files
-GAME_CONFIG = "WarrensGame/Game.conf"
+#data files
+DATA_MONSTERS = "./WarrensGame/monsters.csv"
+DATA_ITEMS = "./WarrensGame/items.csv"
 
 #config switches
 SHOW_GAME_LOGGING = False

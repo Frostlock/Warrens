@@ -102,7 +102,7 @@ class TestItemLibrary(unittest.TestCase):
         items = []
         for item_key in self.ilib.availableItems:
             items.append(self.ilib.createItem(item_key))
-        print 'Created ' + str(len(items)) + ' items'
+        #print 'Created ' + str(len(items)) + ' items'
 
         # Ensure items are being tracked correctly
         self.assertEqual(len(items), len(self.ilib.items))
@@ -112,7 +112,7 @@ class TestItemLibrary(unittest.TestCase):
         Test if we can create a random item.
         """
         item = self.ilib.getRandomItem(5)
-        print 'Created random item: ' + item.name
+        #print 'Created random item: ' + item.name
 
 if __name__ == "__main__":
     unittest.main()

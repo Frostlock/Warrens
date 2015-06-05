@@ -1,5 +1,6 @@
 
 from Actors import *
+from CONSTANTS import *
 
 import csv
 import random
@@ -70,7 +71,7 @@ class MonsterLibrary():
         self._challengeIndex = {}
 
         # read data from CSV file
-        with open("./WarrensGame/monsters.csv", "rb") as csvfile:
+        with open(DATA_MONSTERS, "rb") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for monsterDataDict in reader:
                 # Register the monster data in the data dictionary
@@ -209,7 +210,7 @@ class ItemLibrary():
         self._itemLevelIndex = {}
 
         # read data from CSV file
-        with open("./WarrensGame/items.csv", "rb") as csvfile:
+        with open(DATA_ITEMS, "rb") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for itemDataDict in reader:
                 # Register the item data in the data dictionary
