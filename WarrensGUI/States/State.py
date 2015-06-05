@@ -98,6 +98,12 @@ class MenuState(State):
         """
         super(MenuState, self).__init__(window, parentState)
 
+        self.header = "Uninitialized"
+        self.items = []
+        self.keys = []
+        self.handlers = []
+        self.selected = 0
+
     def loopInit(self):
         #Nothing to be done but need to override super class method to avoid error messsage.
         pass
@@ -140,16 +146,12 @@ class MenuState(State):
         """
         # Switch to Orthographic projection
         GL.glOrtho(0.0, self.window.displayWidth, self.window.displayHeight, 0.0, -1.0, 10.0)
-
         GL.glClear(GL.GL_DEPTH_BUFFER_BIT)
-
         GL.glEnable(GL.GL_BLEND)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
 
-        #TODO: Improve clarity of Orthographic projection? Can we map it to a projection plane equal to the screen dimensions? Not -1.0 to 1.0?
         # Background
         GL.glLoadIdentity()
-        #GL.glTranslatef(-0.5, -0.5, 0)
         width = 0.8
         height = 0.8
         GL.glBegin(GL.GL_QUADS)
