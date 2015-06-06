@@ -1,7 +1,7 @@
 __author__ = 'Frostlock'
 
 import unittest
-from WarrensGame.Actors import Consumable, Equipment
+from WarrensGame.Actors import Monster, Consumable, Equipment
 from WarrensGame.Libraries import MonsterLibrary, ItemLibrary
 from WarrensGame.Utilities import GameError
 
@@ -70,6 +70,11 @@ class TestMonsterLibrary(unittest.TestCase):
         with self.assertRaises(GameError):
             self.mlib.getRandomMonster(0)
         #print 'Asking for a monster with challenge rating 0 raises correct GameError.'
+
+    def test_generatedMonster(self):
+        for difficulty in range(1, 10):
+            monster = self.mlib.generateMonster(difficulty)
+            self.assertIsInstance(monster, Monster)
 
 class TestItemLibrary(unittest.TestCase):
 
