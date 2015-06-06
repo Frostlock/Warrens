@@ -90,10 +90,10 @@ class Effect(object):
         self._effectDescription = "Description not set"
         
         self._targeted = effectItem.targeted
-        self._effectRadius = effectItem.effectradius
-        self._effectHitDie = effectItem.effecthitdie
-        self._effectDuration = effectItem.effectduration
-        self._effectColor = effectItem.effectcolor
+        self._effectRadius = effectItem.effectRadius
+        self._effectHitDie = effectItem.effectHitDie
+        self._effectDuration = effectItem.effectDuration
+        self._effectColor = effectItem.effectColor
     
 
     #functions

@@ -1,4 +1,4 @@
-key,type,position,name,modifierLevel,effect,targeted,effectradius,effecthitdie,effectduration,effectcolor,defense_bonus,power_bonus,hitdie_bonus
+key,type,position,name,modifierLevel,effect,targeted,effectRadius,effectHitDie,effectDuration,effectColor,defense_bonus,power_bonus,hitdie_bonus
 minor,Consumable,prefix,Minor,-1,None,False,0,-1,0,None,0,0,0
 major,Consumable,prefix,Major,1,None,False,0,1,0,None,0,0,0
 exquisite,Consumable,prefix,Exquisite,2,None,False,0,2,0,None,0,0,0

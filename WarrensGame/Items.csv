@@ -1,4 +1,4 @@
-key,type,char,name,itemLevel,effect,targeted,effectradius,effecthitdie,effectduration,effectcolor,defense_bonus,power_bonus,hitdie_bonus
+key,type,char,name,itemLevel,effect,targeted,effectRadius,effectHitDie,effectDuration,effectColor,defense_bonus,power_bonus,hitdie_bonus
 minor_heal,Consumable,!,small vial of healing,1,HealEffect,False,0,2d6,1,"[220,10,10]",0,0,0
 regular_heal,Consumable,!,healing potion,2,HealEffect,False,0,4d6,1,"[220,10,10]",0,0,0
 major_heal,Consumable,!,major healing draught,4,HealEffect,False,0,6d6,1,"[220,10,10]",0,0,0
