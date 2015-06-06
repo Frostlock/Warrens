@@ -60,7 +60,7 @@ class TestMonsterLibrary(unittest.TestCase):
         self.assertEqual(len(monsters), len(self.mlib.regularMonsters) + len(self.mlib.uniqueMonsters))
 
     def test_monsterProperties(self):
-        # This test will trigger all properties
+        # This test will trigger all properties of a random monster
         difficulty = random.randint(1,10)
         aRandomMonster = self.mlib.getRandomMonster(difficulty)
         monsterClass = aRandomMonster.__class__.__name__
@@ -139,7 +139,7 @@ class TestItemLibrary(unittest.TestCase):
         self.assertEqual(len(items), len(self.ilib.items))
 
     def test_itemProperties(self):
-        # This test will trigger all properties
+        # This test will trigger all properties of a random item
         difficulty = random.randint(1,10)
         aRandomItem = self.ilib.getRandomItem(difficulty)
         itemClass = aRandomItem.__class__.__name__
