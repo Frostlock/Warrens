@@ -790,12 +790,12 @@ class Monster(Character):
         self._baseMaxHitPoints = Utilities.rollHitDie(baseMonster.hitdie)
         self._currentHitPoints = self._baseMaxHitPoints
         self._name = baseMonster.name
-        self._color = eval(baseMonster.color)
+        self._color = baseMonster.color
 
         #Character components
-        self._baseDefense = int(baseMonster.defense)
-        self._basePower = int(baseMonster.power)
-        self._xpValue = int(baseMonster.xp)
+        self._baseDefense = baseMonster.defense
+        self._basePower = baseMonster.power
+        self._xpValue = baseMonster.xp
         #gets a class object by name; and instanstiate it if not None
         ai_class = eval('AI.' + baseMonster.ai)
         self._AI = ai_class and ai_class(self) or None
@@ -803,8 +803,6 @@ class Monster(Character):
         #Monster components
         self._flavorText = baseMonster.flavor
         self._killedByText = baseMonster.killed_by
-
-
 
 #########
 # ITEMS #

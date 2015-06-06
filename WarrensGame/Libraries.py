@@ -103,13 +103,21 @@ class MonsterLibrary():
         with open(DATA_MONSTERS, "rb") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for monsterDataDict in reader:
+                # Ensure incoming data from csv file is interpreted correctly
+                monsterDataDict["power"] = int(monsterDataDict["power"])
+                monsterDataDict["defense"] = int(monsterDataDict["defense"])
+                monsterDataDict["xp"] = int(monsterDataDict["xp"])
+                monsterDataDict["unique"] = eval(monsterDataDict["unique"])
+                monsterDataDict["challengeRating"] = int(monsterDataDict["challengeRating"])
+                monsterDataDict["color"] = eval(monsterDataDict["color"])
+                # Create the BaseMonster object
                 baseMonster = BaseMonster(monsterDataDict)
                 # Register the monster data in the data dictionary
                 self.monsterIndex[baseMonster.key]=baseMonster
                 # Register the monster data in the challenge dictionary
                 if not int(baseMonster.challengeRating) in self.challengeIndex.keys():
-                    self.challengeIndex[int(baseMonster.challengeRating)] = []
-                self.challengeIndex[int(baseMonster.challengeRating)].append(baseMonster)
+                    self.challengeIndex[baseMonster.challengeRating] = []
+                self.challengeIndex[baseMonster.challengeRating].append(baseMonster)
 
     def getMaxMonstersPerRoomForDifficulty(self, difficulty):
         #maximum number of monsters per room
@@ -139,8 +147,7 @@ class MonsterLibrary():
         baseMonster = self.monsterIndex[monster_key]
 
         # do not create multiple unique monsters
-        #TODO: can we push this eval in the baseMonster class?
-        if eval(baseMonster.unique):
+        if baseMonster.unique:
             unique_ids = []
             for unique_monster in self.uniqueMonsters:
                 unique_ids.append(unique_monster.id)
@@ -152,19 +159,19 @@ class MonsterLibrary():
         newMonster = Monster(baseMonster)
 
         # register the monster
-        if eval(baseMonster.unique):
+        if baseMonster.unique:
             self.uniqueMonsters.append(newMonster)
             #Avoid randomly recreating the same unique monster in the future
-            self.challengeIndex[int(baseMonster.challengeRating)].remove(baseMonster)
-            if len(self.challengeIndex[int(baseMonster.challengeRating)]) == 0:
-                del self.challengeIndex[int(baseMonster.challengeRating)]
+            self.challengeIndex[baseMonster.challengeRating].remove(baseMonster)
+            if len(self.challengeIndex[baseMonster.challengeRating]) == 0:
+                del self.challengeIndex[baseMonster.challengeRating]
         else:
             self.regularMonsters.append(newMonster)
         return newMonster
 
     def generateMonster(self,difficulty):
         '''
-        Completely random generation of a monster
+        Completely random generation of a monster, not based on the csv data file.
         '''
         Utilities.message('generating monster from scratch', 'GENERATION')
 
@@ -175,11 +182,11 @@ class MonsterLibrary():
         monster_data['char'] = 'M'
         monster_data['hitdie'] = str(difficulty) + 'd8'
         monster_data['name'] = 'Unrecognizable aberation'
-        monster_data['color'] = '[65, 255, 85]'
+        monster_data['color'] = [65, 255, 85]
 
         #Character components
-        monster_data['defense'] = str(difficulty)
-        monster_data['power'] = str(difficulty)
+        monster_data['defense'] = difficulty
+        monster_data['power'] = difficulty + 2
         monster_data['xp'] = difficulty * difficulty * 50
         monster_data['ai'] = 'BasicMonsterAI'
 
