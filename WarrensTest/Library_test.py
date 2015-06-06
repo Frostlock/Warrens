@@ -1,6 +1,7 @@
 __author__ = 'Frostlock'
 
 import unittest
+from WarrensGame.Actors import Consumable, Equipment
 from WarrensGame.Libraries import MonsterLibrary, ItemLibrary
 from WarrensGame.Utilities import GameError
 
@@ -101,7 +102,15 @@ class TestItemLibrary(unittest.TestCase):
         # Create an instance of every item
         items = []
         for item_key in self.ilib.availableItems:
-            items.append(self.ilib.createItem(item_key))
+            item = self.ilib.createItem(item_key)
+            items.append(item)
+            if item.type == "Consumable":
+                self.assertIsInstance(item,Consumable)
+            elif item.type == "Equipment":
+                self.assertIsInstance(item,Equipment)
+            else:
+                raise AssertionError("Unknown item type: " + str(item.type))
+
         #print 'Created ' + str(len(items)) + ' items'
 
         # Ensure items are being tracked correctly

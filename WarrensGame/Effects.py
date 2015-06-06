@@ -89,11 +89,11 @@ class Effect(object):
         self._targetType = EffectTarget.SELF
         self._effectDescription = "Description not set"
         
-        self._targeted = eval(effectItem.targeted)
-        self._effectRadius = int(effectItem.effectradius)
+        self._targeted = effectItem.targeted
+        self._effectRadius = effectItem.effectradius
         self._effectHitDie = effectItem.effecthitdie
-        self._effectDuration = int(effectItem.effectduration)
-        self._effectColor = eval(effectItem.effectcolor)
+        self._effectDuration = effectItem.effectduration
+        self._effectColor = effectItem.effectcolor
     
 
     #functions

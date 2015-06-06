@@ -983,7 +983,7 @@ class Consumable(Item):
         """
         The effect that this consumable can generate.
         """
-        return self._effectColor
+        return self.effect.effectColor
 
     @property
     def targeted(self):

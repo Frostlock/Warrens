@@ -15,18 +15,13 @@ if __name__ == '__main__':
         FirstCommandLineArg = sys.argv [1]
         if FirstCommandLineArg == '-3D':
             # Run the 3D interface
-            print ""
             print "Running 3D interface."
-            print ""
             _application = MainWindow()
         elif FirstCommandLineArg == '-TEST':
             # Run testing suite
             import unittest
             # Load relevant unittest tests
             suite = unittest.TestLoader().discover('./WarrensTest', pattern = "*_test.py")
-            print ""
-            print "Running " + str(suite.countTestCases()) + " test cases:"
-            print ""
             # Run the discovered suite of tests
             unittest.TextTestRunner(verbosity=2).run(suite)
         else:

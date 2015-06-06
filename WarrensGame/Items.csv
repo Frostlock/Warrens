@@ -6,8 +6,8 @@ lightning,Consumable,s,scroll of lightning bolt,2,DamageEffect,True,0,3d6,1,"[14
 fireball,Consumable,s,scroll of fireball,4,DamageEffect,True,6,2d10,1,"[240,83,50]",0,0,0
 firenova,Consumable,s,scroll of firenova,3,DamageEffect,False,4,2d10,1,"[240,83,50]",0,0,0
 confuse,Consumable,s,scroll of confuse,3,ConfuseEffect,True,0,1d6,5,"[50,185,250]",0,0,0
-dagger,Equipment,I,dagger,1,,,,,,,0,1,0
-sword,Equipment,I,sword,3,,,,,,,0,2,0
-shield,Equipment,O,shield,4,,,,,,,1,0,0
-cloak,Equipment,c,cloak,2,,,,,,,1,0,0
-ring,Equipment,o,ring,2,,,,,,,0,0,0
+dagger,Equipment,I,dagger,1,None,None,0,None,0,None,0,1,0
+sword,Equipment,I,sword,3,None,None,0,None,0,None,0,2,0
+shield,Equipment,O,shield,4,None,None,0,None,0,None,1,0,0
+cloak,Equipment,c,cloak,2,None,None,0,None,0,None,1,0,0
+ring,Equipment,o,ring,2,None,None,0,None,0,None,0,0,0

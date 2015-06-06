@@ -308,6 +308,16 @@ class ItemLibrary():
         with open(DATA_ITEMS, "rb") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for itemDataDict in reader:
+                # Ensure incoming data from csv file is interpreted correctly
+                itemDataDict["itemLevel"] = int(itemDataDict["itemLevel"])
+                itemDataDict["targeted"] = eval(itemDataDict["targeted"])
+                itemDataDict["effectradius"] = int(itemDataDict["effectradius"])
+                itemDataDict["effectduration"] = int(itemDataDict["effectduration"])
+                itemDataDict["effectcolor"] = eval(itemDataDict["effectcolor"])
+                itemDataDict["defense_bonus"]= int(itemDataDict["defense_bonus"])
+                itemDataDict["power_bonus"] = int(itemDataDict["power_bonus"])
+                itemDataDict["hitdie_bonus"] = int(itemDataDict["hitdie_bonus"])
+                # Create the BaseItem object
                 baseItem = BaseItem(itemDataDict)
                 # Register the item data in the data dictionary
                 self.itemIndex[baseItem.key]=baseItem
@@ -320,6 +330,16 @@ class ItemLibrary():
         with open(DATA_ITEM_MODIFIERS, "rb") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for modifierDataDict in reader:
+                # Ensure incoming data from csv file is interpreted correctly
+                modifierDataDict["modifierLevel"] = int(modifierDataDict["modifierLevel"])
+                modifierDataDict["targeted"] = eval(modifierDataDict["targeted"])
+                modifierDataDict["effectradius"] = int(modifierDataDict["effectradius"])
+                modifierDataDict["effectduration"] = int(modifierDataDict["effectduration"])
+                modifierDataDict["effectcolor"] = eval(modifierDataDict["effectcolor"])
+                modifierDataDict["defense_bonus"]= int(modifierDataDict["defense_bonus"])
+                modifierDataDict["power_bonus"] = int(modifierDataDict["power_bonus"])
+                modifierDataDict["hitdie_bonus"] = int(modifierDataDict["hitdie_bonus"])
+                # Create the ItemModifier object
                 itemModifier = ItemModifier(modifierDataDict)
                 # Register the item modifier data in the data dictionary
                 self.modifierIndex[itemModifier.key]=itemModifier
@@ -373,7 +393,7 @@ class ItemLibrary():
         possibilities = self.itemLevelIndex[itemLevel]
         selection = random.choice(possibilities)
         # Create the item
-        newItem = self.createItem(selection["key"])
+        newItem = self.createItem(selection.key)
         # Apply modifiers
         maxModifierLevel = maxItemLevel - itemLevel
         if maxModifierLevel > 0:
