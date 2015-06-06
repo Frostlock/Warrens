@@ -173,7 +173,7 @@ class MonsterLibrary():
         '''
         Completely random generation of a monster, not based on the csv data file.
         '''
-        Utilities.message('generating monster from scratch', 'GENERATION')
+        #Utilities.message('generating monster from scratch', 'GENERATION')
 
         monster_data = {}
 

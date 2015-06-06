@@ -1,6 +1,9 @@
 __author__ = 'Frostlock'
 
 import unittest
+
+import random
+
 from WarrensGame.Actors import Monster, Consumable, Equipment
 from WarrensGame.Libraries import MonsterLibrary, ItemLibrary
 from WarrensGame.Utilities import GameError
@@ -56,16 +59,26 @@ class TestMonsterLibrary(unittest.TestCase):
         self.assertEqual(len(monsters), len(self.mlib.monsters))
         self.assertEqual(len(monsters), len(self.mlib.regularMonsters) + len(self.mlib.uniqueMonsters))
 
+    def test_monsterProperties(self):
+        # This test will trigger all properties
+        difficulty = random.randint(1,10)
+        aRandomMonster = self.mlib.getRandomMonster(difficulty)
+        monsterClass = aRandomMonster.__class__.__name__
+        property_names=[p for p in dir(eval(monsterClass)) if isinstance(getattr(eval(monsterClass),p),property)]
+        for p in property_names:
+            result = getattr(aRandomMonster, p)
+            #print result
+
     def test_randomMonster(self):
         """
         Test if we can create a random monster.
         """
         #Create 10 monsters for the first 10 difficulty levels
         for difficulty in range(1, 10):
-            print "Difficulty " + str(difficulty)
+            #print "Difficulty " + str(difficulty)
             for i in range(1,10):
                 monster = self.mlib.getRandomMonster(difficulty)
-                print "   Random monster: " + monster.name + " (CR: " + str(monster.challengeRating) + ")"
+                #print "   Random monster: " + monster.name + " (CR: " + str(monster.challengeRating) + ")"
 
         with self.assertRaises(GameError):
             self.mlib.getRandomMonster(0)
@@ -125,16 +138,26 @@ class TestItemLibrary(unittest.TestCase):
         # Ensure items are being tracked correctly
         self.assertEqual(len(items), len(self.ilib.items))
 
+    def test_itemProperties(self):
+        # This test will trigger all properties
+        difficulty = random.randint(1,10)
+        aRandomItem = self.ilib.getRandomItem(difficulty)
+        itemClass = aRandomItem.__class__.__name__
+        property_names=[p for p in dir(eval(itemClass)) if isinstance(getattr(eval(itemClass),p),property)]
+        for p in property_names:
+            result = getattr(aRandomItem, p)
+            #print result
+
     def test_randomItem(self):
         """
         Test if we can create a random item.
         """
         #Create 10 items for the first 10 difficulty levels
         for difficulty in range(1, 10):
-            print "Difficulty " + str(difficulty)
+            #print "Difficulty " + str(difficulty)
             for i in range(1,10):
                 item = self.ilib.getRandomItem(difficulty)
-                print "   Random item: " + item.name + " (IL: " + str(item.itemLevel) + ")"
+                #print "   Random item: " + item.name + " (IL: " + str(item.itemLevel) + ")"
 
         with self.assertRaises(GameError):
             self.ilib.getRandomItem(0)
