@@ -125,11 +125,11 @@ class MenuState(State):
                # Select up
                 if event.key == pygame.K_UP:
                     self.selected -= 1
-                    if self.selected < 0 : self.selected = 0
+                    if self.selected < 0 : self.selected = len(self.items) - 1
                 # Select down
                 elif event.key == pygame.K_DOWN:
                     self.selected += 1
-                    if self.selected > len(self.items)-1: self.selected = len(self.items) - 1
+                    if self.selected > len(self.items)-1: self.selected = 0
                 # Select
                 elif event.key == pygame.K_RETURN:
                     self.handlers[self.selected]()

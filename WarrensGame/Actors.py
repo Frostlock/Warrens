@@ -626,7 +626,7 @@ class Player(Character):
         """
         self._xp += amount
         #check for level up
-        if self.xp >= self.nextLevelXp:
+        while self.xp >= self.nextLevelXp:
             self.levelUp()
 
     def followPortal(self, portal):
@@ -756,9 +756,9 @@ class Monster(Character):
     Later we can consider more specialised subclasses
     for example Humanoid, Undead, Animal
     """
-
-    #Class variables
-    _flavorText = "Flavor text not set"
+    @property
+    def baseMonster(self):
+        return self._baseMonster
 
     @property
     def flavorText(self):
@@ -766,8 +766,6 @@ class Monster(Character):
         Fancy description of the monster.
         """
         return self._flavorText
-
-    _killedByText = "Killed by text not set"
 
     @property
     def killedByText(self):
@@ -777,34 +775,34 @@ class Monster(Character):
         return self._killedByText
 
     #constructor
-    def __init__(self, monster_data):
+    def __init__(self, baseMonster):
         """
         Creates a new uninitialized Monster object.
         Use MonsterLibrary.createMonster() to create an initialized Monster.
         """
         #call super class constructor
-        #(ensure instance gets unique copies of class variables)
         super(Monster, self).__init__()
-        
+
+        self._baseMonster = baseMonster
         #Actor components
-        self._id = monster_data['key']
-        self._char = monster_data['char']
-        self._baseMaxHitPoints = Utilities.rollHitDie(monster_data['hitdie'])
+        self._id = baseMonster.key
+        self._char = baseMonster.char
+        self._baseMaxHitPoints = Utilities.rollHitDie(baseMonster.hitdie)
         self._currentHitPoints = self._baseMaxHitPoints
-        self._name = monster_data['name']
-        self._color = eval(monster_data['color'])
+        self._name = baseMonster.name
+        self._color = eval(baseMonster.color)
 
         #Character components
-        self._baseDefense = int(monster_data['defense'])
-        self._basePower = int(monster_data['power'])
-        self._xpValue = int(monster_data['xp'])
+        self._baseDefense = int(baseMonster.defense)
+        self._basePower = int(baseMonster.power)
+        self._xpValue = int(baseMonster.xp)
         #gets a class object by name; and instanstiate it if not None
-        ai_class = eval('AI.' + monster_data['ai'])
+        ai_class = eval('AI.' + baseMonster.ai)
         self._AI = ai_class and ai_class(self) or None
 
         #Monster components
-        self._flavorText = monster_data['flavor']
-        self._killedByText = monster_data['killed_by']
+        self._flavorText = baseMonster.flavor
+        self._killedByText = baseMonster.killed_by
 
 
 
@@ -1041,32 +1039,3 @@ class QuestItem(Item):
     Sub class for quest items
     Probably don't need this in the beginning but it would fit in here :)
     """
-
-class BaseItem(dict):
-    '''
-    Base Item, properties are generated from the dictionary
-    '''
-    def __init__(self, *args, **kwargs):
-        '''
-        Constructor
-        :param args: Dictionary object with the item data
-        :param kwargs:
-        :return:
-        '''
-        super(BaseItem, self).__init__(*args, **kwargs)
-        self.__dict__ = self
-
-#TODO: item modifiers should modify the item, currently they only affect the item name.
-class ItemModifier(dict):
-    '''
-    Item modifier, properties are generated from the dictionary
-    '''
-    def __init__(self, *args, **kwargs):
-        '''
-        Constructor
-        :param args: Dictionary object with the item modifier data
-        :param kwargs:
-        :return:
-        '''
-        super(ItemModifier, self).__init__(*args, **kwargs)
-        self.__dict__ = self

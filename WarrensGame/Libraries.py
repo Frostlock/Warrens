@@ -6,6 +6,34 @@ from Utilities import GameError
 import csv
 import random
 
+class BaseMonster(dict):
+    '''
+    Base monster, properties are generated from the dictionary
+    '''
+    def __init__(self, *args, **kwargs):
+        '''
+        Constructor
+        :param args: Dictionary object with the monster data
+        :param kwargs:
+        :return:
+        '''
+        super(BaseMonster, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+class MonsterModifier(dict):
+    '''
+    Monster modifier, properties are generated from the dictionary
+    '''
+    def __init__(self, *args, **kwargs):
+        '''
+        Constructor
+        :param args: Dictionary object with the modifier data
+        :param kwargs:
+        :return:
+        '''
+        super(MonsterModifier, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
 class MonsterLibrary():
     '''
     This class represents a library of monsters.
@@ -75,12 +103,13 @@ class MonsterLibrary():
         with open(DATA_MONSTERS, "rb") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for monsterDataDict in reader:
+                baseMonster = BaseMonster(monsterDataDict)
                 # Register the monster data in the data dictionary
-                self.monsterIndex[monsterDataDict['key']]=monsterDataDict
+                self.monsterIndex[baseMonster.key]=baseMonster
                 # Register the monster data in the challenge dictionary
-                if not int(monsterDataDict['challengeRating']) in self.challengeIndex.keys():
-                    self.challengeIndex[int(monsterDataDict['challengeRating'])] = []
-                self.challengeIndex[int(monsterDataDict['challengeRating'])].append(monsterDataDict)
+                if not int(baseMonster.challengeRating) in self.challengeIndex.keys():
+                    self.challengeIndex[int(baseMonster.challengeRating)] = []
+                self.challengeIndex[int(baseMonster.challengeRating)].append(baseMonster)
 
     def getMaxMonstersPerRoomForDifficulty(self, difficulty):
         #maximum number of monsters per room
@@ -97,7 +126,7 @@ class MonsterLibrary():
         possibilities = self.challengeIndex[maxChallengeRating]
         selection = random.choice(possibilities)
         # create the monster
-        monster = self.createMonster(selection["key"])
+        monster = self.createMonster(selection.key)
         return monster
 
     def createMonster(self, monster_key):
@@ -107,10 +136,11 @@ class MonsterLibrary():
         :return: Monster
         '''
         # load the monster data from the config
-        monster_data = self.monsterIndex[monster_key]
+        baseMonster = self.monsterIndex[monster_key]
 
         # do not create multiple unique monsters
-        if eval(monster_data['unique']):
+        #TODO: can we push this eval in the baseMonster class?
+        if eval(baseMonster.unique):
             unique_ids = []
             for unique_monster in self.uniqueMonsters:
                 unique_ids.append(unique_monster.id)
@@ -119,15 +149,15 @@ class MonsterLibrary():
                 raise GameError('Unique monster' + monster_key + ' already exists.')
 
         #create monster
-        newMonster = Monster(monster_data)
+        newMonster = Monster(baseMonster)
 
         # register the monster
-        if monster_data['unique'] == 'True':
+        if eval(baseMonster.unique):
             self.uniqueMonsters.append(newMonster)
             #Avoid randomly recreating the same unique monster in the future
-            self.challengeIndex[int(monster_data["challengeRating"])].remove(monster_data)
-            if len(self.challengeIndex[int(monster_data["challengeRating"])]) == 0:
-                del self.challengeIndex[int(monster_data["challengeRating"])]
+            self.challengeIndex[int(baseMonster.challengeRating)].remove(baseMonster)
+            if len(self.challengeIndex[int(baseMonster.challengeRating)]) == 0:
+                del self.challengeIndex[int(baseMonster.challengeRating)]
         else:
             self.regularMonsters.append(newMonster)
         return newMonster
@@ -158,11 +188,41 @@ class MonsterLibrary():
         monster_data['killed_by'] = 'The aberation wanders around your remains.'
 
         #create monster
-        newMonster = Monster(monster_data)
+        baseMonster = BaseMonster(monster_data)
+        newMonster = Monster(baseMonster)
 
         # register the monster
         self.regularMonsters.append(newMonster)
         return newMonster
+
+class BaseItem(dict):
+    '''
+    Base Item, properties are generated from the dictionary
+    '''
+    def __init__(self, *args, **kwargs):
+        '''
+        Constructor
+        :param args: Dictionary object with the item data
+        :param kwargs:
+        :return:
+        '''
+        super(BaseItem, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+#TODO: item modifiers should modify the item, currently they only affect the item name.
+class ItemModifier(dict):
+    '''
+    Item modifier, properties are generated from the dictionary
+    '''
+    def __init__(self, *args, **kwargs):
+        '''
+        Constructor
+        :param args: Dictionary object with the item modifier data
+        :param kwargs:
+        :return:
+        '''
+        super(ItemModifier, self).__init__(*args, **kwargs)
+        self.__dict__ = self
 
 class ItemLibrary():
     '''
@@ -241,23 +301,25 @@ class ItemLibrary():
         with open(DATA_ITEMS, "rb") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for itemDataDict in reader:
+                baseItem = BaseItem(itemDataDict)
                 # Register the item data in the data dictionary
-                self.itemIndex[itemDataDict['key']]=itemDataDict
+                self.itemIndex[baseItem.key]=baseItem
                 # Register the item data in the item level dictionary
-                if not int(itemDataDict['itemLevel']) in self.itemLevelIndex.keys():
-                    self.itemLevelIndex[int(itemDataDict['itemLevel'])] = []
-                self.itemLevelIndex[int(itemDataDict['itemLevel'])].append(itemDataDict)
+                if not int(baseItem.itemLevel) in self.itemLevelIndex.keys():
+                    self.itemLevelIndex[int(baseItem.itemLevel)] = []
+                self.itemLevelIndex[int(baseItem.itemLevel)].append(baseItem)
 
         # read item modifier data from CSV file
         with open(DATA_ITEM_MODIFIERS, "rb") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for modifierDataDict in reader:
+                itemModifier = ItemModifier(modifierDataDict)
                 # Register the item modifier data in the data dictionary
-                self.modifierIndex[modifierDataDict['key']]=modifierDataDict
+                self.modifierIndex[itemModifier.key]=itemModifier
                 # Register the item modifier data in the modifier level dictionary
-                if not int(modifierDataDict['modifierLevel']) in self.modifierLevelIndex.keys():
-                    self.modifierLevelIndex[int(modifierDataDict['modifierLevel'])] = []
-                self.modifierLevelIndex[int(modifierDataDict['modifierLevel'])].append(modifierDataDict)
+                if not int(itemModifier.modifierLevel) in self.modifierLevelIndex.keys():
+                    self.modifierLevelIndex[int(itemModifier.modifierLevel)] = []
+                self.modifierLevelIndex[int(itemModifier.modifierLevel)].append(itemModifier)
 
     def createItem(self, item_key, modifier_key=None):
         '''
