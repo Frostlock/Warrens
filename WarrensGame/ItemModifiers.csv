@@ -7,7 +7,7 @@ small,Equipment,prefix,Small,-1,None,False,0,0,0,None,0,0,-1
 large,Equipment,prefix,Large,1,None,False,0,0,0,None,0,0,1
 huge,Equipment,prefix,Huge,2,None,False,0,0,0,None,1,1,2
 giant,Equipment,prefix,Giant,3,None,False,0,0,0,None,2,2,3
-rusty,Equipment,prefix,Rusty,-1,None,False,0,0,0,None,0,-1,0
+ruined,Equipment,prefix,Ruined,-1,None,False,0,0,0,None,0,-1,0
 ancient,Equipment,prefix,Ancient,0,None,False,0,0,0,None,0,0,0
 soldier,Equipment,suffix,of the soldier,1,None,False,0,0,0,None,0,1,0
 slaying,Equipment,suffix,of slaying,3,None,False,0,0,0,None,-2,3,0

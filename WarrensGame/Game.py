@@ -227,12 +227,12 @@ class Game(object):
             self._player.tile.x, self._player.tile.y)
 
         # Starting gear
-        # potion = self.itemLibrary.createItem("minor_heal")
-        # self.player.addItem(potion)
-        potion = self.itemLibrary.createItem("regular_heal")
+        potion = self.itemLibrary.createItem("healingpotion")
         self.player.addItem(potion)
-        # potion = self.itemLibrary.createItem("major_heal")
-        # self.player.addItem(potion)
+        potion = self.itemLibrary.createItem("healingpotion")
+        self.player.addItem(potion)
+        potion = self.itemLibrary.createItem("healingpotion")
+        self.player.addItem(potion)
         cloak = self.itemLibrary.createItem("cloak")
         self.player.addItem(cloak)
         scroll = self.itemLibrary.createItem("firenova")

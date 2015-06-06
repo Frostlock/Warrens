@@ -1,7 +1,7 @@
 key,type,char,name,itemLevel,effect,targeted,effectRadius,effectHitDie,effectDuration,effectColor,defense_bonus,power_bonus,hitdie_bonus
-minor_heal,Consumable,!,small vial of healing,1,HealEffect,False,0,2d6,1,"[220,10,10]",0,0,0
-regular_heal,Consumable,!,healing potion,2,HealEffect,False,0,4d6,1,"[220,10,10]",0,0,0
-major_heal,Consumable,!,major healing draught,4,HealEffect,False,0,6d6,1,"[220,10,10]",0,0,0
+healingvial,Consumable,!,healing vial,1,HealEffect,False,0,3d3,1,"[220,10,10]",0,0,0
+healingpotion,Consumable,!,healing potion,5,HealEffect,False,0,6d6,1,"[220,10,10]",0,0,0
+healingdraught,Consumable,!,healing draught,9,HealEffect,False,0,9d9,1,"[220,10,10]",0,0,0
 lightning,Consumable,s,scroll of lightning bolt,2,DamageEffect,True,0,3d6,1,"[140,170,205]",0,0,0
 fireball,Consumable,s,scroll of fireball,4,DamageEffect,True,6,2d10,1,"[240,83,50]",0,0,0
 firenova,Consumable,s,scroll of firenova,3,DamageEffect,False,4,2d10,1,"[240,83,50]",0,0,0

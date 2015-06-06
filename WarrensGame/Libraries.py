@@ -384,18 +384,22 @@ class ItemLibrary():
         return max_items
 
     def getRandomItem(self, maxItemLevel):
-        # Determine possibilities
+        # Determine max item level at which items are available
         itemLevel = maxItemLevel
         while not itemLevel in self.itemLevelIndex.keys():
             itemLevel -= 1
             if itemLevel <= 0: raise GameError("No items available below the give item level")
-        # Make a random choice
+        # Determine possibilities
         possibilities = self.itemLevelIndex[itemLevel]
+        if itemLevel + 1 in self.itemLevelIndex.keys() : possibilities.extend(self.itemLevelIndex[itemLevel + 1])
+        if itemLevel - 1 in self.itemLevelIndex.keys() : possibilities.extend(self.itemLevelIndex[itemLevel - 1])
+        if itemLevel - 2 in self.itemLevelIndex.keys() : possibilities.extend(self.itemLevelIndex[itemLevel - 2])
+        # Make a random choice
         selection = random.choice(possibilities)
         # Create the item
         newItem = self.createItem(selection.key)
         # Apply modifiers
-        maxModifierLevel = maxItemLevel - itemLevel
+        maxModifierLevel = maxItemLevel - itemLevel + 1
         if maxModifierLevel > 0:
             modifier = self.getRandomModifier(maxModifierLevel)
             if newItem.type == modifier.type:
@@ -403,13 +407,21 @@ class ItemLibrary():
         return newItem
 
     def getRandomModifier(self, maxModifierLevel):
-        # Determine possibilities
+        # Determine max modifier level at which modifiers are available
         modifierLevel = maxModifierLevel
         while not modifierLevel in self.modifierLevelIndex.keys():
             modifierLevel -= 1
             if modifierLevel <= 0: raise GameError("No modifiers available below the give modifier level")
-        # Make a random choice
+        # Determine possibilities
         possibilities = self.modifierLevelIndex[modifierLevel]
+        if modifierLevel + 1 in self.modifierLevelIndex.keys() : possibilities.extend(self.modifierLevelIndex[modifierLevel+1])
+        if modifierLevel - 1 in self.modifierLevelIndex.keys() : possibilities.extend(self.modifierLevelIndex[modifierLevel-1])
+        if modifierLevel - 2 in self.modifierLevelIndex.keys() : possibilities.extend(self.modifierLevelIndex[modifierLevel-2])
+        # Include negative modifiers
+        for key in self.modifierLevelIndex.keys():
+            if key <= 0:
+                possibilities.extend(self.modifierLevelIndex[key])
+        # Make a random choice
         selection = random.choice(possibilities)
         # Create the item
         modifier = ItemModifier(selection)
