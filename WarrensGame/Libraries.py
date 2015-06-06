@@ -188,11 +188,11 @@ class MonsterLibrary():
         monster_data['defense'] = difficulty
         monster_data['power'] = difficulty + 2
         monster_data['xp'] = difficulty * difficulty * 50
-        monster_data['ai'] = 'BasicMonsterAI'
+        monster_data['AI'] = 'BasicMonsterAI'
 
         #Monster components
         monster_data['flavor'] = 'An unrecognizable aberation approaches'
-        monster_data['killed_by'] = 'The aberation wanders around your remains.'
+        monster_data['killedBy'] = 'The aberation wanders around your remains.'
 
         #create monster
         baseMonster = BaseMonster(monster_data)
