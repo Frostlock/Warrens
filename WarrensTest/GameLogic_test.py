@@ -46,6 +46,8 @@ class TestGame(unittest.TestCase):
         """
         G = Game.Game()
         
-    
+
+    #TODO: Add testing code for the different Effects.
+
 if __name__ == "__main__":
     print 'Run this using RunUnitTests.py in base directory.'

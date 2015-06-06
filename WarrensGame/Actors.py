@@ -999,22 +999,43 @@ class Consumable(Item):
         return self._effect
 
     @property
-    def effectColor(self):
-        """
-        The effect that this consumable can generate.
-        """
-        return self.effect.effectColor
-
-    @property
     def targeted(self):
         """
         Boolean that indicates whether this consumable is targeted.
         """
-        if self.effect is None: 
+        if self.effect is None:
             return False
         else:
-            return self.effect.targeted
-    
+            return self.baseItem.targeted
+
+    @property
+    def effectRadius(self):
+        """
+        The radius of the effect that this consumable can generate.
+        """
+        return self.baseItem.effectRadius
+
+    @property
+    def effectHitDie(self):
+        """
+        The HitDie of the effect that this consumable can generate.
+        """
+        return self.baseItem.effectHitDie
+
+    @property
+    def effectDuration(self):
+        """
+        The duration of the effect that this consumable can generate.
+        """
+        return self.baseItem.effectDuration
+
+    @property
+    def effectColor(self):
+        """
+        The effect that this consumable can generate.
+        """
+        return self.baseItem.effectColor
+
     @property
     def isConsumed(self):
         """
@@ -1036,7 +1057,7 @@ class Consumable(Item):
         #consumables usually have an effect
         if baseItem.effect != '':
             effect_class = eval("Effects." + baseItem.effect)
-            self._effect = effect_class and effect_class(self, baseItem) or None
+            self._effect = effect_class and effect_class(self) or None
         else:
             self._effect = None
 

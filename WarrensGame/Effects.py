@@ -40,28 +40,28 @@ class Effect(object):
         """
         Boolean that indicates whether this effect is targeted.
         """
-        return self._targeted
+        return self.source.targeted
     
     @property
     def effectRadius(self):
         """
         Radius of the effect size
         """
-        return self._effectRadius
+        return self.source.effectRadius
 
     @property
     def effectHitDie(self):
         """
         Hit die used to determine the random size of this effect.
         """
-        return self._effectHitDie
+        return self.source.effectHitDie
 
     @property
     def effectDuration(self):
         """
         Duration in number of turns.
         """
-        return self._effectDuration
+        return self.source.effectDuration
 
     @property
     def effectDescription(self):
@@ -76,10 +76,10 @@ class Effect(object):
         """
         RGB tuple that indicates the color of this effect.
         """
-        return self._effectColor
+        return self.source.effectColor
     
     #constructor
-    def __init__(self, source, effectItem):
+    def __init__(self, source):
         """
         Constructor for a new Effect, meant to be used by the Effect subclasses.
         arguments
@@ -88,13 +88,6 @@ class Effect(object):
         self._source = source
         self._targetType = EffectTarget.SELF
         self._effectDescription = "Description not set"
-        
-        self._targeted = effectItem.targeted
-        self._effectRadius = effectItem.effectRadius
-        self._effectHitDie = effectItem.effectHitDie
-        self._effectDuration = effectItem.effectDuration
-        self._effectColor = effectItem.effectColor
-    
 
     #functions
     def applyTo(self, target):
@@ -117,8 +110,8 @@ class HealEffect(MagicEffect):
     """
 
     #constructor
-    def __init__(self, source, effectItem):
-        super(HealEffect, self).__init__(source, effectItem)
+    def __init__(self, source):
+        super(HealEffect, self).__init__(source)
         self._effectDescription = "Wounds close, bones knit."
         self._targetType = EffectTarget.SELF
 
@@ -138,11 +131,11 @@ class ConfuseEffect(MagicEffect):
     This class represents a damage nova effect
     """
     #constructor
-    def __init__(self, source, effectItem):
+    def __init__(self, source):
         '''
         source is the item that causes the effect
         '''
-        super(ConfuseEffect, self).__init__(source, effectItem)
+        super(ConfuseEffect, self).__init__(source)
         self._effectDescription = "An eerie melodie plays in the distance."
         self._targetType = EffectTarget.CHARACTER
 
@@ -174,11 +167,11 @@ class DamageEffect(MagicEffect):
         return self._centerTile
     
     #constructor
-    def __init__(self, source, effectItem):
+    def __init__(self, source):
         '''
         source is the item that causes the effect
         '''
-        super(DamageEffect, self).__init__(source, effectItem)
+        super(DamageEffect, self).__init__(source)
         self._effectDescription = "The area is bombarded by magical energy."
         self._targetType = EffectTarget.TILE
 
