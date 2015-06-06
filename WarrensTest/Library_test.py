@@ -60,8 +60,12 @@ class TestMonsterLibrary(unittest.TestCase):
         """
         Test if we can create a random monster.
         """
-        monster = self.mlib.getRandomMonster(5)
-        #print 'Created random monster: ' + monster.name
+        #Create 10 monsters for the first 10 difficulty levels
+        for difficulty in range(1, 10):
+            print "Difficulty " + str(difficulty)
+            for i in range(1,10):
+                monster = self.mlib.getRandomMonster(difficulty)
+                print "   Random monster: " + monster.name + " (CR: " + str(monster.challengeRating) + ")"
 
         with self.assertRaises(GameError):
             self.mlib.getRandomMonster(0)
@@ -120,8 +124,12 @@ class TestItemLibrary(unittest.TestCase):
         """
         Test if we can create a random item.
         """
-        item = self.ilib.getRandomItem(5)
-        #print 'Created random item: ' + item.name
+        #Create 10 items for the first 10 difficulty levels
+        for difficulty in range(1, 10):
+            print "Difficulty " + str(difficulty)
+            for i in range(1,10):
+                item = self.ilib.getRandomItem(difficulty)
+                print "   Random item: " + item.name + " (IL: " + str(item.itemLevel) + ")"
 
         with self.assertRaises(GameError):
             self.ilib.getRandomItem(0)

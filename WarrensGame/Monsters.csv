@@ -1,4 +1,4 @@
-key,char,name,power,hitdie,defense,xp,unique,challengeRating,color,flavor,killed_by,ai
+key,char,name,power,hitdie,defense,xp,unique,challengeRating,color,flavor,killedBy,AI
 jelly,j,jelly,3,2d6,2,25,False,2,"[255,255,0]","Ew,a nasty sticky substance crawling toward you.",Jelly completely absorbs you... Blub.,BasicMonsterAI
 rat,r,rat,6,1d6,0,50,False,1,"[240,240,240]",A big rat scuttling around.,The rat crawls up your arm and rips out your throat.,BasicMonsterAI
 troll,T,troll,8,5d6,2,100,False,3,"[0,128,0]",,The trolls wicked grin is the last thing you see before everything goes dark.,BasicMonsterAI

@@ -765,14 +765,28 @@ class Monster(Character):
         """
         Fancy description of the monster.
         """
-        return self._flavorText
+        return self.baseMonster.flavor
 
     @property
     def killedByText(self):
         """
         Killed by message that can be shown if this monster kills the player.
         """
-        return self._killedByText
+        return self.baseMonster.killedBy
+
+    @property
+    def modifiers(self):
+        '''
+        Modifiers linked to this item
+        '''
+        return self._modifiers
+
+    @property
+    def challengeRating(self):
+        cRating =  self.baseMonster.challengeRating
+        for modifier in self.modifiers:
+            cRating += modifier.modifierLevel
+        return cRating
 
     #constructor
     def __init__(self, baseMonster):
@@ -784,6 +798,8 @@ class Monster(Character):
         super(Monster, self).__init__()
 
         self._baseMonster = baseMonster
+        self._modifiers = []
+
         #Actor components
         self._id = baseMonster.key
         self._char = baseMonster.char
@@ -797,12 +813,8 @@ class Monster(Character):
         self._basePower = baseMonster.power
         self._xpValue = baseMonster.xp
         #gets a class object by name; and instanstiate it if not None
-        ai_class = eval('AI.' + baseMonster.ai)
+        ai_class = eval('AI.' + baseMonster.AI)
         self._AI = ai_class and ai_class(self) or None
-
-        #Monster components
-        self._flavorText = baseMonster.flavor
-        self._killedByText = baseMonster.killed_by
 
 #########
 # ITEMS #
@@ -877,7 +889,14 @@ class Item(Actor):
         # Fix capitalization
         name = name.lower().capitalize()
         return name
-    
+
+    @property
+    def itemLevel(self):
+        iLevel= self.baseItem.itemLevel
+        for modifier in self.modifiers:
+            iLevel += modifier.modifierLevel
+        return iLevel
+
     def registerWithLevel(self, level):
         """
         Makes the level aware that this item is on it.
@@ -898,8 +917,9 @@ class Item(Actor):
         self._char = baseItem.char
         self._baseMaxHitPoints = 1
         self._currentHitPoints = self._baseMaxHitPoints
-        self._modifiers = []
         self._name = baseItem.name
+        self._modifiers = []
+
         #Basic items are not stackable
         self._stackable = False
         self.stackSize = 1
