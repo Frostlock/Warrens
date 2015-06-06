@@ -113,6 +113,7 @@ class TestItemLibrary(unittest.TestCase):
         """
         item = self.ilib.getRandomItem(5)
         #print 'Created random item: ' + item.name
+
         with self.assertRaises(GameError):
             self.ilib.getRandomItem(0)
 
@@ -120,6 +121,10 @@ class TestItemLibrary(unittest.TestCase):
         """
         Test if we can create modified items
         """
+        item = self.ilib.createItem("dagger","giant")
+        self.assertEqual(item.name, "Giant dagger")
+
+        #Incompatible modifiers should raise a GameError
         with self.assertRaises(GameError):
             self.ilib.createItem("dagger","minor")
         with self.assertRaises(GameError):

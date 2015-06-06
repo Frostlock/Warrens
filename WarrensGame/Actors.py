@@ -818,6 +818,10 @@ class Item(Actor):
     an item
     """
     @property
+    def type(self):
+        return self.baseItem.type
+
+    @property
     def targeted(self):
         """
         Base class implementation, basic items are not targetable, can be refined in subclasses
@@ -844,16 +848,39 @@ class Item(Actor):
         Stack size setter
         '''
         self._stackSize = newStackSize
-    
+
+    @property
+    def baseItem(self):
+        '''
+        Base item for this item.
+        '''
+        return self._baseItem
+
+    @property
+    def modifiers(self):
+        '''
+        Modifiers linked to this item
+        '''
+        return self._modifiers
+
     @property
     def name(self):
         '''
-        Name of this Item, overrides base class implementation to deal stack names.
+        Name of this Item
         '''
+        name = self.baseItem.name
+        # Apply modifiers
+        for modifier in self.modifiers:
+            if modifier.position == "prefix":
+                name = modifier.name + " " + name
+            elif modifier.position == "suffix":
+                name = name + " " + modifier.name
+        # Stack size
         if self.stackable and self.stackSize > 1:
-            return self._name + ' stack (' + str(self.stackSize) + ')'
-        else:
-            return self._name
+            name += '(stack: ' + str(self.stackSize) + ')'
+        # Fix capitalization
+        name = name.lower().capitalize()
+        return name
     
     def registerWithLevel(self, level):
         """
@@ -862,7 +889,7 @@ class Item(Actor):
         level.addItem(self)
 
     #constructor
-    def __init__(self, item_data):
+    def __init__(self, baseItem):
         """
         Creates a new Item object, normally not used directly but called
         by sub class constructors.
@@ -870,11 +897,13 @@ class Item(Actor):
         #call super class constructor
         super(Item, self).__init__()
         #Initialize Item components
-        self._id = item_data['key']
-        self._char = item_data['char']
+        self._baseItem = baseItem
+        self._id = baseItem.key
+        self._char = baseItem.char
         self._baseMaxHitPoints = 1
         self._currentHitPoints = self._baseMaxHitPoints
-        self._name = item_data['name']
+        self._modifiers = []
+        self._name = baseItem.name
         #Basic items are not stackable
         self._stackable = False
         self.stackSize = 1
@@ -930,16 +959,16 @@ class Equipment(Item):
         return super(Equipment, self).name + suffix
 
     #constructor
-    def __init__(self, item_data):
+    def __init__(self, baseItem):
         """
         Creates a new uninitialized Equipment object.
         Use ItemLibrary.createItem() to create an initialized Item.
         """
         #call super class constructor
-        super(Equipment, self).__init__(item_data)
+        super(Equipment, self).__init__(baseItem)
         #Initialize equipment properties
-        self._defenseBonus = item_data['defense_bonus']
-        self._powerBonus = item_data['power_bonus']
+        self._defenseBonus = baseItem.defense_bonus
+        self._powerBonus = baseItem.power_bonus
         self._isEquiped = False
 
 class Consumable(Item):
@@ -979,19 +1008,19 @@ class Consumable(Item):
         return False
     
     #constructor
-    def __init__(self, item_data):
+    def __init__(self, baseItem):
         """
         Creates a new uninitialized Consumable object.
         Use ItemLibrary.createItem() to create an initialized Item.
         """
         #call super class constructor
-        super(Consumable, self).__init__(item_data)
+        super(Consumable, self).__init__(baseItem)
         #consumables are stackable
         self._stackable = True
         #consumables usually have an effect
-        if item_data['effect'] != '':
-            effect_class = eval("Effects." + item_data['effect'])
-            self._effect = effect_class and effect_class(self, item_data) or None
+        if baseItem.effect != '':
+            effect_class = eval("Effects." + baseItem.effect)
+            self._effect = effect_class and effect_class(self, baseItem) or None
         else:
             self._effect = None
 
@@ -1012,3 +1041,32 @@ class QuestItem(Item):
     Sub class for quest items
     Probably don't need this in the beginning but it would fit in here :)
     """
+
+class BaseItem(dict):
+    '''
+    Base Item, properties are generated from the dictionary
+    '''
+    def __init__(self, *args, **kwargs):
+        '''
+        Constructor
+        :param args: Dictionary object with the item data
+        :param kwargs:
+        :return:
+        '''
+        super(BaseItem, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+#TODO: item modifiers should modify the item, currently they only affect the item name.
+class ItemModifier(dict):
+    '''
+    Item modifier, properties are generated from the dictionary
+    '''
+    def __init__(self, *args, **kwargs):
+        '''
+        Constructor
+        :param args: Dictionary object with the item modifier data
+        :param kwargs:
+        :return:
+        '''
+        super(ItemModifier, self).__init__(*args, **kwargs)
+        self.__dict__ = self

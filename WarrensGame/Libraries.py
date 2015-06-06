@@ -270,16 +270,17 @@ class ItemLibrary():
         item_data = self.itemIndex[item_key]
 
         #create the correct type of item
-        item_class = eval(item_data['type'])
-        newItem = item_class and item_class(item_data) or None
+        baseItem = BaseItem(item_data)
+        item_class = eval(baseItem.type)
+        newItem = item_class and item_class(baseItem) or None
         if newItem is None:
             raise GameError('Failed to create item with key: ' + item_key + '; unknown item type: ' + item_data['type'])
 
         if modifier_key is not None:
             modifier_data = self.modifierIndex[modifier_key]
-            if modifier_data["type"] == item_data["type"]:
-                #TODO: Apply the modifier
-                pass
+            mod = ItemModifier(modifier_data)
+            if baseItem.type == mod.type:
+                newItem.modifiers.append(mod)
             else:
                 raise GameError("Incompatible item modifier type. Can not apply " + modifier_key + " to " + item_key)
 
@@ -295,13 +296,32 @@ class ItemLibrary():
 
     def getRandomItem(self, maxItemLevel):
         # Determine possibilities
-        while not maxItemLevel in self.itemLevelIndex.keys():
-            maxItemLevel -= 1
-            if maxItemLevel <= 0: raise GameError("No items available below the give item level")
+        itemLevel = maxItemLevel
+        while not itemLevel in self.itemLevelIndex.keys():
+            itemLevel -= 1
+            if itemLevel <= 0: raise GameError("No items available below the give item level")
         # Make a random choice
-        possibilities = self.itemLevelIndex[maxItemLevel]
+        possibilities = self.itemLevelIndex[itemLevel]
         selection = random.choice(possibilities)
-        #TODO: include items for lower levels and make up with modifiers
         # Create the item
         newItem = self.createItem(selection["key"])
+        # Apply modifiers
+        maxModifierLevel = maxItemLevel - itemLevel
+        if maxModifierLevel > 0:
+            modifier = self.getRandomModifier(maxModifierLevel)
+            if newItem.type == modifier.type:
+                newItem.modifiers.append(modifier)
         return newItem
+
+    def getRandomModifier(self, maxModifierLevel):
+        # Determine possibilities
+        modifierLevel = maxModifierLevel
+        while not modifierLevel in self.modifierLevelIndex.keys():
+            modifierLevel -= 1
+            if modifierLevel <= 0: raise GameError("No modifiers available below the give modifier level")
+        # Make a random choice
+        possibilities = self.modifierLevelIndex[modifierLevel]
+        selection = random.choice(possibilities)
+        # Create the item
+        modifier = ItemModifier(selection)
+        return modifier
