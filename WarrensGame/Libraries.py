@@ -216,7 +216,6 @@ class BaseItem(dict):
         super(BaseItem, self).__init__(*args, **kwargs)
         self.__dict__ = self
 
-#TODO: item modifiers should modify the item, currently they only affect the item name.
 class ItemModifier(dict):
     '''
     Item modifier, properties are generated from the dictionary
@@ -334,6 +333,7 @@ class ItemLibrary():
                 modifierDataDict["modifierLevel"] = int(modifierDataDict["modifierLevel"])
                 modifierDataDict["targeted"] = eval(modifierDataDict["targeted"])
                 modifierDataDict["effectRadius"] = int(modifierDataDict["effectRadius"])
+                modifierDataDict["effectHitDie"] = int(modifierDataDict["effectHitDie"])
                 modifierDataDict["effectDuration"] = int(modifierDataDict["effectDuration"])
                 modifierDataDict["effectColor"] = eval(modifierDataDict["effectColor"])
                 modifierDataDict["defense_bonus"]= int(modifierDataDict["defense_bonus"])
@@ -426,3 +426,11 @@ class ItemLibrary():
         # Create the item
         modifier = ItemModifier(selection)
         return modifier
+
+    def availableModifiersForItem(self, item_key):
+        type = self.itemIndex[item_key].type
+        modifiers = []
+        for modifier in self.availableModifiers:
+            if self.modifierIndex[modifier].type == type:
+                modifiers.append(modifier)
+        return modifiers

@@ -869,6 +869,7 @@ class Item(Actor):
         '''
         Modifiers linked to this item
         '''
+        #TODO: item modifiers should modify the item, currently they only affect the item name.
         return self._modifiers
 
     @property
@@ -929,9 +930,7 @@ class Equipment(Item):
     Sub class for equipment = items that can be equiped
     Might need more subclasses for weapons versus armor
     """
-
-    _defenseBonus = 0
-
+    #TODO: rename property to ArmorBonus
     @property
     def defenseBonus(self):
         """
@@ -939,16 +938,12 @@ class Equipment(Item):
         """
         return self._defenseBonus
 
-    _powerBonus = 0
-
     @property
     def powerBonus(self):
         """
         The power bonus of this piece of equipment
         """
         return self._powerBonus
-
-    _isEquiped = False
 
     @property
     def isEquiped(self):
@@ -996,6 +991,7 @@ class Consumable(Item):
         """
         The effect that this consumable can generate.
         """
+        #TODO: Modifier to take into account?
         return self._effect
 
     @property
@@ -1006,6 +1002,7 @@ class Consumable(Item):
         if self.effect is None:
             return False
         else:
+            #TODO: Modifier of non targeted to targeted?
             return self.baseItem.targeted
 
     @property
@@ -1013,28 +1010,42 @@ class Consumable(Item):
         """
         The radius of the effect that this consumable can generate.
         """
-        return self.baseItem.effectRadius
+        radius = self.baseItem.effectRadius
+        for modifier in self.modifiers:
+            radius += modifier.effectRadius
+        return radius
 
     @property
     def effectHitDie(self):
         """
         The HitDie of the effect that this consumable can generate.
         """
-        return self.baseItem.effectHitDie
+        nbr, die = self.baseItem.effectHitDie.split('d')
+        nbr = int(nbr)
+        for modifier in self.modifiers:
+            nbr += modifier.effectHitDie
+        return str(nbr) + 'd' + die
 
     @property
     def effectDuration(self):
         """
         The duration of the effect that this consumable can generate.
         """
-        return self.baseItem.effectDuration
+        duration = self.baseItem.effectDuration
+        for modifier in self.modifiers:
+            duration += modifier.effectDuration
+        return duration
 
     @property
     def effectColor(self):
         """
         The effect that this consumable can generate.
         """
-        return self.baseItem.effectColor
+        color = self.baseItem.effectColor
+        for modifier in self.modifiers:
+            if modifier.effectColor is not None:
+                color = modifier.effectColor
+        return color
 
     @property
     def isConsumed(self):

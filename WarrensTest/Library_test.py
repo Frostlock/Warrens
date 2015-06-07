@@ -117,7 +117,7 @@ class TestItemLibrary(unittest.TestCase):
         """
         self.ilib = None
 
-    def test_itemList(self):
+    def test_allItems(self):
         """
         Test if every item can be correctly created.
         """
@@ -138,15 +138,32 @@ class TestItemLibrary(unittest.TestCase):
         # Ensure items are being tracked correctly
         self.assertEqual(len(items), len(self.ilib.items))
 
+    def test_allModifiedItems(self):
+        """
+        Try out all item - modifier combinations
+        """
+        count = 0
+        for item_key in self.ilib.availableItems:
+            for modifier_key in self.ilib.availableModifiersForItem(item_key):
+                item = self.ilib.createItem(item_key, modifier_key)
+                count += 1
+                # Call all properties of the item
+                self.callAllProperties(item)
+        print '\n   Created ' + str(count) + " items."
+
+
     def test_itemProperties(self):
         # This test will trigger all properties of a random item
         difficulty = random.randint(1,10)
         aRandomItem = self.ilib.getRandomItem(difficulty)
-        itemClass = aRandomItem.__class__.__name__
-        property_names=[p for p in dir(eval(itemClass)) if isinstance(getattr(eval(itemClass),p),property)]
+        self.callAllProperties(aRandomItem)
+
+    def callAllProperties(self,obj):
+        objClass = obj.__class__.__name__
+        property_names=[p for p in dir(eval(objClass)) if isinstance(getattr(eval(objClass),p),property)]
         for p in property_names:
-            result = getattr(aRandomItem, p)
-            #print result
+            result = getattr(obj, p)
+            #print "      " + p + ": " + str(result)
 
     def test_randomItem(self):
         """
