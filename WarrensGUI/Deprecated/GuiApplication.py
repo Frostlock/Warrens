@@ -13,10 +13,6 @@ from WarrensGame.Actors import Character
 from WarrensGame.Effects import EffectTarget
 from WarrensGUI.Deprecated import GuiCONSTANTS, GuiUtilities
 from WarrensGUI.Util import Utilities
-import GuiTextures
-
-
-
 
 #movement keys
 MOVEMENT_KEYS = {
@@ -282,7 +278,7 @@ class GuiApplication(object):
             if GuiCONSTANTS.SHOW_PERFORMANCE_LOGGING:event_time = time.time() - start_time - render_time
 
             #If the player took a turn: Let the game play a turn
-            self.game.play()
+            self.game.tryToPlayTurn()
 
             #limit framerate (kinda optimistic since with current rendering we don't achieve this framerate :) )
             frameRateLimit = 30
@@ -401,9 +397,6 @@ class GuiApplication(object):
         
         #Initialize render font, a size of roughly 1,5 times the tileSize gives good results
         self._viewPortFont = pygame.font.Font(None, self.tileSize + self.tileSize/2)
-        
-        #initialize textures
-        GuiTextures.initTextures(self.renderLevel.map.textureFile,self.tileSize)
         
         #determine max coords for view port location
         totalWidth = self.renderLevel.map.width * self.tileSize

@@ -140,24 +140,6 @@ class Map(object):
         Place holder function, subclass must provide actual implementation.
         """
         raise Utilities.GameError("Can't use Map class directly, use a subclass!")
-
-    def calculateTileTypes(self):
-        """
-        Calculates tiletypes for all tiles in the map
-        """
-        for x, y in self.each_map_position:
-            self.calculateTileType(self.tiles[x][y])
-             
-    def calculateTileType(self,tile):
-        """
-        Calculates tiletype for given tile based on surrounding tiles.
-        This is a very basic implementation only taking into account if the tile is blocked or not.
-        """
-        #basic rule
-        if tile.blocked: 
-            tile.type = TileType.FULL
-        else:
-            tile.type = TileType.EMPTY
             
     def refreshBlockedTileMatrix(self):
         """
@@ -331,7 +313,6 @@ class DungeonMap(Map):
                 myTile.blockSight = True
                 myTile.color = CONSTANTS.DUNGEON_COLOR_WALL
                 myTile.material = MaterialType.STONE
-                myTile.type = TileType.FULL
 
         #cut out rooms
         num_rooms = 0
@@ -362,29 +343,6 @@ class DungeonMap(Map):
                     self.tiles[x][y].blockSight = False
                     self.tiles[x][y].color = CONSTANTS.DUNGEON_COLOR_FLOOR
                     self.tiles[x][y].material = MaterialType.DIRT
-                    self.tiles[x][y].type = TileType.EMPTY
-            
-            #set tile types of walls and corners
-            #north & south wall
-            for x in range(new_room.x1 + 1, new_room.x2):
-                y = new_room.y1
-                self.tiles[x][y].type = TileType.OUTER_S
-                y = new_room.y2
-                self.tiles[x][y].type = TileType.OUTER_N
-            #east & west wall
-            for y in range(new_room.y1 + 1, new_room.y2):
-                x = new_room.x1
-                self.tiles[x][y].type = TileType.OUTER_E
-                x = new_room.x2
-                self.tiles[x][y].type = TileType.OUTER_W
-            #north west corner
-            self.tiles[new_room.x1][new_room.y1].type = TileType.INNER_NW
-            #north east corner
-            self.tiles[new_room.x1][new_room.y2].type = TileType.INNER_SW
-            #south west corner
-            self.tiles[new_room.x2][new_room.y1].type = TileType.INNER_NE
-            #south east corner
-            self.tiles[new_room.x2][new_room.y2].type = TileType.INNER_SE
                  
             (new_x, new_y) = new_room.center
 
@@ -400,74 +358,6 @@ class DungeonMap(Map):
                 #first move horizontally, then vertically
                 self._createHorizontalTunnel(prev_x, new_x, new_y)
                 self._createVerticalTunnel(prev_y, new_y, prev_x)
-                
-                #TODO: Dungeon tile typing is not perfect
-                #tile types for crossing corridors are not OK
-                #corridors that run over older rooms are also causing issues
-                #new rooms on top of older corridors cause issues
-                
-                #set tile types    
-                if prev_y > new_y:
-                    #entry point in previous room
-                    self._tiles[prev_x-1][prev_room.y1].type = TileType.OUTER_SE
-                    self._tiles[prev_x+1][prev_room.y1].type = TileType.OUTER_SW
-                    if prev_x < new_x:
-                        #corner
-                        self._tiles[prev_x-1][new_y-1].type = TileType.INNER_NW
-                        self._tiles[prev_x+1][new_y+1].type = TileType.OUTER_NW
-                        #entry point in new room
-                        self._tiles[new_room.x1][new_y-1].type = TileType.OUTER_SE
-                        self._tiles[new_room.x1][new_y+1].type = TileType.OUTER_NE
-                    elif prev_x > new_x:
-                        #corner
-                        self._tiles[prev_x-1][new_y+1].type = TileType.OUTER_NE
-                        self._tiles[prev_x+1][new_y-1].type = TileType.INNER_NE
-                        #entry point in new room
-                        self._tiles[new_room.x2][new_y-1].type = TileType.OUTER_SW
-                        self._tiles[new_room.x2][new_y+1].type = TileType.OUTER_NW
-                    else: #new room and previous room on same X axis
-                        #no corner
-                        #entry point in new room
-                        self._tiles[prev_x-1][new_room.y2].type = TileType.OUTER_NE
-                        self._tiles[prev_x+1][new_room.y2].type = TileType.OUTER_NW
-                elif prev_y < new_y:
-                    #entry point in previous room
-                    self._tiles[prev_x-1][prev_room.y2].type = TileType.OUTER_NE
-                    self._tiles[prev_x+1][prev_room.y2].type = TileType.OUTER_NW
-                    if prev_x < new_x:
-                        #corner
-                        self._tiles[prev_x-1][new_y+1].type = TileType.INNER_SW
-                        self._tiles[prev_x+1][new_y-1].type = TileType.OUTER_SW
-                        #entry point in new room
-                        self._tiles[new_room.x1][new_y-1].type = TileType.OUTER_SE
-                        self._tiles[new_room.x1][new_y+1].type = TileType.OUTER_NE
-                    elif prev_x > new_x:
-                        #corner
-                        self._tiles[prev_x-1][new_y-1].type = TileType.OUTER_SE
-                        self._tiles[prev_x+1][new_y+1].type = TileType.INNER_SE
-                        #entry point in new room
-                        self._tiles[new_room.x2][new_y-1].type = TileType.OUTER_SW
-                        self._tiles[new_room.x2][new_y+1].type = TileType.OUTER_NW
-                    else: #new room and previous room on same X axis
-                        #no corner
-                        #entry point in new room
-                        self._tiles[prev_x-1][new_room.y1].type = TileType.OUTER_SE
-                        self._tiles[prev_x+1][new_room.y1].type = TileType.OUTER_SW
-                else: #new room and previous room on same Y axis
-                    if prev_x < new_x:
-                        #entry point in previous room
-                        self._tiles[prev_room.x2][new_y-1].type = TileType.OUTER_SW
-                        self._tiles[prev_room.x2][new_y+1].type = TileType.OUTER_NW
-                        #entry point in new room
-                        self._tiles[new_room.x1][new_y-1].type = TileType.OUTER_SE
-                        self._tiles[new_room.x1][new_y+1].type = TileType.OUTER_NE
-                    elif prev_x > new_x:
-                        #entry point in previous room
-                        self._tiles[prev_room.x1][new_y-1].type = TileType.OUTER_SE
-                        self._tiles[prev_room.x1][new_y+1].type = TileType.OUTER_NE
-                        #entry point in new room
-                        self._tiles[new_room.x2][new_y-1].type = TileType.OUTER_SW
-                        self._tiles[new_room.x2][new_y+1].type = TileType.OUTER_NW
 
             #finally, append the new room to the list
             self.rooms.append(new_room)
@@ -478,12 +368,6 @@ class DungeonMap(Map):
         self._entryTile = self._tiles[entryX][entryY]
         (exitX, exitY) = self.rooms[len(self.rooms) - 1].center
         self._exitTile = self._tiles[exitX][exitY]
-        
-        #ensure unblocked tiles get empty type
-        for y in range(self.height):
-            for x in range(self.width):
-                myTile = self.tiles[x][y]
-                if not myTile.blocked: myTile.type = TileType.EMPTY
 
     def _createHorizontalTunnel(self, x1, x2, y):
         #horizontal tunnel. min() and max() are used in case x1>x2
@@ -492,15 +376,6 @@ class DungeonMap(Map):
             self.tiles[x][y].blockSight = False
             self.tiles[x][y].color = CONSTANTS.DUNGEON_COLOR_FLOOR
             self.tiles[x][y].material = MaterialType.DIRT
-            self.tiles[x][y].type = TileType.EMPTY
-        #north wall
-        if y-1 >= 0:
-            for x in range(min(x1, x2), max(x1, x2) + 1):
-                if self.tiles[x][y-1].blocked: self.tiles[x][y-1].type =TileType.OUTER_S
-        #south wall
-        if y+1 <= self.height:
-            for x in range(min(x1, x2), max(x1, x2) + 1):
-                if self.tiles[x][y+1].blocked: self.tiles[x][y+1].type =TileType.OUTER_N
 
     def _createVerticalTunnel(self, y1, y2, x):
         #vertical tunnel
@@ -509,15 +384,6 @@ class DungeonMap(Map):
             self.tiles[x][y].blockSight = False
             self.tiles[x][y].color = CONSTANTS.DUNGEON_COLOR_FLOOR
             self.tiles[x][y].material = MaterialType.DIRT
-            self.tiles[x][y].type =TileType.EMPTY
-        #west wall
-        if x-1 >= 0:
-            for y in range(min(y1, y2), max(y1, y2) + 1):
-                if self.tiles[x-1][y].blocked: self.tiles[x-1][y].type =TileType.OUTER_E
-        #east wall
-        if x+1 <= self.width:
-            for y in range(min(y1, y2), max(y1, y2) + 1):
-                if self.tiles[x+1][y].blocked: self.tiles[x+1][y].type =TileType.OUTER_W
 
     def getRandomEmptyTile(self):
         """
@@ -591,13 +457,11 @@ class TownMap(Map):
                     myTile.blockSight = True
                     myTile.color = CONSTANTS.TOWN_COLOR_BORDER
                     myTile.material = MaterialType.STONE
-                    myTile.type = TileType.FULL
                 else:
                     myTile.blocked = False
                     myTile.blockSight = False
                     myTile.color = CONSTANTS.TOWN_COLOR_DIRT
                     myTile.material = MaterialType.DIRT
-                    myTile.type = TileType.EMPTY
 
         #generate houses
         num_houses = 0
@@ -628,37 +492,10 @@ class TownMap(Map):
                     self.tiles[x][y].blockSight = True
                     self.tiles[x][y].color = CONSTANTS.TOWN_COLOR_STONE
                     self.tiles[x][y].material = MaterialType.STONE
-                    self.tiles[x][y].type = TileType.FULL
-
-            #set tile types of walls and corners
-            #north & south wall
-            for x in range(new_house.x1 + 1, new_house.x2):
-                y = new_house.y1
-                self.tiles[x][y].type = TileType.OUTER_N
-                y = new_house.y2
-                self.tiles[x][y].type = TileType.OUTER_S
-            #east & west wall
-            for y in range(new_house.y1 + 1, new_house.y2):
-                x = new_house.x1
-                self.tiles[x][y].type = TileType.OUTER_W
-                x = new_house.x2
-                self.tiles[x][y].type = TileType.OUTER_E
-            #north west corner
-            self.tiles[new_house.x1][new_house.y1].type = TileType.OUTER_NW
-            #north east corner
-            self.tiles[new_house.x1][new_house.y2].type = TileType.OUTER_SW
-            #south west corner
-            self.tiles[new_house.x2][new_house.y1].type = TileType.OUTER_NE
-            #south east corner
-            self.tiles[new_house.x2][new_house.y2].type = TileType.OUTER_SE
 
             #finally, append the new room to the list
             self.houses.append(new_house)
             num_houses += 1
-            
-            #calculate tile types (no need, set abvoe)
-            #self.calculateTileTypes()
-
 
 class SingleRoomMap(Map):
     """
@@ -702,7 +539,6 @@ class SingleRoomMap(Map):
                 myTile.blockSight = True
                 myTile.color = CONSTANTS.DUNGEON_COLOR_WALL
                 myTile.material = MaterialType.STONE
-                myTile.type = TileType.FULL
 
         #Cut out the single room
         for x in range(self.room.x1 + 1, self.room.x2):
@@ -711,10 +547,6 @@ class SingleRoomMap(Map):
                 self.tiles[x][y].blockSight = False
                 self.tiles[x][y].color = CONSTANTS.DUNGEON_COLOR_FLOOR
                 self.tiles[x][y].material = MaterialType.DIRT
-                self.tiles[x][y].type = TileType.EMPTY
-        
-        #calculate tile types (no need, set above)
-        #self.calculateTileTypes()
 
 class CaveMap(Map):
     """
@@ -812,28 +644,6 @@ class Room():
                 if not self._map.tiles[x][y].blocked and self._map.tiles[x][y].empty:
                     aTile = self._map.tiles[x][y]
         return aTile
-
-class TileType():
-    
-    """
-    Deprecated enumerator to indicate the type of tile. Should no longer be used.
-    """
-    # TODO; Clear out all Texture related code properties
-    
-    EMPTY = 0
-    FULL = 1
-    INNER_NW = 2
-    INNER_NE = 3
-    INNER_SW = 4
-    INNER_SE = 5
-    OUTER_N = 6
-    OUTER_W = 7
-    OUTER_E = 8
-    OUTER_S = 9
-    OUTER_NW = 10
-    OUTER_NE = 11
-    OUTER_SW = 12
-    OUTER_SE = 13
 
 class MaterialType():
     """
@@ -989,7 +799,6 @@ class Tile(object):
         self._material = MaterialType.NONE
         self._in_view = True
         self._color = CONSTANTS.TILE_DEFAULT_COLOR
-        self._type = TileType.EMPTY
 
     def __str__(self):
         """
