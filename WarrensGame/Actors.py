@@ -391,6 +391,7 @@ class Character(Actor):
         adding item puts it in this characters inventory
         """
         self.inventory.add(item)
+        item.owner = self
         #TODO: check for auto equip
 
     def removeItem(self, item):
@@ -711,7 +712,7 @@ class Player(Character):
         """
         if isinstance(item, Consumable):
             #try to use the consumable
-            if item.effect is not None and item.isConsumed is False:
+            if not item.isConsumed:
                 if target is None:
                     #apply to self
                     item.applyTo(self)
@@ -898,13 +899,29 @@ class Item(Actor):
             iLevel += modifier.modifierLevel
         return iLevel
 
+    @property
+    def owner(self):
+        """
+        Returns the owner of this item.
+        :return: Character or None
+        """
+        return self._owner
+
+    @owner.setter
+    def owner(self, owner):
+        '''
+        Set the owner of this item to the given owner (Character).
+        :param owner: Character that owns this item
+        :return: None
+        '''
+        self._owner = owner
+
     def registerWithLevel(self, level):
         """
         Makes the level aware that this item is on it.
         """
         level.addItem(self)
 
-    #constructor
     def __init__(self, baseItem):
         """
         Creates a new Item object, normally not used directly but called
@@ -1065,12 +1082,8 @@ class Consumable(Item):
         super(Consumable, self).__init__(baseItem)
         #consumables are stackable
         self._stackable = True
-        #consumables usually have an effect
-        if baseItem.effect != '':
-            effect_class = eval("Effects." + baseItem.effect)
-            self._effect = effect_class and effect_class(self) or None
-        else:
-            self._effect = None
+        # Effect will be created when item is consumed
+        self._effect = None
 
     #functions
     def applyTo(self, target):
@@ -1080,8 +1093,11 @@ class Consumable(Item):
         specific Effect subclass.
         """
         if self.stackSize > 0:
-            if self.effect is not None:
-                self.effect.applyTo(target)
+            if self.baseItem.effect != '':
+                effect_class = eval("Effects." + self.baseItem.effect)
+                self._effect = effect_class and effect_class(self) or None
+                if self.effect is not None:
+                    self.effect.applyTo(target)
             self.stackSize -= 1
 
 class QuestItem(Item):

@@ -760,6 +760,8 @@ class MainWindow(object):
                 for actor in tile.actors:
                     actorObj = ActorSceneObject(actor, TILESIZE)
                     self.dynamicObjects.append(actorObj)
+                # Create an effect object for every active effect on the tile
+                # TODO: effectSceneObject
         # Load the dynamic objects in vertex buffers
         self.loadVAODynamicObjects()
 

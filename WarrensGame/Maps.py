@@ -11,7 +11,13 @@ class Map(object):
     Describes the 2D layout of a level
     Contains logic to calculate distance, intersection, field of view, ...
     """
-    _tiles = None
+    @property
+    def level(self):
+        """
+        Returns the level for this Map.
+        :return: Level or None
+        """
+        return self._level
 
     @property
     def tiles(self):
@@ -107,17 +113,9 @@ class Map(object):
         Range of view used to determine field of view on this map.
         """
         return self._rangeOfView
-
-    @property
-    def textureFile(self):
-        """
-        FileName of texture file for this map.
-        """
-        # TODO: clean out all references to textures? Or keep it in a simplified way? (no corners etc, only 1 per tile type)
-        return self._textureFile
     
     #constructor
-    def __init__(self, MapWidth, MapHeight):
+    def __init__(self, MapWidth, MapHeight, level=None):
         """
         Constructor to create a new empty map
         Arguments
@@ -126,7 +124,7 @@ class Map(object):
         """
         #Initialize range of view
         self._rangeOfView = CONSTANTS.TORCH_RADIUS
-        self._textureFile = None
+        self._level = level
         #Create a big empty map
         self._tiles = [[Tile(map, x, y)
             for y in range(MapHeight)]
@@ -276,14 +274,14 @@ class DungeonMap(Map):
         """
         self._areas = []
 
-    def __init__(self, MapWidth, MapHeight):
+    def __init__(self, MapWidth, MapHeight, level=None):
         """
         Constructor to create a new dungeon map
         Arguments
             MapWidth - Map width in tiles
             MapHeight - Map height in tiles
         """
-        super(DungeonMap, self).__init__(MapWidth, MapHeight)
+        super(DungeonMap, self).__init__(MapWidth, MapHeight, level)
         #Initialize range of view
         self._rangeOfView = CONSTANTS.TORCH_RADIUS
         self._textureFile = CONSTANTS.DUNGEON_TEXTURE
@@ -417,14 +415,14 @@ class TownMap(Map):
         """
         self._areas = []
 
-    def __init__(self, MapWidth, MapHeight):
+    def __init__(self, MapWidth, MapHeight, level=None):
         """
         Constructor to create a new town map
         Arguments
             MapWidth - Map width in tiles
             MapHeight - Map height in tiles
         """
-        super(TownMap, self).__init__(MapWidth, MapHeight)
+        super(TownMap, self).__init__(MapWidth, MapHeight, level)
         #Initialize range of view
         self._rangeOfView = CONSTANTS.TOWN_RADIUS
         self._textureFile = CONSTANTS.TOWN_TEXTURE
@@ -511,7 +509,7 @@ class SingleRoomMap(Map):
         """
         return self._room
 
-    def __init__(self, MapWidth, MapHeight, myRoom):
+    def __init__(self, MapWidth, MapHeight, level, myRoom):
         """
         Constructor to create a new empty map
         Arguments
@@ -520,7 +518,7 @@ class SingleRoomMap(Map):
         """
         #Register room
         self._room = myRoom
-        super(SingleRoomMap, self).__init__(MapWidth, MapHeight)
+        super(SingleRoomMap, self).__init__(MapWidth, MapHeight, level)
         #Initialize range of view
         self._rangeOfView = CONSTANTS.TORCH_RADIUS
         self._textureFile = CONSTANTS.TOWN_TEXTURE
@@ -553,14 +551,14 @@ class CaveMap(Map):
     This class represents a randomized cave system map.
     """
     
-    def __init__(self, MapWidth, MapHeight):
+    def __init__(self, MapWidth, MapHeight, level=None):
         """
         Constructor to create a new cave system map
         Arguments
             MapWidth - Map width in tiles
             MapHeight - Map height in tiles
         """
-        super(CaveMap, self).__init__(MapWidth, MapHeight)
+        super(CaveMap, self).__init__(MapWidth, MapHeight, level)
         #Initialize range of view
         self._rangeOfView = CONSTANTS.TORCH_RADIUS
         #self._textureFile = CONSTANTS.CAVE_TEXTURE

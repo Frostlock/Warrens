@@ -29,6 +29,22 @@ class Effect(object):
         return self._source
 
     @property
+    def tiles(self):
+        """
+        The tiles affected by this effect.
+        :return: List of tiles
+        """
+        return self._tiles
+
+    @property
+    def actors(self):
+        """
+        The actors affected by this effect.
+        :return: List of actors
+        """
+        return self._actors
+
+    @property
     def targetType(self):
         """
         indicates the type of target this effect needs, enumerator
@@ -59,9 +75,13 @@ class Effect(object):
     @property
     def effectDuration(self):
         """
-        Duration in number of turns.
+        Duration of this effect in number of turns.
         """
-        return self.source.effectDuration
+        return self._effectDuration
+
+    @effectDuration.setter
+    def effectDuration(self, duration):
+        self._effectDuration = duration
 
     @property
     def effectDescription(self):
@@ -77,8 +97,7 @@ class Effect(object):
         RGB tuple that indicates the color of this effect.
         """
         return self.source.effectColor
-    
-    #constructor
+
     def __init__(self, source):
         """
         Constructor for a new Effect, meant to be used by the Effect subclasses.
@@ -86,16 +105,26 @@ class Effect(object):
             source - an object representing the source of the effect
         """
         self._source = source
+        self._tiles = []
+        self._actors = []
         self._targetType = EffectTarget.SELF
+        self._effectDuration = self.source.effectDuration
         self._effectDescription = "Description not set"
 
-    #functions
     def applyTo(self, target):
         """
         Applies this effect to a target. The target can be several types of
         objects, it depends on the specific Effect subclass.
         """
-        print "WARNING: missing effect applyTo() implementation"
+        raise NotImplementedError("WARNING: missing effect applyTo() implementation")
+
+    def tick(self):
+        """
+        Applies an additional duration tick for this effect.
+        Supposed to be overridden in subclass.
+        """
+        if self.effectDuration == 0: return
+        self.effectDuration -= 1
 
 class MagicEffect(Effect):
     """
@@ -121,10 +150,19 @@ class HealEffect(MagicEffect):
         arguments
             target - Character object
         """
-        healAmount = Utilities.rollHitDie(self.effectHitDie)
-        target.takeHeal(healAmount, self.source)
-        effectTiles = [target.tile]
-        Utilities.registerEffect(self, effectTiles)
+        self._tiles = [target.tile]
+        self._actors = [target]
+        target.tile.map.level.game.activeEffects.append(self)
+        self.tick()
+
+    def tick(self):
+        """
+        Apply one tick of healing
+        """
+        super(HealEffect, self).tick()
+        for target in self.actors:
+            healAmount = Utilities.rollHitDie(self.effectHitDie)
+            target.takeHeal(healAmount, self.source)
 
 class ConfuseEffect(MagicEffect):
     """
@@ -147,6 +185,7 @@ class ConfuseEffect(MagicEffect):
         """
         confusedTurns = self.effectDuration
         AI.ConfusedMonsterAI(self, target, confusedTurns)
+        target.level.game.activeEffects.append(self)
         Utilities.message(target.name + ' is confused for ' + str(confusedTurns) + ' turns.', "GAME")        
 
 class DamageEffect(MagicEffect):
@@ -155,9 +194,6 @@ class DamageEffect(MagicEffect):
     It can be targeted, in which case it will damage all actors in a circular area.
     It can be untargeted, in which case it will function as a nova, damaging all actors in a circular area around the source, excluding the tile of the source
     """
-
-    #set when effect is applied
-    _centerTile = None
     
     @property
     def centerTile(self):
@@ -174,30 +210,31 @@ class DamageEffect(MagicEffect):
         super(DamageEffect, self).__init__(source)
         self._effectDescription = "The area is bombarded by magical energy."
         self._targetType = EffectTarget.TILE
+        self._centerTile = None
 
-    def applyTo(self, center):
+    def applyTo(self, targetActor):
         """
         Damage area is circular around center.
         If this effect is targeted, center should be a Tile object.
         If this effect is not targeted, center should be an Actor object.
         """
         if self.targeted:
-            self._centerTile = center
+            self._centerTile = targetActor
         else:
-            self._centerTile = center.tile
+            self._centerTile = targetActor.tile
         #find all tiles that are in the damage area
         sourceTile = self.centerTile
         fullCircle = True
         excludeBlockedTiles = True
         radius = self.effectRadius
-        effectTiles = sourceTile.map.getCircleTiles(sourceTile.x, sourceTile.y, radius, fullCircle, excludeBlockedTiles)
+        self._tiles = sourceTile.map.getCircleTiles(sourceTile.x, sourceTile.y, radius, fullCircle, excludeBlockedTiles)
         #in case this is an untargeted effect
         if not self.targeted:
             #exclude the center of the nova
-            effectTiles.remove(sourceTile)
+            self.tiles.remove(sourceTile)
         #find all targets in range
         targets = []
-        for tile in effectTiles:
+        for tile in self.tiles:
             for actor in tile.actors:
                 targets.append(actor)
         #apply damage to every target
@@ -205,6 +242,7 @@ class DamageEffect(MagicEffect):
         for target in targets:
             Utilities.message(self.source.name.capitalize() + ' hits '
                     + target.name + ' for ' + str(damageAmount) + ' Damage.', "GAME")
-            target.takeDamage(damageAmount, self.source)
-        #effect visualization
-        Utilities.registerEffect(self, effectTiles)
+            target.takeDamage(damageAmount, self.source.owner)
+
+        # Register effect with Game
+        targetActor.level.game.activeEffects.append(self)

@@ -13,18 +13,12 @@ class Level(object):
     This is the generic version containing the shared logic that is inherited
     by the sub classes
     """
-
-    #class variables
-    _game = None
-
     @property
     def game(self):
         """
         The game that owns this level.
         """
         return self._game
-
-    _name = None
 
     @property
     def name(self):
@@ -33,16 +27,12 @@ class Level(object):
         """
         return self._name
 
-    _difficulty = 0
-
     @property
     def difficulty(self):
         """
         The difficulty of this level.
         """
         return self._difficulty
-
-    _map = None
 
     @property
     def map(self):
@@ -51,16 +41,12 @@ class Level(object):
         """
         return self._map
 
-    _portals = None
-
     @property
     def portals(self):
         """
         The portals on this level
         """
         return self._portals
-
-    _characters = None
 
     @property
     def characters(self):
@@ -69,16 +55,12 @@ class Level(object):
         """
         return self._characters
 
-    _items = None
-
     @property
     def items(self):
         """
         The items on this level
         """
         return self._items
-
-    _subLevels = []
 
     @property
     def subLevels(self):
@@ -96,7 +78,6 @@ class Level(object):
             difficulty - Difficulty of this level
             name - a textual name for this level
         """
-        #initialize class variables (makes them unique to this instance)
         self._game = owner
         self._difficulty = difficulty
         self._name = name
@@ -149,7 +130,7 @@ class DungeonLevel(Level):
     """
     Class representing a randomly generated dungeon level.
     """
-    #constructor
+
     def __init__(self, owner, difficulty, name):
         """
         Constructor to create a new generated level.
@@ -161,7 +142,7 @@ class DungeonLevel(Level):
         #call constructor of super class
         super(DungeonLevel, self).__init__(owner, difficulty, name)
         #generate the map
-        self._map = Maps.DungeonMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
+        self._map = Maps.DungeonMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT, self)
         #add some monsters
         self._placeMonsters()
         #add some items
@@ -227,7 +208,6 @@ class TownLevel(Level):
     Class representing a randomly generated town level.
     """
 
-    #constructor
     def __init__(self, owner, difficulty, name):
         """
         Constructor to create a new generated level.
@@ -239,7 +219,7 @@ class TownLevel(Level):
         #call constructor of super class
         super(TownLevel, self).__init__(owner, difficulty, name)
         #generate the map
-        self._map = Maps.TownMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
+        self._map = Maps.TownMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT, self)
         #generate sublevels for the houses
         for house in self.map.houses:
             self.generateHouseInterior(house)
@@ -299,7 +279,7 @@ class SingleRoomLevel(Level):
         #call constructor of super class
         super(SingleRoomLevel, self).__init__(owner, difficulty, name)
         #generate the map
-        self._map = Maps.SingleRoomMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT, area)
+        self._map = Maps.SingleRoomMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT, self, area)
 
 
 class CaveLevel(Level):

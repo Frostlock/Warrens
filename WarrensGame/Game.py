@@ -86,6 +86,14 @@ class Game(object):
         self._currentLevel = level
 
     @property
+    def activeEffects(self):
+        """
+        A list of the currently active effects
+        :return: Array of Effects
+        """
+        return self._activeEffects
+
+    @property
     def monsterLibrary(self):
         """
         Returns the monster library used by this game.
@@ -107,6 +115,7 @@ class Game(object):
         # Initialize class variables
         self._player = None
         self._currentLevel = None
+        self._activeEffects = []
         # Initialize libraries
         self._monsterLibrary = MonsterLibrary()
         self._itemLibrary = ItemLibrary()
@@ -227,7 +236,7 @@ class Game(object):
             self._player.tile.x, self._player.tile.y)
 
         # Starting gear
-        potion = self.itemLibrary.createItem("healingpotion")
+        potion = self.itemLibrary.createItem("healingvial", "exquisite")
         self.player.addItem(potion)
         potion = self.itemLibrary.createItem("healingpotion")
         self.player.addItem(potion)
@@ -278,6 +287,16 @@ class Game(object):
                     c.actionTaken = False
             # Update field of view
             self.currentLevel.map.updateFieldOfView(self.player.tile.x, self.player.tile.y)
+            # Let effects tick
+            toRemove = []
+            for effect in self.activeEffects:
+                if effect.effectDuration <= 0:
+                    toRemove.append(effect)
+                else:
+                    effect.tick()
+            # Remove effects that are no longer active
+            for effect in toRemove:
+                self.activeEffects.remove(effect)
             return True
         else:
             return False
