@@ -770,9 +770,6 @@ class CaveMap(Map):
             
         #TODO: Grow additional cave areas.
 
-        #calculate tile types
-        #self.calculateTileTypes()
-
 class Room():
     """
     Describes a rectangular room on the map
@@ -820,8 +817,8 @@ class TileType():
     
     """
     Deprecated enumerator to indicate the type of tile. Should no longer be used.
-    TODO; Clear out all Texture related code properties
     """
+    # TODO; Clear out all Texture related code properties
     
     EMPTY = 0
     FULL = 1
@@ -999,7 +996,7 @@ class Tile(object):
         Overrides object standard string representation.
         This enables str(thisTile).
         """
-        return '(' + str(self.x) + ',' + str(self.y) + ')'
+        return 'Tile @(' + str(self.x) + ',' + str(self.y) + ')'
 
     def addActor(self, myActor):
         """
