@@ -33,12 +33,24 @@ class SceneObject(object):
     def vertexCount(self):
         return len(self._vertices) / 4
 
+    @property
+    def timeSinceLastAnimation(self):
+        return self._timeSinceLastAnimation
+
+    @timeSinceLastAnimation.setter
+    def timeSinceLastAnimation(self, time):
+        self._timeSinceLastAnimation = time
+
     def __init__(self):
         self._vertices = []
         self._normals = []
         self._colors = []
         self._texCoords = []
         self._triangleIndices = []
+        self._timeSinceLastAnimation = 0
+
+    def animate(self, timePassed):
+        self.timeSinceLastAnimation += timePassed
 
 class AxisSceneObject(SceneObject):
 

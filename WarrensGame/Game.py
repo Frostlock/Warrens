@@ -261,12 +261,12 @@ class Game(object):
         """
         pass
 
-    def play(self):
+    def tryToPlayTurn(self):
         """
         This function should be called regularly by the GUI. It waits for the player
         to take action after which all AI controlled characters also get to act.
         This is what moves the game forward.
-        :rtype : None
+        :rtype : Boolean indicating if a turn was played
         """
         # Wait for player to take action
         if self.player.actionTaken:
@@ -278,3 +278,6 @@ class Game(object):
                     c.actionTaken = False
             # Update field of view
             self.currentLevel.map.updateFieldOfView(self.player.tile.x, self.player.tile.y)
+            return True
+        else:
+            return False

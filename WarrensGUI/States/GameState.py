@@ -47,8 +47,8 @@ class GameState(State):
         self.window.setCameraCenterOnMap()
 
     def loopDraw(self):
-        # Refresh the actors VAO (some actors might have moved)
-        self.window.refreshDynamicObjects()
+        # Animate every frame
+        self.window.animateDynamicObjects()
         # Redraw window
         self.window.drawAll()
 

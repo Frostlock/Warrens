@@ -1,3 +1,4 @@
+import random
 import numpy as np
 
 # For performance use the math functions, numpy also has these for multi dimensional arrays.
@@ -115,6 +116,19 @@ def normalizeColor(color):
         return (float(color[0]) / 255, float(color[1]) / 255, float(color[2]) / 255)
     elif len(color) == 4:
         return (float(color[0]) / 255, float(color[1]) / 255, float(color[2]) / 255, float(color[3]) / 255)
+
+def randomizeColor(color, varianceR, varianceG, varianceB):
+        r = random.randrange(-varianceR / 2, varianceR / 2)
+        g = random.randrange(-varianceG / 2, varianceG / 2)
+        b = random.randrange(-varianceB / 2, varianceB / 2)
+        newColor = [color[0] + r, color[1] + g, color[2] + b]
+        if newColor[0] < 0: newColor[0] = 0
+        if newColor[0] > 255: newColor[0] = 255
+        if newColor[1] < 0: newColor[1] = 0
+        if newColor[1] > 255: newColor[1] = 255
+        if newColor[2] < 0: newColor[2] = 0
+        if newColor[2] > 255: newColor[2] = 255
+        return normalizeColor(newColor)
 
 if __name__ == '__main__':
     pass

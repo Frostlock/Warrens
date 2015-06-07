@@ -27,12 +27,13 @@ from WarrensGame.Actors import Character
 from WarrensGUI.Util import Utilities
 import WarrensGUI.Util.OpenGlUtilities as og_util
 
-from WarrensGUI.Util.LevelSceneObject import LevelSceneObject
+from WarrensGUI.Util.TileSceneObject import TileSceneObject
 from WarrensGUI.Util.ActorSceneObject import ActorSceneObject
 from WarrensGUI.Util.vec3 import vec3
 from WarrensGUI.Util.Constants import *
 from WarrensGUI.States.MainMenuState import MainMenuState
 from WarrensGUI.States.GameState import GameState
+from WarrensGame.Maps import MaterialType
 
 class MainWindow(object):
     '''
@@ -80,17 +81,6 @@ class MainWindow(object):
         :return: PyGame clock object
         '''
         return self._clock
-
-    @property
-    def FPS(self):
-        '''
-        FPS - Frames per second
-        This property returns the number of frames based on previous calls to this property.
-        :return:
-        '''
-        time_passed_seconds = self.clock.tick() / 1000.
-        if time_passed_seconds <> 0: return 1 / time_passed_seconds
-        else: return 0
 
     @property
     def displaySize(self):
@@ -681,8 +671,10 @@ class MainWindow(object):
     def refreshStaticObjects(self):
         self.staticObjects = []
         if self.level is not None:
-            levelObj = LevelSceneObject(self.level, TILESIZE)
-            self.staticObjects.append(levelObj)
+            for tileRow in self.level.map.tiles:
+                for tile in tileRow:
+                    tileObj = TileSceneObject(tile, TILESIZE)
+                    self.staticObjects.append(tileObj)
             # Load the static objects in vertex buffers
             self.loadVAOStaticObjects()
 
@@ -752,14 +744,35 @@ class MainWindow(object):
         GL.glUseProgram(0)
 
     def refreshDynamicObjects(self):
+        '''
+        Recreates the dynamic objects.
+        This should be called every game turn.
+        :return:
+        '''
         self.dynamicObjects = []
         if self.level is not None:
-            for vTile in self.level.map.visible_tiles:
-                for actor in vTile.actors:
+            for tile in self.level.map.visible_tiles:
+                # Create tile object for dynamic tiles
+                if tile.material == MaterialType.WATER:
+                    tileObj = TileSceneObject(tile, TILESIZE)
+                    self.dynamicObjects.append(tileObj)
+                # Create scene object for every actor on the tile
+                for actor in tile.actors:
                     actorObj = ActorSceneObject(actor, TILESIZE)
                     self.dynamicObjects.append(actorObj)
-            # Load the dynamic objects in vertex buffers
-            self.loadVAODynamicObjects()
+        # Load the dynamic objects in vertex buffers
+        self.loadVAODynamicObjects()
+
+    def animateDynamicObjects(self):
+        '''
+        Triggers the animation of the current dynamic objects.
+        This should be called every frame.
+        :return: None
+        '''
+        for obj in self.dynamicObjects:
+            obj.animate(self.clock.get_time())
+        # Load the dynamic objects in vertex buffers
+        self.loadVAODynamicObjects()
 
     def loadVAODynamicObjects(self):
         """
@@ -839,6 +852,9 @@ class MainWindow(object):
         self.drawHUD()
         # draw Vector Buffer Arrays
         self.drawVBAs()
+        # Register time
+        #self.clock.tick_busy_loop(40) # This caps the framerate
+        self.clock.tick() # No framerate cap
 
     def drawVBAs(self):
         DEBUG_GLSL = False
@@ -928,19 +944,20 @@ class MainWindow(object):
         usedHeights = []
         fontHeight = FONT_HUD_M_HEIGHT / float(self.displayHeight)
         for actorObj in self.dynamicObjects:
-            drawCoords = (self.getActorNormalizedCoords(actorObj)[0],
-                            self.getActorNormalizedCoords(actorObj)[1],
-                            self.getActorNormalizedCoords(actorObj)[2])
-            foundHeight = False
-            while not foundHeight:
-                if usedHeights.count(int(drawCoords[1]/fontHeight)) == 0:
-                    usedHeights.append(int(drawCoords[1]/fontHeight))
-                    foundHeight = True
-                else:
-                    drawCoords = (drawCoords[0],
-                                  drawCoords[1] + fontHeight,
-                                  drawCoords[2])
-            self.drawText(drawCoords, actorObj.actor.name, FONT_HUD_M, COLOR_PG_HUD_TEXT)
+            if isinstance(actorObj,ActorSceneObject):
+                drawCoords = (self.getActorNormalizedCoords(actorObj)[0],
+                                self.getActorNormalizedCoords(actorObj)[1],
+                                self.getActorNormalizedCoords(actorObj)[2])
+                foundHeight = False
+                while not foundHeight:
+                    if usedHeights.count(int(drawCoords[1]/fontHeight)) == 0:
+                        usedHeights.append(int(drawCoords[1]/fontHeight))
+                        foundHeight = True
+                    else:
+                        drawCoords = (drawCoords[0],
+                                      drawCoords[1] + fontHeight,
+                                      drawCoords[2])
+                self.drawText(drawCoords, actorObj.actor.name, FONT_HUD_M, COLOR_PG_HUD_TEXT)
 
         # Health Bar
         GL.glLoadIdentity()
@@ -996,7 +1013,7 @@ class MainWindow(object):
 
         # FPS
         GL.glLoadIdentity()
-        self.drawText((-0.98, -1, zNear), str(self.FPS), FONT_HUD_S, COLOR_PG_HUD_TEXT)
+        self.drawText((-0.98, -1, zNear), str(self.clock.get_fps()), FONT_HUD_S, COLOR_PG_HUD_TEXT)
 
         # Right side: render game messages
         GL.glLoadIdentity()
@@ -1022,12 +1039,15 @@ class MainWindow(object):
 
     def progressGame(self):
         # Let the game move forward
-        self.game.play()
+        if self.game.tryToPlayTurn():
+            # If a turn was played, refresh the dynamic objects (some actors might have moved)
+            self.refreshDynamicObjects()
         # Detect level change
         if self.level is not self.previousPassLevel:
             self.previousPassLevel = self.level
             # On level change we refresh the static objects
             self.refreshStaticObjects()
+            self.refreshDynamicObjects()
         # React to player death
         if self.game.player.state == Character.DEAD:
             self.setCameraCenterOnActor(self.game.player)

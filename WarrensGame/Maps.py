@@ -761,7 +761,7 @@ class CaveMap(Map):
             tile.material = MaterialType.DIRT
         
         #Create a bit of water
-        circleTiles = self.getCircleTiles(x+1, y+1, 2, fullCircle)
+        circleTiles = self.getCircleTiles(x, y, 2, fullCircle)
         for tile in circleTiles:
             tile.material = MaterialType.WATER
             tile.blocked = False
@@ -956,14 +956,7 @@ class Tile(object):
         """
         Returns the preferred color of this tile.
         """
-        if self.material == MaterialType.WATER :
-            r = random.randrange(-5,5)
-            g = random.randrange(-5,5)
-            b = random.randrange(-50,0)
-            newColor = (self._color[0]+r,self._color[1]+g,self._color[2]+b)
-            return newColor
-        else:
-            return self._color
+        return self._color
     
     @color.setter
     def color(self, newColor):
