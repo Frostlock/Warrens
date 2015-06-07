@@ -870,7 +870,6 @@ class Item(Actor):
         '''
         Modifiers linked to this item
         '''
-        #TODO: item modifiers should modify the item, currently they only affect the item name.
         return self._modifiers
 
     @property

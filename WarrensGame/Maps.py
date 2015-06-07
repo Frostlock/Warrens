@@ -604,8 +604,7 @@ class Room():
     """
     Describes a rectangular room on the map
     """
-    #TODO EASY: clean up properties and provide comments for this class
-    #could use some additional properties as well maybe.
+
     def __init__(self, map, x, y, w, h):
         self._map = map
         self.x1 = x
