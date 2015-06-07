@@ -186,6 +186,9 @@ class TestItemLibrary(unittest.TestCase):
         item = self.ilib.createItem("dagger","giant")
         self.assertEqual(item.name, "Giant dagger")
 
+        item = self.ilib.createItem("firenova","double")
+        print "duur " + str(item.effect)
+
         #Incompatible modifiers should raise a GameError
         with self.assertRaises(GameError):
             self.ilib.createItem("dagger","minor")

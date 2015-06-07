@@ -35,6 +35,7 @@ class Inventory(object):
                 #If there is no existing item just add the new one
                 self.items.append(newItem)
                 #TODO: Problem here: Items with different modifiers should not stack!
+                #TODO: Problem here: Modifiers on first item apply to entire stack
             else:
                 #Item already exists, increase the stack with one
                 existingItem.stackSize +=1

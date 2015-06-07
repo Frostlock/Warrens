@@ -485,30 +485,32 @@ class Character(Actor):
            damage - the incoming damage
            attacker - the attacking Actor
         """
-        #apply damage if possible
-        if amount > 0:
-            self.currentHitPoints -= amount
-        #check for death
-        if self.currentHitPoints < 0:
-            Utilities.message(self.name.capitalize() + ' is killed!', "GAME")
-            self._killedBy(attacker)
+        if self.state == Character.ACTIVE:
+            #apply damage if possible
+            if amount > 0:
+                self.currentHitPoints -= amount
+            #check for death
+            if self.currentHitPoints < 0:
+                Utilities.message(self.name.capitalize() + ' is killed!', "GAME")
+                self._killedBy(attacker)
 
     def _killedBy(self, attacker):
         """
         This function handles the death of this Character
         """
-        if type(attacker) is Player:
-            #yield experience to the player
-            Utilities.message(attacker.name + ' gains ' + str(self.xpValue) + ' XP.', "GAME")
-            attacker.gainXp(self.xpValue)
-        if type(attacker) is Monster:
-            if attacker.killedByText != '':
-                Utilities.message(attacker.killedByText, "GAME")
-        #transform this character into a corpse and remove AI
-        self._char = '%'
-        self._AI = None
-        self._name = self.name + ' corpse'
-        self._state = Character.DEAD
+        if self.state == Character.ACTIVE:
+            if type(attacker) is Player:
+                #yield experience to the player
+                Utilities.message(attacker.name + ' gains ' + str(self.xpValue) + ' XP.', "GAME")
+                attacker.gainXp(self.xpValue)
+            if type(attacker) is Monster:
+                if attacker.killedByText != '':
+                    Utilities.message(attacker.killedByText, "GAME")
+            #transform this character into a corpse and remove AI
+            self._char = '%'
+            self._AI = None
+            self._name = self.name + ' corpse'
+            self._state = Character.DEAD
 
     def takeHeal(self, amount, healer):
         """
@@ -936,6 +938,7 @@ class Item(Actor):
         self._currentHitPoints = self._baseMaxHitPoints
         self._name = baseItem.name
         self._modifiers = []
+        self._owner = None
 
         #Basic items are not stackable
         self._stackable = False

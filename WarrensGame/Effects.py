@@ -123,8 +123,7 @@ class Effect(object):
         Applies an additional duration tick for this effect.
         Supposed to be overridden in subclass.
         """
-        if self.effectDuration == 0: return
-        self.effectDuration -= 1
+        raise NotImplementedError("WARNING: missing effect tick() implementation")
 
 class MagicEffect(Effect):
     """
@@ -159,7 +158,10 @@ class HealEffect(MagicEffect):
         """
         Apply one tick of healing
         """
-        super(HealEffect, self).tick()
+        # Update effectduration
+        if self.effectDuration == 0: return
+        self.effectDuration -= 1
+        # Apply healing
         for target in self.actors:
             healAmount = Utilities.rollHitDie(self.effectHitDie)
             target.takeHeal(healAmount, self.source)
@@ -232,6 +234,15 @@ class DamageEffect(MagicEffect):
         if not self.targeted:
             #exclude the center of the nova
             self.tiles.remove(sourceTile)
+        # Tick for damage
+        self.tick()
+        # Register effect with Game
+        targetActor.level.game.activeEffects.append(self)
+
+    def tick(self):
+        # Update effectduration
+        if self.effectDuration == 0: return
+        self.effectDuration -= 1
         #find all targets in range
         targets = []
         for tile in self.tiles:
@@ -243,6 +254,3 @@ class DamageEffect(MagicEffect):
             Utilities.message(self.source.name.capitalize() + ' hits '
                     + target.name + ' for ' + str(damageAmount) + ' Damage.', "GAME")
             target.takeDamage(damageAmount, self.source.owner)
-
-        # Register effect with Game
-        targetActor.level.game.activeEffects.append(self)
