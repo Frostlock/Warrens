@@ -130,3 +130,4 @@ class GameState(State):
                     # interact
                     elif event.key == pygame.K_COMMA:
                         player.tryPickUp()
+                        self.window.refreshDynamicObjects()

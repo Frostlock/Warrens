@@ -41,6 +41,8 @@ class InventoryMenuState(MenuState):
         else:
             #try to use the item
             self.window.game.player.tryUseItem(myItem)
+        # Something may have happened in the world
+        self.window.refreshDynamicObjects()
 
         # Refresh items, keys and handlers
         self.items = []

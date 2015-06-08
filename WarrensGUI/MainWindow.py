@@ -29,6 +29,7 @@ import WarrensGUI.Util.OpenGlUtilities as og_util
 
 from WarrensGUI.Util.TileSceneObject import TileSceneObject
 from WarrensGUI.Util.ActorSceneObject import ActorSceneObject
+from WarrensGUI.Util.EffectSceneObject import EffectSceneObject
 from WarrensGUI.Util.vec3 import vec3
 from WarrensGUI.Util.Constants import *
 from WarrensGUI.States.MainMenuState import MainMenuState
@@ -419,6 +420,8 @@ class MainWindow(object):
         #Initialize a new game
         self.game = Game()
         self.game.resetGame()
+        self.refreshStaticObjects()
+        self.refreshDynamicObjects()
         # Set Game state (which contains the main loop)
         self.state = GameState(self,self.state)
 
@@ -751,6 +754,7 @@ class MainWindow(object):
         '''
         self.dynamicObjects = []
         if self.level is not None:
+            #Check the visible tiles
             for tile in self.level.map.visible_tiles:
                 # Create tile object for dynamic tiles
                 if tile.material == MaterialType.WATER:
@@ -760,8 +764,10 @@ class MainWindow(object):
                 for actor in tile.actors:
                     actorObj = ActorSceneObject(actor, TILESIZE)
                     self.dynamicObjects.append(actorObj)
-                # Create an effect object for every active effect on the tile
-                # TODO: effectSceneObject
+            # Create an effect object for every active effect on the tile
+            for effect in self.game.activeEffects:
+                effectObj = EffectSceneObject(effect, TILESIZE)
+                self.dynamicObjects.append(effectObj)
         # Load the dynamic objects in vertex buffers
         self.loadVAODynamicObjects()
 
@@ -1044,7 +1050,7 @@ class MainWindow(object):
         if self.game.tryToPlayTurn():
             # If a turn was played, refresh the dynamic objects (some actors might have moved)
             self.refreshDynamicObjects()
-        # Detect level change
+        # Detect level change (this may happen without a turn being played)
         if self.level is not self.previousPassLevel:
             self.previousPassLevel = self.level
             # On level change we refresh the static objects
