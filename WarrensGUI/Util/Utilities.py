@@ -83,21 +83,20 @@ def getElementMinHeight(element):
     :param element: Element type
     :return: Minimum height
     '''
-    #TODO fill in the others
     if element == HEAL:
-        return 0.1
+        return 0.1 * TILESIZE
     elif element == WATER:
-        return WATER_COLOR
+        return 0.1 * TILESIZE
     elif element == AIR:
-        return AIR_COLOR
+        return 0.5 * TILESIZE
     elif element == FIRE:
-        return 0.1
+        return 0.1 * TILESIZE
     elif element == EARTH:
-        return 0.0001
+        return 0.0001 * TILESIZE
     elif element == ELEC:
-        return ELEC_COLOR
+        return 0.7 * TILESIZE
     elif element == MIND:
-        return MIND_COLOR
+        return 0.1 * TILESIZE
     else:
         raise NotImplementedError("Missing element to min height mapping.")
 
@@ -107,21 +106,20 @@ def getElementMaxHeight(element):
     :param element: Element type
     :return: Maximum height
     '''
-    #TODO fill in the others
     if element == HEAL:
-        return TILESIZE
+        return 0.8 * TILESIZE
     elif element == WATER:
-        return WATER_COLOR
+        return 0.5 *TILESIZE
     elif element == AIR:
-        return AIR_COLOR
+        return TILESIZE
     elif element == FIRE:
         return 0.8 * TILESIZE
     elif element == EARTH:
         return 0.1 * TILESIZE
     elif element == ELEC:
-        return ELEC_COLOR
+        return 0.9 * TILESIZE
     elif element == MIND:
-        return MIND_COLOR
+        return TILESIZE
     else:
         raise NotImplementedError("Missing element to max height mapping.")
 
@@ -131,7 +129,6 @@ def getElementColorVariance(element):
     :param element: Element type
     :return: Color variance tuple
     '''
-    #TODO fill in the others
     if element == HEAL:
         return COLOR_VAR_HEAL
     elif element == WATER:
