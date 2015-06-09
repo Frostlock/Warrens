@@ -149,7 +149,7 @@ class TestItemLibrary(unittest.TestCase):
                 count += 1
                 # Call all properties of the item
                 self.callAllProperties(item)
-        print '\n   Created ' + str(count) + " items."
+        #print '\n   Created ' + str(count) + " items."
 
 
     def test_itemProperties(self):
@@ -187,7 +187,7 @@ class TestItemLibrary(unittest.TestCase):
         self.assertEqual(item.name, "Giant dagger")
 
         item = self.ilib.createItem("firenova","double")
-        print item.effectElement
+        self.assertEqual(item.effectDuration, 2)
 
         #Incompatible modifiers should raise a GameError
         with self.assertRaises(GameError):
