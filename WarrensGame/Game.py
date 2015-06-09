@@ -236,6 +236,10 @@ class Game(object):
             self._player.tile.x, self._player.tile.y)
 
         # Starting gear
+        scroll = self.itemLibrary.createItem("firenova", "double")
+        self.player.addItem(scroll)
+        scroll = self.itemLibrary.createItem("tremor")
+        self.player.addItem(scroll)
         potion = self.itemLibrary.createItem("healingvial", "exquisite")
         self.player.addItem(potion)
         potion = self.itemLibrary.createItem("healingpotion")
@@ -246,8 +250,6 @@ class Game(object):
         self.player.addItem(cloak)
 #        scroll = self.itemLibrary.createItem("firenova")
 #        self.player.addItem(scroll)
-        scroll = self.itemLibrary.createItem("firenova", "double")
-        self.player.addItem(scroll)
         scroll = self.itemLibrary.createItem("fireball")
         self.player.addItem(scroll)
         scroll = self.itemLibrary.createItem("confuse")
