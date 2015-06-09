@@ -59,6 +59,7 @@ void main()
             float gradient = 1 - ((myDist - fullViewDist) / (fogDistance - fullViewDist));
             interpColor = (directLightColor + ambientLightColor) * gradient;
             interpColor[3] = 1.0;
+            //TODO: This probably messes up transparency of effects...
         }
         else
         {

@@ -4,6 +4,7 @@ import random
 
 from WarrensGUI.Util.SceneObject import SceneObject
 from WarrensGUI.Util.OpenGlUtilities import randomizeColor
+from WarrensGUI.Util.Utilities import clamp
 
 class EffectSceneObject(SceneObject):
 
@@ -11,11 +12,50 @@ class EffectSceneObject(SceneObject):
     def effect(self):
         return self._effect
 
+    @property
+    def heightMap(self):
+        '''
+        Height of the top vertices. This allows to set the height based on the x & y coordinates of the vertex.
+        This ensures that adjacent corners of tiles end up on the same height.
+        :return: Dictionary with (x,y) keys
+        '''
+        return self._heightMap
+
+    def height(self, key):
+        if not key in self.heightMap.keys():
+            self.heightMap[key] = (self.TILESIZE / 10 )* random.randint(1, 10)
+        return self.heightMap[key]
+
+    def updateHeightMap(self, variance, minHeight, maxHeight):
+        for key in self.heightMap.keys():
+            self.heightMap[key] += random.choice([-variance/2,variance/2])
+            self.heightMap[key] = clamp(self.heightMap[key],minHeight, maxHeight)
+
+    @property
+    def colorMap(self):
+        '''
+        Color of the top vertices. This allows to set the color based on the x & y coordinates of the vertex.
+        This ensures that adjacent corners of tiles end up with same color.
+        :return: Dictionary with (x,y) keys
+        '''
+        return self._colorMap
+
+    def color(self, key):
+        if not key in self.colorMap.keys():
+            self.colorMap[key] = randomizeColor(self.effect.effectColor, 50, 50, 50)
+        return self.colorMap[key]
+
+    def updateColorMap(self, variance):
+        for key in self.colorMap.keys():
+            self.colorMap[key] = randomizeColor(self.effect.effectColor, variance, variance, variance)
+
     def __init__(self, effect, TILESIZE):
         super(EffectSceneObject, self).__init__()
 
         self._effect = effect
         self.TILESIZE = TILESIZE
+        self._heightMap = {}
+        self._colorMap = {}
 
         self.refreshMesh()
 
@@ -24,17 +64,16 @@ class EffectSceneObject(SceneObject):
         self._colors = []
         self._normals = []
         self._triangleIndices = []
-
         offset = 0
         TS = self.TILESIZE
-        heights = {}
+        alpha = 0.5
 
-        def height(heights,key):
-            if not key in heights.keys():
-                heights[key] = (self.TILESIZE / 10 )* random.randint(1, 10)
-            return heights[key]
-
-        #TODO: don't recalculate completely, vary a base height map to make it more fluid
+        # Create fluctuation in the heightmap
+        variance = 0.1
+        minHeight = 0.1
+        maxHeight = TS
+        self.updateHeightMap(variance, minHeight, maxHeight)
+        self.updateColorMap(40)
 
         for tile in self.effect.tiles:
             x = tile.x
@@ -48,26 +87,31 @@ class EffectSceneObject(SceneObject):
             self.vertices.extend((x * TS + TS, y * TS + TS, 0.0, 1.0))
             self.vertices.extend((x * TS + TS, y * TS, 0.0, 1.0))
             # 4 vertices: top of the rectangular tile area
-            self.vertices.extend((x * TS, y * TS, height(heights, (x, y)), 1.0))
-            self.vertices.extend((x * TS, y * TS + TS, height(heights, (x, y+1)), 1.0))
-            self.vertices.extend((x * TS + TS, y * TS + TS, height(heights, (x+1, y+1)), 1.0))
-            self.vertices.extend((x * TS + TS, y * TS, height(heights, (x+1, y)), 1.0))
+            self.vertices.extend((x * TS, y * TS, self.height((x, y)), 1.0))
+            self.vertices.extend((x * TS, y * TS + TS, self.height((x, y+1)), 1.0))
+            self.vertices.extend((x * TS + TS, y * TS + TS, self.height((x+1, y+1)), 1.0))
+            self.vertices.extend((x * TS + TS, y * TS, self.height((x+1, y)), 1.0))
 
             # Store the vertex colors
             # 4 components per color: R, G, B, A, one color for every vertex
-            color = randomizeColor(self.effect.effectColor, 50, 50, 50)
-
             # 4 vertices for the bottom
+            color = self.color((x,y))
             self.colors.extend((color[0], color[1], color[2], 1.0))
+            color = self.color((x,y+1))
             self.colors.extend((color[0], color[1], color[2], 1.0))
+            color = self.color((x+1,y+1))
             self.colors.extend((color[0], color[1], color[2], 1.0))
+            color = self.color((x+1,y))
             self.colors.extend((color[0], color[1], color[2], 1.0))
             # 4 vertices for the top
-            self.colors.extend((color[0], color[1], color[2], 1.0))
-            self.colors.extend((color[0], color[1], color[2], 1.0))
-            self.colors.extend((color[0], color[1], color[2], 1.0))
-            self.colors.extend((color[0], color[1], color[2], 1.0))
-            #TODO: transparency????
+            color = self.color((x,y))
+            self.colors.extend((color[0], color[1], color[2], alpha))
+            color = self.color((x,y+1))
+            self.colors.extend((color[0], color[1], color[2], alpha))
+            color = self.color((x+1,y+1))
+            self.colors.extend((color[0], color[1], color[2], alpha))
+            color = self.color((x+1,y))
+            self.colors.extend((color[0], color[1], color[2], alpha))
 
             # Store the vertex normals
             # 3 components per normal: x, y, z

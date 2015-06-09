@@ -6,6 +6,12 @@ __author__ = 'pi'
 
 from itertools import chain
 
+def clamp(n, minn, maxn):
+    """
+    This function returns the number n limited to the range min-max.
+    """
+    return max(min(maxn, n), minn)
+
 def truncline(text, font, maxwidth):
         real=len(text)
         stext=text
