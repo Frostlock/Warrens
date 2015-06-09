@@ -117,7 +117,8 @@ def normalizeColor(color):
     elif len(color) == 4:
         return (float(color[0]) / 255, float(color[1]) / 255, float(color[2]) / 255, float(color[3]) / 255)
 
-def randomizeColor(color, varianceR, varianceG, varianceB):
+def randomizeColor(color, variance):
+        varianceR, varianceG, varianceB = variance
         r = random.randrange(-varianceR / 2, varianceR / 2)
         g = random.randrange(-varianceG / 2, varianceG / 2)
         b = random.randrange(-varianceB / 2, varianceB / 2)

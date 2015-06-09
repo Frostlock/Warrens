@@ -4,7 +4,7 @@ import random
 
 from WarrensGUI.Util.SceneObject import SceneObject
 from WarrensGUI.Util.OpenGlUtilities import randomizeColor
-from WarrensGUI.Util.Utilities import clamp, getElementColor, getElementMinHeight, getElementMaxHeight
+from WarrensGUI.Util.Utilities import *
 from WarrensGUI.Util.Constants import TILESIZE
 
 class EffectSceneObject(SceneObject):
@@ -24,17 +24,33 @@ class EffectSceneObject(SceneObject):
 
     def height(self, key):
         if not key in self.heightMap.keys():
-            self.heightMap[key] = (TILESIZE / 10 )* random.randint(1, 10)
+            self.heightMap[key] = self.minHeight + (self.maxHeight - self.minHeight)*random.randint(1, 10)/10
         return self.heightMap[key]
 
-    def updateHeightMap(self, variance, minHeight, maxHeight):
+    def updateHeightMap(self, variance):
         for key in self.heightMap.keys():
             self.heightMap[key] += random.choice([-variance/2,variance/2])
-            self.heightMap[key] = clamp(self.heightMap[key],minHeight, maxHeight)
+            self.heightMap[key] = clamp(self.heightMap[key],self.minHeight, self.maxHeight)
 
     @property
     def baseColor(self):
         return self._baseColor
+
+    @property
+    def colorVariance(self):
+        return self._colorVariance
+
+    @property
+    def alpha(self):
+        return self._alpha
+
+    @property
+    def minHeight(self):
+        return self._minHeight
+
+    @property
+    def maxHeight(self):
+        return self._maxHeight
 
     @property
     def colorMap(self):
@@ -47,12 +63,12 @@ class EffectSceneObject(SceneObject):
 
     def color(self, key):
         if not key in self.colorMap.keys():
-            self.colorMap[key] = randomizeColor(self.baseColor, 50, 50, 50)
+            self.colorMap[key] = randomizeColor(self.baseColor, self.colorVariance)
         return self.colorMap[key]
 
-    def updateColorMap(self, variance):
+    def updateColorMap(self):
         for key in self.colorMap.keys():
-            self.colorMap[key] = randomizeColor(self.baseColor, variance, variance, variance)
+            self.colorMap[key] = randomizeColor(self.baseColor, self.colorVariance)
 
     def __init__(self, effect):
         super(EffectSceneObject, self).__init__()
@@ -60,9 +76,13 @@ class EffectSceneObject(SceneObject):
         self._effect = effect
         self._heightMap = {}
         self._baseColor = getElementColor(effect.effectElement)
+        self._colorVariance = getElementColorVariance(effect.effectElement)
         self._maxHeight = getElementMaxHeight(effect.effectElement)
         self._minHeight = getElementMinHeight(effect.effectElement)
         self._colorMap = {}
+
+        #TODO: set alpha per element type
+        self._alpha = 0.5
 
         self.refreshMesh()
 
@@ -73,14 +93,11 @@ class EffectSceneObject(SceneObject):
         self._triangleIndices = []
         offset = 0
         TS = TILESIZE
-        alpha = 0.5
 
         # Create fluctuation in the heightmap
         variance = 0.1
-        minHeight = 0.1
-        maxHeight = TS
-        self.updateHeightMap(variance, minHeight, maxHeight)
-        self.updateColorMap(40)
+        self.updateHeightMap(variance)
+        self.updateColorMap()
 
         for tile in self.effect.tiles:
             x = tile.x
@@ -112,13 +129,13 @@ class EffectSceneObject(SceneObject):
             self.colors.extend((color[0], color[1], color[2], 1.0))
             # 4 vertices for the top
             color = self.color((x,y))
-            self.colors.extend((color[0], color[1], color[2], alpha))
+            self.colors.extend((color[0], color[1], color[2], self.alpha))
             color = self.color((x,y+1))
-            self.colors.extend((color[0], color[1], color[2], alpha))
+            self.colors.extend((color[0], color[1], color[2], self.alpha))
             color = self.color((x+1,y+1))
-            self.colors.extend((color[0], color[1], color[2], alpha))
+            self.colors.extend((color[0], color[1], color[2], self.alpha))
             color = self.color((x+1,y))
-            self.colors.extend((color[0], color[1], color[2], alpha))
+            self.colors.extend((color[0], color[1], color[2], self.alpha))
 
             # Store the vertex normals
             # 3 components per normal: x, y, z

@@ -284,7 +284,6 @@ class DungeonMap(Map):
         super(DungeonMap, self).__init__(MapWidth, MapHeight, level)
         #Initialize range of view
         self._rangeOfView = CONSTANTS.TORCH_RADIUS
-        self._textureFile = CONSTANTS.DUNGEON_TEXTURE
 
     def generateMap(self):
         """
@@ -425,7 +424,6 @@ class TownMap(Map):
         super(TownMap, self).__init__(MapWidth, MapHeight, level)
         #Initialize range of view
         self._rangeOfView = CONSTANTS.TOWN_RADIUS
-        self._textureFile = CONSTANTS.TOWN_TEXTURE
 
     def generateMap(self):
         """
@@ -521,7 +519,6 @@ class SingleRoomMap(Map):
         super(SingleRoomMap, self).__init__(MapWidth, MapHeight, level)
         #Initialize range of view
         self._rangeOfView = CONSTANTS.TORCH_RADIUS
-        self._textureFile = CONSTANTS.TOWN_TEXTURE
 
     def generateMap(self):
         #Create a new map with empty tiles
@@ -561,7 +558,6 @@ class CaveMap(Map):
         super(CaveMap, self).__init__(MapWidth, MapHeight, level)
         #Initialize range of view
         self._rangeOfView = CONSTANTS.TORCH_RADIUS
-        #self._textureFile = CONSTANTS.CAVE_TEXTURE
 
     def generateMap(self):
         #Create a new map with empty tiles

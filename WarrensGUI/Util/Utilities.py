@@ -61,19 +61,19 @@ def getElementColor(element):
     :return: RGB color tuple
     '''
     if element == HEAL:
-        return HEAL_COLOR
+        return COLOR_RGB_HEAL
     elif element == WATER:
-        return WATER_COLOR
+        return COLOR_RGB_WATER
     elif element == AIR:
-        return AIR_COLOR
+        return COLOR_RGB_AIR
     elif element == FIRE:
-        return FIRE_COLOR
+        return COLOR_RGB_FIRE
     elif element == EARTH:
-        return EARTH_COLOR
+        return COLOR_RGB_EARTH
     elif element == ELEC:
-        return ELEC_COLOR
+        return COLOR_RGB_ELEC
     elif element == MIND:
-        return MIND_COLOR
+        return COLOR_RGB_MIND
     else:
         raise NotImplementedError("Missing element to color mapping.")
 
@@ -99,7 +99,7 @@ def getElementMinHeight(element):
     elif element == MIND:
         return MIND_COLOR
     else:
-        raise NotImplementedError("Missing element to color mapping.")
+        raise NotImplementedError("Missing element to min height mapping.")
 
 def getElementMaxHeight(element):
     '''
@@ -123,4 +123,28 @@ def getElementMaxHeight(element):
     elif element == MIND:
         return MIND_COLOR
     else:
-        raise NotImplementedError("Missing element to color mapping.")
+        raise NotImplementedError("Missing element to max height mapping.")
+
+def getElementColorVariance(element):
+    '''
+    This function looks up the color variance for the given element
+    :param element: Element type
+    :return: Color variance tuple
+    '''
+    #TODO fill in the others
+    if element == HEAL:
+        return COLOR_VAR_HEAL
+    elif element == WATER:
+        return COLOR_VAR_WATER
+    elif element == AIR:
+        return COLOR_VAR_AIR
+    elif element == FIRE:
+        return COLOR_VAR_FIRE
+    elif element == EARTH:
+        return COLOR_VAR_EARTH
+    elif element == ELEC:
+        return COLOR_VAR_ELEC
+    elif element == MIND:
+        return COLOR_VAR_MIND
+    else:
+        raise NotImplementedError("Missing element to color variance mapping.")

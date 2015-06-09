@@ -39,7 +39,7 @@ class TileSceneObject(SceneObject):
 
         # Store the vertex colors
         # 4 components per color: R, G, B, A, one color for every vertex
-        color = randomizeColor(self.tile.color, 10, 10, 10)
+        color = randomizeColor(self.tile.color, (10, 10, 10))
 
         # 4 vertices for the bottom
         self.colors.extend((color[0], color[1], color[2], 1.0))
@@ -93,7 +93,7 @@ class TileSceneObject(SceneObject):
                 # 4 components per color: R, G, B, A, one color for every vertex
                 self._colors = []
 
-                color = randomizeColor(self.tile.color, 50, 50, 150)
+                color = randomizeColor(self.tile.color, (50, 50, 150))
                 # 4 vertices for the bottom
                 self.colors.extend((color[0], color[1], color[2], 1.0))
                 self.colors.extend((color[0], color[1], color[2], 1.0))
@@ -101,9 +101,9 @@ class TileSceneObject(SceneObject):
                 self.colors.extend((color[0], color[1], color[2], 1.0))
                 # 4 vertices for the top
                 self.colors.extend((color[0], color[1], color[2], 1.0))
-                color = randomizeColor(self.tile.color, 50, 50, 150)
+                color = randomizeColor(self.tile.color, (50, 50, 150))
                 self.colors.extend((color[0], color[1], color[2], 1.0))
-                color = randomizeColor(self.tile.color, 50, 50, 150)
+                color = randomizeColor(self.tile.color, (50, 50, 150))
                 self.colors.extend((color[0], color[1], color[2], 1.0))
-                color = randomizeColor(self.tile.color, 50, 50, 150)
+                color = randomizeColor(self.tile.color, (50, 50, 150))
                 self.colors.extend((color[0], color[1], color[2], 1.0))
