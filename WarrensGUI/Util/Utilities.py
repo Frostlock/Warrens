@@ -1,16 +1,11 @@
 __author__ = 'pi'
 
+from WarrensGame.CONSTANTS import *
 
 #Thanks to unknow, found following functions at
 #https://www.pygame.org/wiki/TextWrapping?parent=CookBook
 
 from itertools import chain
-
-def clamp(n, minn, maxn):
-    """
-    This function returns the number n limited to the range min-max.
-    """
-    return max(min(maxn, n), minn)
 
 def truncline(text, font, maxwidth):
         real=len(text)
@@ -51,3 +46,32 @@ def wrap_multi_line(text, font, maxwidth):
 
 #End of functions found at
 #https://www.pygame.org/wiki/TextWrapping?parent=CookBook
+
+def clamp(n, minn, maxn):
+    """
+    This function returns the number n limited to the range min-max.
+    """
+    return max(min(maxn, n), minn)
+
+def getElementColor(element):
+    '''
+    This function looks up the preferred color for the given element
+    :param element: Element type
+    :return: RGB color tuple
+    '''
+    if element == HEAL:
+        return HEAL_COLOR
+    elif element == WATER:
+        return WATER_COLOR
+    elif element == AIR:
+        return AIR_COLOR
+    elif element == FIRE:
+        return FIRE_COLOR
+    elif element == EARTH:
+        return EARTH_COLOR
+    elif element == ELEC:
+        return ELEC_COLOR
+    elif element == MIND:
+        return MIND_COLOR
+    else:
+        raise NotImplementedError("Missing element to color mapping.")

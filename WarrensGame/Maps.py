@@ -596,7 +596,7 @@ class CaveMap(Map):
             tile.material = MaterialType.WATER
             tile.blocked = False
             tile.blockSight = False
-            tile.color = CONSTANTS.WATER_COLOR_LIGHT
+            tile.color = CONSTANTS.WATER_COLOR
             
         #TODO: Grow additional cave areas.
 

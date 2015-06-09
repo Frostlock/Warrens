@@ -1056,15 +1056,15 @@ class Consumable(Item):
         return duration
 
     @property
-    def effectColor(self):
+    def effectElement(self):
         """
-        The effect that this consumable can generate.
+        The element of the effect that this consumable can generate.
         """
-        color = self.baseItem.effectColor
+        element = self.baseItem.effectElement
         for modifier in self.modifiers:
-            if modifier.effectColor is not None:
-                color = modifier.effectColor
-        return color
+            if modifier.effectElement is not None:
+                element = modifier.effectElement
+        return element
 
     @property
     def isConsumed(self):

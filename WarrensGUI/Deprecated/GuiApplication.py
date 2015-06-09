@@ -643,13 +643,13 @@ class GuiApplication(object):
             
             if effect.targetType == EffectTarget.SELF:
                 #flash tile on which actor is standing
-                self.animationFlashTiles(effect.effectColor, effectTiles)
+                self.animationFlashTiles(Utilities.getElementColor(effect.effectElement), effectTiles)
             elif effect.targetType == EffectTarget.CHARACTER:
                 #circle around the target character
-                self.animationNova(effect.effectColor, effectTiles[0], effect.effectRadius)
+                self.animationNova(Utilities.getElementColor(effect.effectElement), effectTiles[0], effect.effectRadius)
             elif effect.targetType == EffectTarget.TILE:
                 #circular blast around centerTile
-                self.animationNova(effect.effectColor, effect.centerTile, effect.effectRadius)
+                self.animationNova(Utilities.getElementColor(effect.effectElement), effect.centerTile, effect.effectRadius)
             else:
                 print ('WARNING: Unknown visualization type, skipping.')
             self.game.effectBuffer.remove(effectTuple)

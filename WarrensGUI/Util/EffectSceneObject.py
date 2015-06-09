@@ -4,7 +4,7 @@ import random
 
 from WarrensGUI.Util.SceneObject import SceneObject
 from WarrensGUI.Util.OpenGlUtilities import randomizeColor
-from WarrensGUI.Util.Utilities import clamp
+from WarrensGUI.Util.Utilities import clamp, getElementColor
 
 class EffectSceneObject(SceneObject):
 
@@ -32,6 +32,10 @@ class EffectSceneObject(SceneObject):
             self.heightMap[key] = clamp(self.heightMap[key],minHeight, maxHeight)
 
     @property
+    def baseColor(self):
+        return self._baseColor
+
+    @property
     def colorMap(self):
         '''
         Color of the top vertices. This allows to set the color based on the x & y coordinates of the vertex.
@@ -42,12 +46,12 @@ class EffectSceneObject(SceneObject):
 
     def color(self, key):
         if not key in self.colorMap.keys():
-            self.colorMap[key] = randomizeColor(self.effect.effectColor, 50, 50, 50)
+            self.colorMap[key] = randomizeColor(self.baseColor, 50, 50, 50)
         return self.colorMap[key]
 
     def updateColorMap(self, variance):
         for key in self.colorMap.keys():
-            self.colorMap[key] = randomizeColor(self.effect.effectColor, variance, variance, variance)
+            self.colorMap[key] = randomizeColor(self.baseColor, variance, variance, variance)
 
     def __init__(self, effect, TILESIZE):
         super(EffectSceneObject, self).__init__()
@@ -55,6 +59,7 @@ class EffectSceneObject(SceneObject):
         self._effect = effect
         self.TILESIZE = TILESIZE
         self._heightMap = {}
+        self._baseColor = getElementColor(effect.effectElement)
         self._colorMap = {}
 
         self.refreshMesh()

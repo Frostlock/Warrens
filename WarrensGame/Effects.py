@@ -92,11 +92,11 @@ class Effect(object):
         return self._effectDescription
 
     @property
-    def effectColor(self):
+    def effectElement(self):
         """
-        RGB tuple that indicates the color of this effect.
+        The element of this effect.
         """
-        return self.source.effectColor
+        return self.source.effectElement
 
     def __init__(self, source):
         """
