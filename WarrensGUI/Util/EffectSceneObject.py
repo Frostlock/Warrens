@@ -32,9 +32,6 @@ class EffectSceneObject(SceneObject):
             self.heightMap[key] += random.choice([-variance/2,variance/2])
             self.heightMap[key] = clamp(self.heightMap[key],self.minHeight, self.maxHeight)
 
-        #TODO: healeffect instead of varying the height would be nice to have an upward downward movement
-        #TODO: effects should also modify their actors, (flash in the effect color?)
-
     @property
     def baseColor(self):
         return self._baseColor
