@@ -4,6 +4,8 @@ import random
 
 from WarrensGUI.Util.SceneObject import SceneObject
 from WarrensGUI.Util.OpenGlUtilities import randomizeColor
+from WarrensGUI.Util.Constants import *
+
 from WarrensGame.Maps import MaterialType
 
 class TileSceneObject(SceneObject):
@@ -12,7 +14,7 @@ class TileSceneObject(SceneObject):
     def tile(self):
         return self._tile
 
-    def __init__(self, tile, TILESIZE):
+    def __init__(self, tile):
         super(TileSceneObject, self).__init__()
 
         self._tile = tile

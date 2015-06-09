@@ -2,6 +2,7 @@ __author__ = 'pi'
 
 from WarrensGUI.Util.SceneObject import SceneObject
 from WarrensGUI.Util.OpenGlUtilities import normalizeColor
+from WarrensGUI.Util.Constants import *
 
 from WarrensGame.Actors import *
 
@@ -24,11 +25,10 @@ class ActorSceneObject(SceneObject):
         '''
         return self._actor
 
-    def __init__(self, actor, TILESIZE):
+    def __init__(self, actor):
         '''
         Constructor
         :param actor: Actor object for which an ActorSceneObject is generated
-        :param TILESIZE:
         :return:
         '''
         super(ActorSceneObject, self).__init__()

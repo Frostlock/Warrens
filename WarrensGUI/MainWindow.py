@@ -676,7 +676,7 @@ class MainWindow(object):
         if self.level is not None:
             for tileRow in self.level.map.tiles:
                 for tile in tileRow:
-                    tileObj = TileSceneObject(tile, TILESIZE)
+                    tileObj = TileSceneObject(tile)
                     self.staticObjects.append(tileObj)
             # Load the static objects in vertex buffers
             self.loadVAOStaticObjects()
@@ -758,15 +758,15 @@ class MainWindow(object):
             for tile in self.level.map.visible_tiles:
                 # Create tile object for dynamic tiles
                 if tile.material == MaterialType.WATER:
-                    tileObj = TileSceneObject(tile, TILESIZE)
+                    tileObj = TileSceneObject(tile)
                     self.dynamicObjects.append(tileObj)
                 # Create scene object for every actor on the tile
                 for actor in tile.actors:
-                    actorObj = ActorSceneObject(actor, TILESIZE)
+                    actorObj = ActorSceneObject(actor)
                     self.dynamicObjects.append(actorObj)
             # Create an effect object for every active effect on the tile
             for effect in self.game.activeEffects:
-                effectObj = EffectSceneObject(effect, TILESIZE)
+                effectObj = EffectSceneObject(effect)
                 self.dynamicObjects.append(effectObj)
         # Load the dynamic objects in vertex buffers
         self.loadVAODynamicObjects()

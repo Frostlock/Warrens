@@ -1,6 +1,7 @@
 __author__ = 'pi'
 
 from WarrensGame.CONSTANTS import *
+from WarrensGUI.Util.Constants import *
 
 #Thanks to unknow, found following functions at
 #https://www.pygame.org/wiki/TextWrapping?parent=CookBook
@@ -69,6 +70,54 @@ def getElementColor(element):
         return FIRE_COLOR
     elif element == EARTH:
         return EARTH_COLOR
+    elif element == ELEC:
+        return ELEC_COLOR
+    elif element == MIND:
+        return MIND_COLOR
+    else:
+        raise NotImplementedError("Missing element to color mapping.")
+
+def getElementMinHeight(element):
+    '''
+    This function looks up the minimum height for the given element
+    :param element: Element type
+    :return: Minimum height
+    '''
+    #TODO fill in the others
+    if element == HEAL:
+        return 0.1
+    elif element == WATER:
+        return WATER_COLOR
+    elif element == AIR:
+        return AIR_COLOR
+    elif element == FIRE:
+        return 0.1
+    elif element == EARTH:
+        return 0.0001
+    elif element == ELEC:
+        return ELEC_COLOR
+    elif element == MIND:
+        return MIND_COLOR
+    else:
+        raise NotImplementedError("Missing element to color mapping.")
+
+def getElementMaxHeight(element):
+    '''
+    This function looks up the maximum height for the given element
+    :param element: Element type
+    :return: Maximum height
+    '''
+    #TODO fill in the others
+    if element == HEAL:
+        return TILESIZE
+    elif element == WATER:
+        return WATER_COLOR
+    elif element == AIR:
+        return AIR_COLOR
+    elif element == FIRE:
+        return 0.8 * TILESIZE
+    elif element == EARTH:
+        return 0.1 * TILESIZE
     elif element == ELEC:
         return ELEC_COLOR
     elif element == MIND:

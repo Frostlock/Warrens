@@ -4,7 +4,8 @@ import random
 
 from WarrensGUI.Util.SceneObject import SceneObject
 from WarrensGUI.Util.OpenGlUtilities import randomizeColor
-from WarrensGUI.Util.Utilities import clamp, getElementColor
+from WarrensGUI.Util.Utilities import clamp, getElementColor, getElementMinHeight, getElementMaxHeight
+from WarrensGUI.Util.Constants import TILESIZE
 
 class EffectSceneObject(SceneObject):
 
@@ -23,7 +24,7 @@ class EffectSceneObject(SceneObject):
 
     def height(self, key):
         if not key in self.heightMap.keys():
-            self.heightMap[key] = (self.TILESIZE / 10 )* random.randint(1, 10)
+            self.heightMap[key] = (TILESIZE / 10 )* random.randint(1, 10)
         return self.heightMap[key]
 
     def updateHeightMap(self, variance, minHeight, maxHeight):
@@ -53,13 +54,14 @@ class EffectSceneObject(SceneObject):
         for key in self.colorMap.keys():
             self.colorMap[key] = randomizeColor(self.baseColor, variance, variance, variance)
 
-    def __init__(self, effect, TILESIZE):
+    def __init__(self, effect):
         super(EffectSceneObject, self).__init__()
 
         self._effect = effect
-        self.TILESIZE = TILESIZE
         self._heightMap = {}
         self._baseColor = getElementColor(effect.effectElement)
+        self._maxHeight = getElementMaxHeight(effect.effectElement)
+        self._minHeight = getElementMinHeight(effect.effectElement)
         self._colorMap = {}
 
         self.refreshMesh()
@@ -70,7 +72,7 @@ class EffectSceneObject(SceneObject):
         self._normals = []
         self._triangleIndices = []
         offset = 0
-        TS = self.TILESIZE
+        TS = TILESIZE
         alpha = 0.5
 
         # Create fluctuation in the heightmap
