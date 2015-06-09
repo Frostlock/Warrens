@@ -43,6 +43,16 @@ class ActorSceneObject(SceneObject):
         return self._effectColor
 
     @property
+    def color(self):
+        if self.effectColor is None:
+            return self.baseColor
+        else:
+            R,G,B,A = self.baseColor
+            r,g,b = self._colorStep
+            s= self._currentAnimationStep
+            return (R + s * r, G + s * g, B + s *b, A)
+
+    @property
     def effect(self):
         '''
         Effect currently active on this ActorSceneObject
@@ -50,12 +60,15 @@ class ActorSceneObject(SceneObject):
         '''
         return self._effect
 
+    STEPS = 20
+
     @effect.setter
     def effect(self, effect):
         self._effect = effect
         r,g,b = normalizeColor(getElementColor(effect.effectElement))
-        a = 1.0
-        self._effectColor = (r, g, b, a)
+        self._effectColor = (r, g, b, 1.0)
+        R,G,B,A = self.baseColor
+        self._colorStep = ((r-R)/self.STEPS,(g-G)/self.STEPS,(b-B)/self.STEPS)
         self.refreshMesh()
 
     def __init__(self, actor):
@@ -68,10 +81,11 @@ class ActorSceneObject(SceneObject):
 
         self._actor = actor
         r,g,b = normalizeColor(actor.color)
-        a = 1.0
-        self._baseColor = (r, g, b, a)
+        self._baseColor = (r, g, b, 1.0)
         self._effect = None
         self._effectColor = None
+        self._currentAnimationStep = 0
+        self._animationStepModifier = 1
         self.refreshMesh()
 
     def refreshMesh(self):
@@ -113,11 +127,7 @@ class ActorSceneObject(SceneObject):
         self._mainVertex = (tile.x * TILESIZE + (TILESIZE / 2), tile.y * TILESIZE + (TILESIZE / 2), height, 1.0)
 
         # Store the vertex color
-        color = self.baseColor
-        if not self.effectColor is None:
-            color = self.effectColor
-            #TODO: make this pulsate in time with the effect pulse.
-
+        color = self.color
         self.colors.extend(color)
         self.colors.extend(color)
         self.colors.extend(color)
@@ -138,3 +148,17 @@ class ActorSceneObject(SceneObject):
         self.triangleIndices.extend((3, 2, 4))
         self.triangleIndices.extend((2, 1, 4))
         self.triangleIndices.extend((1, 0, 4))
+
+    def animate(self, timePassed):
+        super(ActorSceneObject,self).animate(timePassed)
+
+        if self.timeSinceLastAnimation > 50:
+            # Reset timer
+            self.timeSinceLastAnimation = 0
+            self._currentAnimationStep += self._animationStepModifier
+
+            # Refresh the mesh
+            self.refreshMesh()
+
+            if self._currentAnimationStep == self.STEPS : self._animationStepModifier = -1
+            if self._currentAnimationStep == 0 : self._animationStepModifier = 1
