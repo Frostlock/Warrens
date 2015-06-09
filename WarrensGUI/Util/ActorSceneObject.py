@@ -2,6 +2,7 @@ __author__ = 'pi'
 
 from WarrensGUI.Util.SceneObject import SceneObject
 from WarrensGUI.Util.OpenGlUtilities import normalizeColor
+from WarrensGUI.Util.Utilities import getElementColor
 from WarrensGUI.Util.Constants import *
 
 from WarrensGame.Actors import *
@@ -25,6 +26,38 @@ class ActorSceneObject(SceneObject):
         '''
         return self._actor
 
+    @property
+    def baseColor(self):
+        '''
+        The base color used for this ActorSceneObject.
+        :return: GL Color tuple or None
+        '''
+        return self._baseColor
+
+    @property
+    def effectColor(self):
+        '''
+        The effect color used for this ActorSceneObject.
+        :return: GL Color tuple or None
+        '''
+        return self._effectColor
+
+    @property
+    def effect(self):
+        '''
+        Effect currently active on this ActorSceneObject
+        :return: Effect object or None
+        '''
+        return self._effect
+
+    @effect.setter
+    def effect(self, effect):
+        self._effect = effect
+        r,g,b = normalizeColor(getElementColor(effect.effectElement))
+        a = 1.0
+        self._effectColor = (r, g, b, a)
+        self.refreshMesh()
+
     def __init__(self, actor):
         '''
         Constructor
@@ -33,60 +66,75 @@ class ActorSceneObject(SceneObject):
         '''
         super(ActorSceneObject, self).__init__()
 
-        elemOffset = 0
-        tile = actor.tile
         self._actor = actor
+        r,g,b = normalizeColor(actor.color)
+        a = 1.0
+        self._baseColor = (r, g, b, a)
+        self._effect = None
+        self._effectColor = None
+        self.refreshMesh()
+
+    def refreshMesh(self):
+        self._vertices = []
+        self._colors = []
+        self._normals = []
+        self._triangleIndices = []
+
+        tile = self.actor.tile
 
         # Determine scale
-        if isinstance(actor, Player):
+        if isinstance(self.actor, Player):
             scale = 0.9
-        elif isinstance(actor, Portal):
+        elif isinstance(self.actor, Portal):
             scale = 0.8
-        elif isinstance(actor, Monster):
+        elif isinstance(self.actor, Monster):
             scale = 0.7
-        elif isinstance(actor, Item):
+        elif isinstance(self.actor, Item):
             scale = 0.4
         else:
-            scale = 0.2
+            raise NotImplementedError("Unknown actor type")
+        # Offset within the tile area
+        offset = ((1 - scale) / 2) * TILESIZE
 
         # Determine height
-        offset = ((1 - scale) / 2) * TILESIZE
-        assert isinstance(actor, Actor)
-        if actor.currentHitPoints > 0:
+        if self.actor.currentHitPoints > 0:
             height = TILESIZE - (2 * offset)
         else:
             height = 0.05
 
         # Store the vertex coordinates: 4 components per vertex: x, y, z, w
-        self._vertices.extend((tile.x * TILESIZE + offset, tile.y * TILESIZE + offset, 0.0, 1.0))
-        self._vertices.extend((tile.x * TILESIZE + offset, tile.y * TILESIZE + TILESIZE - offset, 0.0, 1.0))
-        self._vertices.extend((tile.x * TILESIZE + TILESIZE - offset, tile.y * TILESIZE + TILESIZE - offset, 0.0, 1.0))
-        self._vertices.extend((tile.x * TILESIZE + TILESIZE - offset, tile.y * TILESIZE + offset, 0.0, 1.0))
-        self._vertices.extend((tile.x * TILESIZE + (TILESIZE / 2), tile.y * TILESIZE + (TILESIZE / 2), height, 1.0))
+        self.vertices.extend((tile.x * TILESIZE + offset, tile.y * TILESIZE + offset, 0.0, 1.0))
+        self.vertices.extend((tile.x * TILESIZE + offset, tile.y * TILESIZE + TILESIZE - offset, 0.0, 1.0))
+        self.vertices.extend((tile.x * TILESIZE + TILESIZE - offset, tile.y * TILESIZE + TILESIZE - offset, 0.0, 1.0))
+        self.vertices.extend((tile.x * TILESIZE + TILESIZE - offset, tile.y * TILESIZE + offset, 0.0, 1.0))
+        self.vertices.extend((tile.x * TILESIZE + (TILESIZE / 2), tile.y * TILESIZE + (TILESIZE / 2), height, 1.0))
 
         # Select one vertex as mainVertex
         self._mainVertex = (tile.x * TILESIZE + (TILESIZE / 2), tile.y * TILESIZE + (TILESIZE / 2), height, 1.0)
 
-        # Store the vertex color: 4 components per color: R, G, B, A
-        color = normalizeColor(actor.color)
-        self._colors.extend((color[0], color[1], color[2], 1.0))
-        self._colors.extend((color[0], color[1], color[2], 1.0))
-        self._colors.extend((color[0], color[1], color[2], 1.0))
-        self._colors.extend((color[0], color[1], color[2], 1.0))
-        self._colors.extend((color[0], color[1], color[2], 1.0))
+        # Store the vertex color
+        color = self.baseColor
+        if not self.effectColor is None:
+            color = self.effectColor
+            #TODO: make this pulsate in time with the effect pulse.
+
+        self.colors.extend(color)
+        self.colors.extend(color)
+        self.colors.extend(color)
+        self.colors.extend(color)
+        self.colors.extend(color)
 
         # Store the vertex normals: 3 components per normal: x, y, z
-        self._normals.extend((-1.0, 1.0, -0.2))
-        self._normals.extend((1.0, 1.0, -0.2))
-        self._normals.extend((1.0, -1.0, -0.2))
-        self._normals.extend((-1.0, -1.0, -0.2))
-        self._normals.extend((0.0, 0.0, -1.0))
+        self.normals.extend((-1.0, 1.0, -0.2))
+        self.normals.extend((1.0, 1.0, -0.2))
+        self.normals.extend((1.0, -1.0, -0.2))
+        self.normals.extend((-1.0, -1.0, -0.2))
+        self.normals.extend((0.0, 0.0, -1.0))
 
         # Store the indices for the element drawing (triangles, clockwise from front)
-        self._triangleIndices.extend((0 + elemOffset, 1 + elemOffset, 2 + elemOffset))
-        self._triangleIndices.extend((0 + elemOffset, 2 + elemOffset, 3 + elemOffset))
-        self._triangleIndices.extend((0 + elemOffset, 3 + elemOffset, 4 + elemOffset))
-        self._triangleIndices.extend((3 + elemOffset, 2 + elemOffset, 4 + elemOffset))
-        self._triangleIndices.extend((2 + elemOffset, 1 + elemOffset, 4 + elemOffset))
-        self._triangleIndices.extend((1 + elemOffset, 0 + elemOffset, 4 + elemOffset))
-        elemOffset += 5 # 5 vertices per actor so offset is 5
+        self.triangleIndices.extend((0, 1, 2))
+        self.triangleIndices.extend((0, 2, 3))
+        self.triangleIndices.extend((0, 3, 4))
+        self.triangleIndices.extend((3, 2, 4))
+        self.triangleIndices.extend((2, 1, 4))
+        self.triangleIndices.extend((1, 0, 4))

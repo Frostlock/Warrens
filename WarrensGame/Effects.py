@@ -149,8 +149,7 @@ class HealEffect(MagicEffect):
         arguments
             target - Character object
         """
-        self._tiles = [target.tile]
-        self._actors = [target]
+        self.actors.append(target)
         target.tile.map.level.game.activeEffects.append(self)
         self.tick()
 
@@ -244,13 +243,13 @@ class DamageEffect(MagicEffect):
         if self.effectDuration == 0: return
         self.effectDuration -= 1
         #find all targets in range
-        targets = []
+        self._actors = []
         for tile in self.tiles:
             for actor in tile.actors:
-                targets.append(actor)
+                self.actors.append(actor)
         #apply damage to every target
         damageAmount = Utilities.rollHitDie(self.effectHitDie)
-        for target in targets:
+        for target in self.actors:
             Utilities.message(self.source.name.capitalize() + ' hits '
                     + target.name + ' for ' + str(damageAmount) + ' Damage.', "GAME")
             target.takeDamage(damageAmount, self.source.owner)

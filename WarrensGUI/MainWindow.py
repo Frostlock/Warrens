@@ -763,8 +763,12 @@ class MainWindow(object):
                 # Create scene object for every actor on the tile
                 for actor in tile.actors:
                     actorObj = ActorSceneObject(actor)
+                    # Check if there is an effect on the actor
+                    for effect in self.game.activeEffects:
+                        if actor in effect.actors:
+                            actorObj.effect = effect
                     self.dynamicObjects.append(actorObj)
-            # Create an effect object for every active effect on the tile
+            # Create an effect object for every effect on the tile
             for effect in self.game.activeEffects:
                 effectObj = EffectSceneObject(effect)
                 self.dynamicObjects.append(effectObj)

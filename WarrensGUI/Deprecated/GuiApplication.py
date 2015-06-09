@@ -518,7 +518,7 @@ class GuiApplication(object):
                 if tile.explored:
                     tileCount += 1
                     #blit color of tile
-                    self.surfaceViewPort.fill(tile.color, tileRect)
+                    self.surfaceViewPort.fill(tile.baseColor, tileRect)
                     
                     #TEXTURE BASED: deprecated
                     #blit empty tile first (empty tile underneath transparant overlay)
@@ -534,7 +534,7 @@ class GuiApplication(object):
                         # draw any actors standing on this tile (monsters, portals, items, ...)
                         for myActor in tile.actors:
                             if myActor.inView:
-                                textImg = self.viewPortFont.render(myActor.char, 1, myActor.color)
+                                textImg = self.viewPortFont.render(myActor.char, 1, myActor.baseColor)
                                 #Center                    
                                 x = tileRect.x + (tileRect.width / 2 - textImg.get_width() /2)
                                 y = tileRect.y + (tileRect.height / 2 - textImg.get_height() /2)
@@ -557,7 +557,7 @@ class GuiApplication(object):
                 vpX = (portal.tile.x - startX) * self.tileSize + self._renderViewPortXOffSet
                 vpY = (portal.tile.y - startY) * self.tileSize + self._renderViewPortYOffSet
                 tileRect = pygame.Rect(vpX, vpY, self.tileSize, self.tileSize)
-                textImg = self.viewPortFont.render(portal.char, 1, portal.color)
+                textImg = self.viewPortFont.render(portal.char, 1, portal.baseColor)
                 #Center                    
                 x = tileRect.x + (tileRect.width / 2 - textImg.get_width() /2)
                 y = tileRect.y + (tileRect.height / 2 - textImg.get_height() /2)
@@ -568,7 +568,7 @@ class GuiApplication(object):
         vpX = (player.tile.x - startX) * self.tileSize + self._renderViewPortXOffSet
         vpY = (player.tile.y - startY) * self.tileSize + self._renderViewPortYOffSet
         tileRect = pygame.Rect(vpX, vpY, self.tileSize, self.tileSize)
-        textImg = self.viewPortFont.render(player.char, 1, player.color)
+        textImg = self.viewPortFont.render(player.char, 1, player.baseColor)
         #Center                    
         x = tileRect.x + (tileRect.width / 2 - textImg.get_width() /2)
         y = tileRect.y + (tileRect.height / 2 - textImg.get_height() /2)
@@ -616,7 +616,7 @@ class GuiApplication(object):
         for myActor in tile.actors:
             if myActor.inView:
                 myText = myActor.char + ': ' + myActor.name + ' (' + str(myActor.currentHitPoints) + '/' + str(myActor.maxHitPoints) + ')'
-                textImg = panelFont.render(myText, 1, myActor.color)
+                textImg = panelFont.render(myText, 1, myActor.baseColor)
                 components.append((xOffSet, yOffSet, textImg))
                 height += textImg.get_height()
                 yOffSet = height
