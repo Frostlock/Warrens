@@ -242,7 +242,7 @@ class MainWindow(object):
 
     @property
     def fogActive(self):
-        return False
+        return True
 
     @property
     def staticObjects(self):
@@ -969,7 +969,7 @@ class MainWindow(object):
                         drawCoords = (drawCoords[0],
                                       drawCoords[1] + fontHeight,
                                       drawCoords[2])
-                self.drawText(drawCoords, actorObj.actor.name, FONT_HUD_M, COLOR_PG_HUD_TEXT)
+                self.drawText(drawCoords, actorObj.actor.name, FONT_HUD_M, actorObj.actor.color)
 
         # Health Bar
         GL.glLoadIdentity()
