@@ -49,15 +49,6 @@ class Game(object):
         return Utilities.messageBuffer
 
     @property
-    def effectBuffer(self):
-        """
-        Returns an array of game effects.
-        This is meant to give the GUI application the opportunity to show a visualization of the effect.
-        :rtype : Utilities.effectBuffer
-        """
-        return Utilities.effectBuffer
-
-    @property
     def player(self):
         """
         The player of the game

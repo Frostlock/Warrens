@@ -87,13 +87,6 @@ def message(text, category=None):
         #Default to console output
         print text
 
-#array to keep track of on-going effects    
-effectBuffer = []
-        
-def registerEffect(effect, effectTiles):
-    global effectBuffer
-    effectBuffer.append((effect, effectTiles))
-    
 def clamp(n, minn, maxn):
     """
     This function returns the number n limited to the range min-max.
