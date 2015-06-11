@@ -41,6 +41,15 @@ class SceneObject(object):
     def timeSinceLastAnimation(self, time):
         self._timeSinceLastAnimation = time
 
+    @property
+    def selected(self):
+        return self._selected
+
+    @selected.setter
+    def selected(self, selected):
+        self._selected = selected
+
+
     def __init__(self):
         self._vertices = []
         self._normals = []
@@ -48,6 +57,7 @@ class SceneObject(object):
         self._texCoords = []
         self._triangleIndices = []
         self._timeSinceLastAnimation = 0
+        self._selected = False
 
     def animate(self, timePassed):
         self.timeSinceLastAnimation += timePassed

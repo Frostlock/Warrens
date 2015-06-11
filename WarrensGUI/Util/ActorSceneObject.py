@@ -44,7 +44,9 @@ class ActorSceneObject(SceneObject):
 
     @property
     def color(self):
-        if self.effectColor is None:
+        if self.selected:
+            return COLOR_GL_BAR_HEALTH
+        elif self.effectColor is None:
             return self.baseColor
         else:
             R,G,B,A = self.baseColor

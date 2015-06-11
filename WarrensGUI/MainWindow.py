@@ -629,12 +629,15 @@ class MainWindow(object):
         :param textString: string to be printed
         :param font: Pygame font to be used to render the text
         :param color: Color for the printed text
-        :return: None
+        :return: Pygame Rect for the drawn area
         '''
         textSurface = font.render(textString, True, color)
+        fontHeight = textSurface.get_height() / float(self.displayHeight)
         textData = pygame.image.tostring(textSurface, "RGBA", True)
         GL.glRasterPos3d(*position)
         GL.glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
+        pixelX, pixelY = self.ndcToPixelCoords((position[0], position[1] + 2*fontHeight))
+        return pygame.Rect(pixelX, pixelY, textSurface.get_width(), textSurface.get_height())
 
     def lookAt(self, eye, center, up):
         self.cameraMatrix = og_util.lookAtMatrix44(eye, center, up)
@@ -667,7 +670,7 @@ class MainWindow(object):
         x = gl_position[0]/gl_position[3]
         y = gl_position[1]/gl_position[3]
         z = gl_position[2]/gl_position[3]
-        return (x, y, z)
+        return [x, y, z]
 
     def screenCoordsToWorldPosition(self):
         #get current screen position
@@ -678,6 +681,15 @@ class MainWindow(object):
         print str((NDCx, NDCy))
         raise NotImplementedError("Implementation not complete")
         #TODO: DIFFICULT Finish implementation, checking zbuffer or raycasting?
+
+    def ndcToPixelCoords(self, ndcPosition):
+        '''
+        Converts normalized device coordinates from OpenGl to pixel position on the screen.
+        :return: tuple with pixel coordinates
+        '''
+        pixelX = int(self.displayWidth * ((ndcPosition[0] + 1.0)/2))
+        pixelY = int(self.displayHeight * ((1.0 - ndcPosition[1])/2))
+        return (pixelX, pixelY)
 
     # End of Window utility functions
 
@@ -963,24 +975,25 @@ class MainWindow(object):
         self.drawText((-0.98, -0.85, zNear), self.game.player.name + " (Lvl " + str(self.game.player.playerLevel) + ")", FONT_HUD_L, COLOR_PG_HUD_TEXT)
 
         # Labels for dynamic objects
+        self._sceneObjectRects = []
         usedHeights = []
         fontHeight = FONT_HUD_M_HEIGHT / float(self.displayHeight)
         for actorObj in self.dynamicObjects:
             if isinstance(actorObj,ActorSceneObject):
-                normalizedCoords = self.getActorNormalizedCoords(actorObj)
-                drawCoords = (normalizedCoords[0],
-                              normalizedCoords[1],
-                              normalizedCoords[2])
+                # Decide on label position for actor
+                drawCoords = self.getActorNormalizedCoords(actorObj)[:3]
+                # Check if height offset is still available (avoid overlapping labels)
                 foundHeight = False
                 while not foundHeight:
                     if usedHeights.count(int(drawCoords[1]/fontHeight)) == 0:
                         usedHeights.append(int(drawCoords[1]/fontHeight))
                         foundHeight = True
                     else:
-                        drawCoords = (drawCoords[0],
-                                      drawCoords[1] + fontHeight,
-                                      drawCoords[2])
-                self.drawText(drawCoords, actorObj.actor.name, FONT_HUD_M, actorObj.actor.color)
+                        drawCoords[1] += fontHeight
+                # Draw the label
+                screenRect = self.drawText(drawCoords, actorObj.actor.name, FONT_HUD_M, og_util.RGBcnolor(actorObj.color))
+                # Store the rectangle with actorObj
+                self._sceneObjectRects.append((screenRect, actorObj))
 
         # Health Bar
         GL.glLoadIdentity()
@@ -1080,6 +1093,16 @@ class MainWindow(object):
         self._dragging = True
         # call pygame.mouse.get_rel() to make pygame correctly register the starting point of the drag
         pygame.mouse.get_rel()
+
+        mousePos = pygame.mouse.get_pos()
+        # Unselect all actors
+        for actorObj in self.dynamicObjects:
+            actorObj.selected = False
+        # Try to find a selection candidate
+        for rectangle, actorObj in self._sceneObjectRects:
+            if rectangle.collidepoint(mousePos):
+                actorObj.selected = True
+                break
 
     def eventDraggingStop(self):
         self._dragging = False

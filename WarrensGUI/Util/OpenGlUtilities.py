@@ -117,6 +117,17 @@ def normalizeColor(color):
     elif len(color) == 4:
         return (float(color[0]) / 255, float(color[1]) / 255, float(color[2]) / 255, float(color[3]) / 255)
 
+def RGBcolor(color):
+    '''
+    Utility function to convert a normalized OpenGl color to a standard RGB color.
+    :param color: normalized RGB color
+    :return: RGB color tuple
+    '''
+    if len(color) == 3:
+        return (int(color[0] * 255), int(color[1] * 255), int(color[2] * 255))
+    elif len(color) == 4:
+        return (int(color[0] * 255), int(color[1] * 255), int(color[2] * 255), int(color[3] * 255))
+        
 def randomizeColor(color, variance):
         varianceR, varianceG, varianceB = variance
         r = random.randrange(-varianceR / 2, varianceR / 2)
