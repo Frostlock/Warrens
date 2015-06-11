@@ -691,6 +691,18 @@ class MainWindow(object):
         pixelY = int(self.displayHeight * ((1.0 - ndcPosition[1])/2))
         return (pixelX, pixelY)
 
+    def selectSceneObject(self, mousePos):
+        # Unselect all actors
+        for actorObj in self.dynamicObjects:
+            actorObj.selected = False
+        # Try to find a selection candidate
+        for rectangle, actorObj in self._sceneObjectRects:
+            if rectangle.collidepoint(mousePos):
+                actorObj.selected = True
+                return actorObj.actor
+        # No suitable candiate found
+        return None
+
     # End of Window utility functions
 
     def refreshStaticObjects(self):
@@ -1095,14 +1107,7 @@ class MainWindow(object):
         pygame.mouse.get_rel()
 
         mousePos = pygame.mouse.get_pos()
-        # Unselect all actors
-        for actorObj in self.dynamicObjects:
-            actorObj.selected = False
-        # Try to find a selection candidate
-        for rectangle, actorObj in self._sceneObjectRects:
-            if rectangle.collidepoint(mousePos):
-                actorObj.selected = True
-                break
+        self.selectSceneObject(mousePos)
 
     def eventDraggingStop(self):
         self._dragging = False

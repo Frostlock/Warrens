@@ -1018,11 +1018,8 @@ class Consumable(Item):
         """
         Boolean that indicates whether this consumable is targeted.
         """
-        if self.effect is None:
-            return False
-        else:
-            #TODO: Modifier of non targeted to targeted?
-            return self.baseItem.targeted
+        #TODO: Modifier of non targeted to targeted?
+        return self.baseItem.targeted
 
     @property
     def effectRadius(self):

@@ -5,6 +5,7 @@ import sys
 import pygame
 
 from WarrensGUI.States.State import MenuState
+from WarrensGUI.States.TargetingState import TargetingState
 
 class InventoryMenuState(MenuState):
     """
@@ -35,9 +36,10 @@ class InventoryMenuState(MenuState):
     def useItem(self):
         myItem = self.inventory.items[self.selected]
         if myItem.targeted:
-            # TODO: targeting to be implemented, can we go from normalised device coordinates to a tile?
-            # self.eventTargetingStart(useItem)
-            raise NotImplementedError()
+            # try to target the item
+            state = TargetingState(self.window, self.parentState, myItem)
+            state.mainLoop()
+            self.close()
         else:
             #try to use the item
             self.window.game.player.tryUseItem(myItem)

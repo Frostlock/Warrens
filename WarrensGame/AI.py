@@ -126,9 +126,6 @@ class ConfusedMonsterAI(AI):
         #TODO: roam around in random directions
         Utilities.message(self.character.name + ' stumbles around.', "GAME")
         
-        #visualization
-        Utilities.registerEffect(self.sourceEffect, [self.character.tile])
-        
         self.confusedTurns -= 1
         if self.confusedTurns == 0:
             #switch back to regular AI

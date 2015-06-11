@@ -187,7 +187,12 @@ class ConfuseEffect(MagicEffect):
         confusedTurns = self.effectDuration
         AI.ConfusedMonsterAI(self, target, confusedTurns)
         target.level.game.activeEffects.append(self)
-        Utilities.message(target.name + ' is confused for ' + str(confusedTurns) + ' turns.', "GAME")        
+        Utilities.message(target.name + ' is confused for ' + str(confusedTurns) + ' turns.', "GAME")
+
+    def tick(self):
+         # Update effectduration
+        if self.effectDuration == 0: return
+        self.effectDuration -= 1
 
 class DamageEffect(MagicEffect):
     """
