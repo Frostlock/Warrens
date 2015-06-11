@@ -991,7 +991,7 @@ class MainWindow(object):
                     else:
                         drawCoords[1] += fontHeight
                 # Draw the label
-                screenRect = self.drawText(drawCoords, actorObj.actor.name, FONT_HUD_M, og_util.RGBcnolor(actorObj.color))
+                screenRect = self.drawText(drawCoords, actorObj.actor.name, FONT_HUD_M, og_util.RGBcolor(actorObj.color))
                 # Store the rectangle with actorObj
                 self._sceneObjectRects.append((screenRect, actorObj))
 
