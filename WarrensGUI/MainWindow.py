@@ -669,6 +669,16 @@ class MainWindow(object):
         z = gl_position[2]/gl_position[3]
         return (x, y, z)
 
+    def screenCoordsToWorldPosition(self):
+        #get current screen position
+        screenCoord = pygame.mouse.get_pos()
+        #convert to normalized device coordinates
+        NDCx = (screenCoord[0]/float(self.displayWidth))*2.0 - 1.0
+        NDCy = 1.0 - (screenCoord[1]/float(self.displayHeight)) * 2.0
+        print str((NDCx, NDCy))
+        raise NotImplementedError("Implementation not complete")
+        #TODO: DIFFICULT Finish implementation, checking zbuffer or raycasting?
+
     # End of Window utility functions
 
     def refreshStaticObjects(self):
@@ -957,9 +967,10 @@ class MainWindow(object):
         fontHeight = FONT_HUD_M_HEIGHT / float(self.displayHeight)
         for actorObj in self.dynamicObjects:
             if isinstance(actorObj,ActorSceneObject):
-                drawCoords = (self.getActorNormalizedCoords(actorObj)[0],
-                                self.getActorNormalizedCoords(actorObj)[1],
-                                self.getActorNormalizedCoords(actorObj)[2])
+                normalizedCoords = self.getActorNormalizedCoords(actorObj)
+                drawCoords = (normalizedCoords[0],
+                              normalizedCoords[1],
+                              normalizedCoords[2])
                 foundHeight = False
                 while not foundHeight:
                     if usedHeights.count(int(drawCoords[1]/fontHeight)) == 0:
