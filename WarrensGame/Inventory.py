@@ -16,17 +16,26 @@ class Inventory(object):
         Basic array of all items in this inventory
         '''
         return self._items
-        
-    def __init__(self):
+
+    @property
+    def owner(self):
+        '''
+        The character that owns this inventory
+        '''
+        return self._owner
+
+    def __init__(self, character):
         '''
         Constructor
         '''
         self._items = []
+        self._owner = character
         
     def add(self,newItem):
         '''
         Add an item to this inventory
         '''
+        newItem.owner = self.owner
         #if item is stackable
         if newItem.stackable:
             #Check if there is another item with the same ID

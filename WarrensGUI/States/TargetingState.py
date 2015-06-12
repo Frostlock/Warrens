@@ -29,6 +29,13 @@ class TargetingState(State):
         
         self.seeker = seeker
         self.header = "Select target for " + str(self.seeker.name)
+        self.availableTargets = []
+        for rectangle, actorObj in self.window.sceneObjectSelectionRectangles:
+            self.availableTargets.append(actorObj)
+        if len(self.availableTargets) == 0:
+            self.selected = None
+        else:
+            self.selected = 0
 
 
     def loopInit(self):
@@ -62,16 +69,24 @@ class TargetingState(State):
             if event.type == pygame.KEYDOWN:
                 #TODO: keyboard targetting, iterate over visible candidate targets
                # Select up
-                if event.key == pygame.K_UP:
-                    self.selected -= 1
-                    if self.selected < 0 : self.selected = len(self.items) - 1
-                # Select down
-                elif event.key == pygame.K_DOWN:
-                    self.selected += 1
-                    if self.selected > len(self.items)-1: self.selected = 0
+                if event.key == pygame.K_TAB:
+                    self.availableTargets[self.selected].selected = False
+                    # check for shift modifier
+                    mods = pygame.key.get_mods()
+                    if (mods & pygame.KMOD_LSHIFT) or (mods & pygame.KMOD_RSHIFT):
+                        self.selected -= 1
+                        if self.selected < 0 : self.selected = len(self.availableTargets) - 1
+                        self.availableTargets[self.selected].selected = True
+                    else:
+                        self.selected += 1
+                        if self.selected > len(self.availableTargets)-1: self.selected = 0
+                        self.availableTargets[self.selected].selected = True
                 # Select
                 elif event.key == pygame.K_RETURN:
-                    pass
+                    if not self.selected is None:
+                        target = (self.availableTargets[self.selected])
+                        self.window.game.player.tryUseItem(self.seeker, target)
+                        self.close()
                 elif event.key == pygame.K_ESCAPE:
                     self.close()
 
@@ -86,12 +101,5 @@ class TargetingState(State):
         target = self.window.selectSceneObject(mousePos)
         # Object found
         if not target is None:
-            #TODO: switch base on TargetType however target type is in the effect object and that only is created on apply...
-            #if self.seeker.effect.targetType == EffectTarget.CHARACTER:
             self.window.game.player.tryUseItem(self.seeker, target)
-            #elif self.seeker.effect.targetType == EffectTarget.TILE:
-            #    self.window.game.player.tryUseItem(self.seeker, target.tile)
-            #else:
-            #    raise NotImplementedError("Unknown target type.")
-            # Targeting completed
             self.close()

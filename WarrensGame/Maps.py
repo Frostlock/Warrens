@@ -180,6 +180,15 @@ class Map(object):
         levelArea = Room(self, 1, 1, self.width - 2, self.height - 2)
         return levelArea.getRandomEmptyTile()
 
+    def getRandomTile(self):
+        '''
+        Returns a random Tile in this map.
+        :return: Tile object
+        '''
+        x = random.randrange(self.width)
+        y = random.randrange(self.height)
+        return self.tiles[x][y]
+
     def getCircleTiles(self, x, y, radius, fullCircle=False, excludeBlockedTiles=False):
         """
         Frost: This utility function returns an array of tiles that 

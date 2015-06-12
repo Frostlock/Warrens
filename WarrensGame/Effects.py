@@ -4,8 +4,10 @@
 # Magic/Event system #
 ######################
 
-import Utilities
+from Utilities import rollHitDie, GameError, message
 import AI
+import Actors
+from Maps import Tile
 
 class EffectTarget:
     """
@@ -144,25 +146,28 @@ class HealEffect(MagicEffect):
         self._targetType = EffectTarget.SELF
 
     def applyTo(self, target):
-        """
+        '''
         Healing effect will be applied to target character.
-        arguments
-            target - Character object
-        """
+        :target: Character object
+        :return: None
+        '''
+        if not isinstance(target, Actors.Character):
+            raise GameError("Can not apply healing effect to " + str(target))
         self.actors.append(target)
         target.tile.map.level.game.activeEffects.append(self)
         self.tick()
 
     def tick(self):
-        """
-        Apply one tick of healing
-        """
+        '''
+        Apply one tick of healing.
+        :return: None
+        '''
         # Update effectduration
         if self.effectDuration == 0: return
         self.effectDuration -= 1
         # Apply healing
         for target in self.actors:
-            healAmount = Utilities.rollHitDie(self.effectHitDie)
+            healAmount = rollHitDie(self.effectHitDie)
             target.takeHeal(healAmount, self.source)
 
 class ConfuseEffect(MagicEffect):
@@ -179,18 +184,24 @@ class ConfuseEffect(MagicEffect):
         self._targetType = EffectTarget.CHARACTER
 
     def applyTo(self, target):
-        """
-        Confuse effect will be applied to target character.
-        arguments
-            target - Character object
-        """
+        '''
+        Confuse effect will be applied to target monster.
+        :target: Monster object
+        :return: None
+        '''
+        if not isinstance(target, Actors.Monster):
+            raise GameError("Can not apply confuse effect to " + str(target))
         confusedTurns = self.effectDuration
         AI.ConfusedMonsterAI(self, target, confusedTurns)
         target.level.game.activeEffects.append(self)
-        Utilities.message(target.name + ' is confused for ' + str(confusedTurns) + ' turns.', "GAME")
+        message(target.name + ' is confused for ' + str(confusedTurns) + ' turns.', "GAME")
 
     def tick(self):
-         # Update effectduration
+        '''
+        Apply a tick of the confuse effect
+        :return: None
+        '''
+        # Update effectduration
         if self.effectDuration == 0: return
         self.effectDuration -= 1
 
@@ -218,32 +229,54 @@ class DamageEffect(MagicEffect):
         self._targetType = EffectTarget.TILE
         self._centerTile = None
 
-    def applyTo(self, targetActor):
-        """
+    def applyTo(self, target):
+        '''
         Damage area is circular around center.
-        If this effect is targeted, center should be a Tile object.
-        If this effect is not targeted, center should be an Actor object.
-        """
-        if self.targeted:
-            self._centerTile = targetActor
+        If this effect is targeted, the center will be the given target.
+        If this effect is not targeted, the center will be the source of the effect.
+        All actors on the tiles in the area of effect will be damaged.
+        :target: Actor or Tile Object
+        :return: None
+        '''
+        print target
+        # Determine center tile for the area of effect
+        if isinstance(target, Tile):
+            self._centerTile = target
+        elif isinstance(target, Actors.Actor):
+            # Actor could be located on a tile
+            if not target.tile is None:
+                self._centerTile = target.tile
+            # Actor could be located in an inventory
+            elif not target.owner is None:
+                self._centerTile = target.owner.tile
+            else:
+                raise GameError("Can't find a tile for Actor " + str(target))
         else:
-            self._centerTile = targetActor.tile
+            raise GameError("Can not apply damage effect to " + str(target))
         #find all tiles that are in the damage area
-        sourceTile = self.centerTile
+        x = self.centerTile.x
+        y = self.centerTile.y
+        radius = self.effectRadius
         fullCircle = True
         excludeBlockedTiles = True
-        radius = self.effectRadius
-        self._tiles = sourceTile.map.getCircleTiles(sourceTile.x, sourceTile.y, radius, fullCircle, excludeBlockedTiles)
+        self._tiles = self.centerTile.map.getCircleTiles(x, y, radius, fullCircle, excludeBlockedTiles)
         #in case this is an untargeted effect
         if not self.targeted:
             #exclude the center of the nova
-            self.tiles.remove(sourceTile)
+            self.tiles.remove(self.centerTile)
         # Tick for damage
         self.tick()
         # Register effect with Game
-        targetActor.level.game.activeEffects.append(self)
+        try:
+            self.centerTile.map.level.game.activeEffects.append(self)
+        except:
+            pass
 
     def tick(self):
+        '''
+        Apply one tick of damage
+        :return: None
+        '''
         # Update effectduration
         if self.effectDuration == 0: return
         self.effectDuration -= 1
@@ -253,8 +286,8 @@ class DamageEffect(MagicEffect):
             for actor in tile.actors:
                 self.actors.append(actor)
         #apply damage to every target
-        damageAmount = Utilities.rollHitDie(self.effectHitDie)
+        damageAmount = rollHitDie(self.effectHitDie)
         for target in self.actors:
-            Utilities.message(self.source.name.capitalize() + ' hits '
+            message(self.source.name.capitalize() + ' hits '
                     + target.name + ' for ' + str(damageAmount) + ' Damage.', "GAME")
             target.takeDamage(damageAmount, self.source.owner)

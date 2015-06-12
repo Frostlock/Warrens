@@ -374,7 +374,7 @@ class Character(Actor):
         self._baseDefense = 0
         self._basePower = 1
         self._equipedItems = []
-        self._inventory = Inventory.Inventory()
+        self._inventory = Inventory.Inventory(self)
         self._xpValue = 0
         self._AI = None
         self._state = Character.ACTIVE
@@ -391,7 +391,6 @@ class Character(Actor):
         adding item puts it in this characters inventory
         """
         self.inventory.add(item)
-        item.owner = self
         #TODO: check for auto equip
 
     def removeItem(self, item):

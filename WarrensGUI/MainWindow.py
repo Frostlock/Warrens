@@ -273,6 +273,18 @@ class MainWindow(object):
     def sceneObjectSelectionRectangles(self,rectangles):
         self._sceneObjectSelectionRectangles = rectangles
 
+    @property
+    def selectedActor(self):
+        '''
+        Property for the currently selected Actor.
+        :return: Actor object or None
+        '''
+        return self._selectedActor
+
+    @selectedActor.setter
+    def selectedActor(self, actor):
+        self._selectedActor = actor
+
     def __init__(self):
         """
         Constructor to create a new main window.
@@ -293,6 +305,8 @@ class MainWindow(object):
         self._rotating = False
         self._state = None
         self._clock = pygame.time.Clock()
+        self._sceneObjectSelectionRectangles = []
+        self._selectedActor = None
         # Initialize uniform class variables
         self.perspectiveMatrixUnif = None
         self.cameraMatrixUnif = None
@@ -713,7 +727,7 @@ class MainWindow(object):
                 actorObj.selected = True
                 self.selectedActor = actorObj.actor
                 return actorObj.actor
-        # No suitable candiate found
+        # No suitable candidate found
         return None
 
     # End of Window utility functions
