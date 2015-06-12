@@ -267,10 +267,7 @@ class DamageEffect(MagicEffect):
         # Tick for damage
         self.tick()
         # Register effect with Game
-        try:
-            self.centerTile.map.level.game.activeEffects.append(self)
-        except:
-            pass
+        self.centerTile.map.level.game.activeEffects.append(self)
 
     def tick(self):
         '''
