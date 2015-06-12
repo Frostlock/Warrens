@@ -260,6 +260,18 @@ class MainWindow(object):
     def dynamicObjects(self, objectsArray):
         self._dynamicObjects = objectsArray
 
+    @property
+    def sceneObjectSelectionRectangles(self):
+        '''
+        Array of (Rectangle, SceneObject) tuples for visible SceneObjects that have a selection area (Rectangle).
+        This can be used to select these SceneObjects using the mouse.
+        :return: Array of (Rectangle, SceneObject)
+        '''
+        return self._sceneObjectSelectionRectangles
+
+    @sceneObjectSelectionRectangles.setter
+    def sceneObjectSelectionRectangles(self,rectangles):
+        self._sceneObjectSelectionRectangles = rectangles
 
     def __init__(self):
         """
@@ -696,9 +708,10 @@ class MainWindow(object):
         for actorObj in self.dynamicObjects:
             actorObj.selected = False
         # Try to find a selection candidate
-        for rectangle, actorObj in self._sceneObjectRects:
+        for rectangle, actorObj in self.sceneObjectSelectionRectangles:
             if rectangle.collidepoint(mousePos):
                 actorObj.selected = True
+                self.selectedActor = actorObj.actor
                 return actorObj.actor
         # No suitable candiate found
         return None
@@ -987,7 +1000,7 @@ class MainWindow(object):
         self.drawText((-0.98, -0.85, zNear), self.game.player.name + " (Lvl " + str(self.game.player.playerLevel) + ")", FONT_HUD_L, COLOR_PG_HUD_TEXT)
 
         # Labels for dynamic objects
-        self._sceneObjectRects = []
+        self.sceneObjectSelectionRectangles = []
         usedHeights = []
         fontHeight = FONT_HUD_M_HEIGHT / float(self.displayHeight)
         for actorObj in self.dynamicObjects:
@@ -1005,7 +1018,7 @@ class MainWindow(object):
                 # Draw the label
                 screenRect = self.drawText(drawCoords, actorObj.actor.name, FONT_HUD_M, og_util.RGBcolor(actorObj.color))
                 # Store the rectangle with actorObj
-                self._sceneObjectRects.append((screenRect, actorObj))
+                self.sceneObjectSelectionRectangles.append((screenRect, actorObj))
 
         # Health Bar
         GL.glLoadIdentity()

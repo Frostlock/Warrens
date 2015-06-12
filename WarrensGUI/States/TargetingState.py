@@ -11,7 +11,7 @@ from WarrensGUI.States.State import State
 
 class TargetingState(State):
     """
-    State that allows targetting.
+    State that allows targeting.
     """
 
     #TODO: enable targeting of actors
@@ -32,7 +32,7 @@ class TargetingState(State):
 
 
     def loopInit(self):
-        #Nothing to be done but need to override super class method to avoid error messsage.
+        #Nothing to be done but need to override super class method to avoid error message.
         pass
 
     def loopDraw(self):
@@ -45,32 +45,9 @@ class TargetingState(State):
         GL.glEnable(GL.GL_BLEND)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
 
-        # # Background
-        # GL.glLoadIdentity()
-        # width = 0.8
-        # height = 0.8
-        # GL.glBegin(GL.GL_QUADS)
-        # GL.glColor4f(*COLOR_GL_MENU_BG)
-        # GL.glVertex2f(width, -height)
-        # GL.glVertex2f(width, height)
-        # GL.glVertex2f(-width, height)
-        # GL.glVertex2f(-width, -height)
-        # GL.glEnd()
-
-        # Header
+        # Draw header
         GL.glLoadIdentity()
         self.window.drawText((-0.85, 0.85, 0), self.header, FONT_HUD_XXL, COLOR_PG_HUD_TEXT_SELECTED)
-
-        # # Items
-        # heightOffset = 0
-        # for i in range(0, len(items)):
-        #     if selected == i:
-        #         color = COLOR_PG_HUD_TEXT_SELECTED
-        #     else:
-        #         color = COLOR_PG_HUD_TEXT
-        #     position=(-0.6, 0.6 - heightOffset, 0)
-        #     self.window.drawText(position, items[i], FONT_HUD_XL, color)
-        #     heightOffset += 3 * FONT_HUD_XL_HEIGHT / float(self.window.displayHeight)
 
     def loopEvents(self):
         # handle pygame (GUI) events
@@ -99,6 +76,11 @@ class TargetingState(State):
                     self.close()
 
     def handleMouseClick(self):
+        '''
+        Event handler for mouse click. It will ask the window for a object at the current mouse position
+        on which it will try to apply the effect that is being targeted.
+        :return: None
+        '''
         # Try to select a an object based on the mouse position
         mousePos = pygame.mouse.get_pos()
         target = self.window.selectSceneObject(mousePos)
