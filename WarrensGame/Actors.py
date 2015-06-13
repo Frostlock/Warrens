@@ -502,7 +502,7 @@ class Character(Actor):
             if amount > 0:
                 self.currentHitPoints -= amount
             #check for death
-            if self.currentHitPoints < 0:
+            if self.currentHitPoints <= 0:
                 Utilities.message(self.name.capitalize() + ' is killed!', "GAME")
                 self._killedBy(attacker)
 
