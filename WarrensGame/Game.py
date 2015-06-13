@@ -254,7 +254,8 @@ class Game(object):
         :param fileName:
         :rtype : None
         """
-        # TODO: Implement saving and loading of gamestate
+        #TODO: Implement saving and loading of gamestate
+        raise NotImplementedError ("Loading not implemented.")
         pass
 
     def saveGame(self, fileName):
@@ -263,6 +264,7 @@ class Game(object):
         :param fileName:
         :rtype : None
         """
+        raise NotImplementedError ("Saving not implemented.")
         pass
 
     def tryToPlayTurn(self):

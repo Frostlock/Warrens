@@ -476,14 +476,11 @@ class MainWindow(object):
         # Set Game state (which contains the main loop)
         self.state = GameState(self,self.state)
 
-    #TODO: loading and saving to be implemented
     def saveGame(self):
-        print "Called Save but not implemented yet"
-        pass
+        self.game.saveGame(SAVE_FILE)
 
     def loadGame(self):
-        print "Called Load but not implemented yet"
-        pass
+        self.game.loadGame(SAVE_FILE)
 
     def DEPRECATED_playGame(self):
         # #Init Game

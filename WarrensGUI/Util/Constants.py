@@ -22,6 +22,8 @@ CAM_ISOMETRIC = 2
 CAM_FIRSTPERSON = 3
 CAM_FREE = 4
 
+SAVE_FILE = "save.warrens"
+
 ##########
 # COLORS #
 ######################################################################
