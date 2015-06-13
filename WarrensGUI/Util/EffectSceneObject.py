@@ -32,6 +32,13 @@ class EffectSceneObject(SceneObject):
             self.heightMap[key] += random.choice([-variance/2,variance/2])
             self.heightMap[key] = clamp(self.heightMap[key],self.minHeight, self.maxHeight)
 
+    def bottomHeight(self, key):
+        if self.effect.effectElement == ELEC:
+            return self.height(key) - (TILESIZE/40)
+        else:
+            return 0.0
+
+
     @property
     def baseColor(self):
         return self._baseColor
@@ -70,6 +77,20 @@ class EffectSceneObject(SceneObject):
         for key in self.colorMap.keys():
             self.colorMap[key] = randomizeColor(self.baseColor, self.colorVariance)
 
+    @property
+    def xOffset(self):
+        if self.effect.effectElement == ELEC:
+            return TILESIZE / random.randint(4, 12)
+        else:
+            return 0.0
+
+    @property
+    def yOffset(self):
+        if self.effect.effectElement == ELEC:
+            return TILESIZE / random.randint(4, 12)
+        else:
+            return 0.0
+
     def __init__(self, effect):
         super(EffectSceneObject, self).__init__()
 
@@ -106,15 +127,15 @@ class EffectSceneObject(SceneObject):
             # Store the vertex coordinates
             # 4 components per vertex: x, y, z, w
             # 4 vertices: bottom of the rectangular tile area
-            self.vertices.extend((x * TS, y * TS, 0.0, 1.0))
-            self.vertices.extend((x * TS, y * TS + TS, 0.0, 1.0))
-            self.vertices.extend((x * TS + TS, y * TS + TS, 0.0, 1.0))
-            self.vertices.extend((x * TS + TS, y * TS, 0.0, 1.0))
+            self.vertices.extend((x * TS + self.xOffset, y * TS + self.yOffset, self.bottomHeight((x, y)), 1.0))
+            self.vertices.extend((x * TS + self.xOffset, y * TS + TS - self.yOffset, self.bottomHeight((x, y)), 1.0))
+            self.vertices.extend((x * TS + TS - self.xOffset, y * TS + TS - self.yOffset, self.bottomHeight((x, y)), 1.0))
+            self.vertices.extend((x * TS + TS - self.xOffset, y * TS + self.yOffset, self.bottomHeight((x, y)), 1.0))
             # 4 vertices: top of the rectangular tile area
-            self.vertices.extend((x * TS, y * TS, self.height((x, y)), 1.0))
-            self.vertices.extend((x * TS, y * TS + TS, self.height((x, y+1)), 1.0))
-            self.vertices.extend((x * TS + TS, y * TS + TS, self.height((x+1, y+1)), 1.0))
-            self.vertices.extend((x * TS + TS, y * TS, self.height((x+1, y)), 1.0))
+            self.vertices.extend((x * TS + self.xOffset, y * TS + self.yOffset, self.height((x, y)), 1.0))
+            self.vertices.extend((x * TS + self.xOffset, y * TS + TS - self.yOffset, self.height((x, y+1)), 1.0))
+            self.vertices.extend((x * TS + TS - self.xOffset, y * TS + TS - self.yOffset, self.height((x+1, y+1)), 1.0))
+            self.vertices.extend((x * TS + TS - self.xOffset, y * TS + self.yOffset, self.height((x+1, y)), 1.0))
 
             # Store the vertex colors
             # 4 components per color: R, G, B, A, one color for every vertex

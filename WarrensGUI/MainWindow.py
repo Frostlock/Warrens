@@ -319,7 +319,8 @@ class MainWindow(object):
             self._selectedObject = sceneObject
             # Static objects that were selected before should be removed from the dynamic objects
             for staticObject in self.toRemoveFromDynamicObjects:
-                self.dynamicObjects.remove(staticObject)
+                if staticObject in self.dynamicObjects:
+                    self.dynamicObjects.remove(staticObject)
                 self.toRemoveFromDynamicObjects.remove(staticObject)
             # To enable selection visualization:
             # If a static object is selected, temporarily add it to the dynamic objects.
