@@ -244,7 +244,24 @@ class MainWindow(object):
 
     @property
     def fogActive(self):
-        return True
+        '''
+        Boolean property indicating whether or not the Fog of War is active.
+        :return: Boolean
+        '''
+        return self._fogActive
+
+    @fogActive.setter
+    def fogActive(self, active):
+        '''
+        Boolean property indicating whether or not the Fog of War is active.
+        :param active: Boolean
+        :return: None
+        '''
+        self._fogActive = active
+
+    @property
+    def fogDistance(self):
+        return self.level.map.rangeOfView * TILESIZE
 
     @property
     def staticObjects(self):
@@ -326,6 +343,7 @@ class MainWindow(object):
         self._cameraAngleXZ = 45
         self._perspectiveMatrix = None
         self._lightingMatrix = None
+        self._fogActive = True
         self._dragging = False
         self._rotating = False
         self._state = None
@@ -395,6 +413,7 @@ class MainWindow(object):
         Initializes OpenGl settings and shaders
         """
         GLUT.glutInit([])
+        # TODO: Usage of GLUT is annoying on Windows. Can we do without?
 
         # Compile Shaders into program object
         from OpenGL.GL.shaders import compileShader, compileProgram
@@ -419,7 +438,6 @@ class MainWindow(object):
         # Fog of War
         self.playerPositionUnif = GL.glGetUniformLocation(self.openGlProgram, "playerPosition")
         self.fogDistanceUnif = GL.glGetUniformLocation(self.openGlProgram, "fogDistance")
-        GL.glUniform1f(self.fogDistanceUnif, 4.0)
         self.fogActiveUnif = GL.glGetUniformLocation(self.openGlProgram, "fogActive")
 
         # Generate Vertex Array Object for the static objects
@@ -1014,6 +1032,7 @@ class MainWindow(object):
 
             GL.glUniform4f(self.playerPositionUnif, *self.getPlayerPosition())
             GL.glUniform1i(self.fogActiveUnif, 1 if self.fogActive else 0)
+            GL.glUniform1f(self.fogDistanceUnif, self.fogDistance)
 
             # Bind element array
             GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_static_elements_id)
@@ -1036,7 +1055,10 @@ class MainWindow(object):
             GL.glUniform3f(self.lightPosUnif, self.lightPosition[0], self.lightPosition[1], self.lightPosition[2])
             GL.glUniform4f(self.lightIntensityUnif, 0.8, 0.8, 0.8, 1.0)
             GL.glUniform4f(self.ambientIntensityUnif, 0.2, 0.2, 0.2, 1.0)
+
             GL.glUniform4f(self.playerPositionUnif, *self.getPlayerPosition())
+            GL.glUniform1i(self.fogActiveUnif, 1 if self.fogActive else 0)
+            GL.glUniform1f(self.fogDistanceUnif, self.fogDistance)
 
             # Bind element array
             GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.VBO_dynamic_elements_id)

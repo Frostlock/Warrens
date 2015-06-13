@@ -49,21 +49,30 @@ void main()
     if ( fogActive == true)
     {
         float myDist = distance(playerPosition, position);
-        float fullViewDist = fogDistance / 3;
+        float fullViewDist = fogDistance * 0.75;
+        float minimumClarity = 0.25;
         if ( myDist <= fullViewDist )
         {
+            //100% clarity
             interpColor = directLightColor + ambientLightColor;
         }
         else if ( myDist <= fogDistance )
         {
+            //100% to 20% clarity
             float gradient = 1 - ((myDist - fullViewDist) / (fogDistance - fullViewDist));
+            gradient = clamp(gradient, minimumClarity , 1.0);
             interpColor = (directLightColor + ambientLightColor) * gradient;
             interpColor[3] = 1.0;
-            //TODO: This probably messes up transparency of effects...
+            //Note: This probably messes up transparency in the edge of the Fog
         }
         else
         {
-            interpColor = vec4(0.0, 0.0, 0.0, 1.0);
+            //20% clarity
+            float gradient = minimumClarity;
+            interpColor = (directLightColor + ambientLightColor) * gradient;
+            interpColor[3] = 1.0;
+            //Full black
+            //interpColor = vec4(0.0, 0.0, 0.0, 1.0);
         }
     }
 

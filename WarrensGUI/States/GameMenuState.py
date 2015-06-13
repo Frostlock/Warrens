@@ -23,12 +23,15 @@ class GameMenuState(MenuState):
         self.header = "Menu"
         self.items = ["s - Save Game",
                       "l - Load Game",
+                      "f - Toggle 'Fog of War'",
                       "q - Quit Game"]
         self.keys = [pygame.K_s,
                      pygame.K_l,
+                     pygame.K_f,
                      pygame.K_q]
         self.handlers = [self.saveGame,
                          self.loadGame,
+                         self.toggleFog,
                          self.quitGame]
         self.selected = 0
 
@@ -38,6 +41,10 @@ class GameMenuState(MenuState):
 
     def loadGame(self):
         self.window.loadGame()
+        self.close()
+
+    def toggleFog(self):
+        self.window.fogActive = not self.window.fogActive
         self.close()
 
     def quitGame(self):
