@@ -27,9 +27,11 @@ from WarrensGame.Actors import Character
 from WarrensGUI.Util import Utilities
 import WarrensGUI.Util.OpenGlUtilities as og_util
 
+from WarrensGUI.Util.SceneObject import SceneObject
 from WarrensGUI.Util.TileSceneObject import TileSceneObject
 from WarrensGUI.Util.ActorSceneObject import ActorSceneObject
 from WarrensGUI.Util.EffectSceneObject import EffectSceneObject
+
 from WarrensGUI.Util.vec3 import vec3
 from WarrensGUI.Util.Constants import *
 from WarrensGUI.States.MainMenuState import MainMenuState
@@ -274,16 +276,39 @@ class MainWindow(object):
         self._sceneObjectSelectionRectangles = rectangles
 
     @property
-    def selectedActor(self):
+    def selectedObject(self):
         '''
-        Property for the currently selected Actor.
+        Property for the currently selected SceneObject.
         :return: Actor object or None
         '''
-        return self._selectedActor
+        return self._selectedObject
 
-    @selectedActor.setter
-    def selectedActor(self, actor):
-        self._selectedActor = actor
+    toRemoveFromDynamicObjects = []
+    @selectedObject.setter
+    def selectedObject(self, sceneObject):
+        '''
+        Setter for the currently selected sceneObject.
+        If it is a static object it will get added temporarily to the dynamic objects to allow
+        visualization of the selection.
+        :param sceneObject: Selected SceneObject
+        :return: None
+        '''
+        if not sceneObject is None:
+            # Clear previous selection
+            if not self._selectedObject is None:
+                self._selectedObject.selected = False
+            # Ensure selected boolean is set properly
+            sceneObject.selected = True
+            self._selectedObject = sceneObject
+            # Static objects that were selected before should be removed from the dynamic objects
+            for staticObject in self.toRemoveFromDynamicObjects:
+                self.dynamicObjects.remove(staticObject)
+                self.toRemoveFromDynamicObjects.remove(staticObject)
+            # To enable selection visualization:
+            # If a static object is selected, temporarily add it to the dynamic objects.
+            if not self.selectedObject in self.dynamicObjects:
+                self.dynamicObjects.append(self.selectedObject)
+                self.toRemoveFromDynamicObjects.append(self.selectedObject)
 
     def __init__(self):
         """
@@ -306,7 +331,7 @@ class MainWindow(object):
         self._state = None
         self._clock = pygame.time.Clock()
         self._sceneObjectSelectionRectangles = []
-        self._selectedActor = None
+        self._selectedObject = None
         # Initialize uniform class variables
         self.perspectiveMatrixUnif = None
         self.cameraMatrixUnif = None
@@ -680,23 +705,56 @@ class MainWindow(object):
         playerZ = TILESIZE / 2
         return (playerX, playerY, playerZ, 1.0)
 
-    def getActorNormalizedCoords(self,actorObj):
-        '''
-        Calculates the normalized device coordinates for the give ActorSceneObject.
-        More explanation can be found here
-        https://www.opengl.org/discussion_boards/showthread.php/168819-Final-pixel-position-after-transformations
-        :param actorObj:ActorSceneObject
-        :return: Normalized Device Coordinates
-        '''
-        actorVec = actorObj.mainVertex
+    # NO LONGER USED
+    # def getActorNormalizedCoords(self,actorObj):
+    #     '''
+    #     Calculates the normalized device coordinates for the give ActorSceneObject.
+    #     More explanation can be found here
+    #     https://www.opengl.org/discussion_boards/showthread.php/168819-Final-pixel-position-after-transformations
+    #     :param actorObj:ActorSceneObject
+    #     :return: Normalized Device Coordinates
+    #     '''
+    #     actorVec = actorObj.mainVertex
+    #     return self.getNormalizedCoords(actorVec)
+
+    def getNormalizedCoords(self, vertex):
         # gl_position as it is calculated in the shader
         # This needs to be updated when the shader is updated!
-        gl_position = self.perspectiveMatrix.dot(self.cameraMatrix.dot(actorVec))
+        gl_position = self.perspectiveMatrix.dot(self.cameraMatrix.dot(vertex))
         # Perspective divide
         x = gl_position[0]/gl_position[3]
         y = gl_position[1]/gl_position[3]
         z = gl_position[2]/gl_position[3]
         return [x, y, z]
+
+    def getScreenRectangle(self, sceneObj):
+        '''
+        Returns a Pygame rectangle that represents the bounding box screen area for the given sceneObject.
+        It is mainly used to allow to detect mouse over and and selection.
+        :param sceneObj: SceneObject
+        :return: Rectangle
+        '''
+        screenPoints = []
+        # Get the normalized pixel coordinates for each vertex in the sceneObject.
+        for i in range(0, len(sceneObj.vertices), 4):
+            x = sceneObj.vertices[i]
+            y = sceneObj.vertices[i+1]
+            z = sceneObj.vertices[i+2]
+            w = sceneObj.vertices[i+3]
+            screenPoints.append(self.ndcToPixelCoords(self.getNormalizedCoords((x, y, z, w))))
+        # Determine minimum and maximum pixel coordinates.
+        maxX, maxY = 0,0
+        minX = self.displayWidth
+        minY = self.displayHeight
+        for x,y in screenPoints:
+            if x > maxX: maxX = x
+            if y > maxY: maxY = y
+            if x < minX: minX = x
+            if y < minY: minY = y
+        width = maxX - minX
+        height = maxY - minY
+        # Construct appropriate Rect object
+        return pygame.Rect(minX, minY, width, height)
 
     def screenCoordsToWorldPosition(self):
         #get current screen position
@@ -706,7 +764,7 @@ class MainWindow(object):
         NDCy = 1.0 - (screenCoord[1]/float(self.displayHeight)) * 2.0
         print str((NDCx, NDCy))
         raise NotImplementedError("Implementation not complete")
-        #TODO: DIFFICULT Finish implementation, checking zbuffer or raycasting?
+        #TODO: DIFFICULT : Finish implementation, checking zbuffer or raycasting? This might be a much nicer way to check which item is currently under the mouse?
 
     def ndcToPixelCoords(self, ndcPosition):
         '''
@@ -718,15 +776,12 @@ class MainWindow(object):
         return (pixelX, pixelY)
 
     def selectSceneObject(self, mousePos):
-        # Unselect all actors
-        for actorObj in self.dynamicObjects:
-            actorObj.selected = False
         # Try to find a selection candidate
-        for rectangle, actorObj in self.sceneObjectSelectionRectangles:
+        for rectangle, sceneObj in self.sceneObjectSelectionRectangles:
             if rectangle.collidepoint(mousePos):
-                actorObj.selected = True
-                self.selectedActor = actorObj.actor
-                return actorObj.actor
+                sceneObj.selected = True
+                self.selectedObject = sceneObj
+                return sceneObj
         # No suitable candidate found
         return None
 
@@ -1020,7 +1075,7 @@ class MainWindow(object):
         for actorObj in self.dynamicObjects:
             if isinstance(actorObj,ActorSceneObject):
                 # Decide on label position for actor
-                drawCoords = self.getActorNormalizedCoords(actorObj)[:3]
+                drawCoords = self.getNormalizedCoords(actorObj.mainVertex)[:3]
                 # Check if height offset is still available (avoid overlapping labels)
                 foundHeight = False
                 while not foundHeight:

@@ -82,6 +82,7 @@ class ActorSceneObject(SceneObject):
         super(ActorSceneObject, self).__init__()
 
         self._actor = actor
+        self.actor.sceneObject = self
         r,g,b = normalizeColor(actor.color)
         self._baseColor = (r, g, b, 1.0)
         self._effect = None

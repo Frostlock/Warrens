@@ -781,7 +781,19 @@ class Tile(object):
     @type.setter
     def type(self, newType):
         self._type = newType
-            
+
+    @property
+    def sceneObject(self):
+        '''
+        Property used to store the scene object that represents this tile in the GUI.
+        :return: SceneObject
+        '''
+        return self._sceneObject
+
+    @sceneObject.setter
+    def sceneObject(self, sceneObject):
+        self._sceneObject = sceneObject
+
     def __init__(self, map, x, y):
         """
         Constructor to create a new tile, all tiles are created empty
@@ -801,6 +813,7 @@ class Tile(object):
         self._material = MaterialType.NONE
         self._in_view = True
         self._color = CONSTANTS.TILE_DEFAULT_COLOR
+        self._sceneObject = None
 
     def __str__(self):
         """

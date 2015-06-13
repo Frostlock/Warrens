@@ -295,3 +295,36 @@ class Game(object):
             return True
         else:
             return False
+
+    def getPossibleTargets(self, seeker):
+        '''
+        Returns a list of valid targets for the seeker.
+        :param seeker:
+        :return: Array of targets
+        '''
+        assert(isinstance(seeker,Item))
+        if seeker.baseItem.effect == "None":
+            return []
+        elif seeker.baseItem.effect == "DamageEffect":
+            # Target can be an Actor or a Tile
+            targets = []
+            for tile in self.currentLevel.map.visible_tiles:
+                for actor in tile.actors:
+                    if isinstance(actor, Actor):
+                        targets.append(actor)
+            targets.extend(self.currentLevel.map.visible_tiles)
+            return targets
+        elif seeker.baseItem.effect == "HealEffect":
+            # Target has to be of type Character
+            # Currently on the player should benefit from healing
+            return [self.player]
+        elif seeker.baseItem.effect == "ConfuseEffect":
+            # Target has to be of type Monster
+            targets = []
+            for tile in self.currentLevel.map.visible_tiles:
+                for actor in tile.actors:
+                    if isinstance(actor, Monster):
+                        targets.append(actor)
+            return targets
+        else:
+            raise GameError("Unknown effect type")

@@ -138,6 +138,18 @@ class Actor(object):
         """
         return self._color
 
+    @property
+    def sceneObject(self):
+        '''
+        Property used to store the scene object that represents this actor in the GUI.
+        :return: SceneObject
+        '''
+        return self._sceneObject
+
+    @sceneObject.setter
+    def sceneObject(self, sceneObject):
+        self._sceneObject = sceneObject
+
     def __init__(self):
         """
         Creates a new basic Actor, normally not used directly but should
@@ -154,6 +166,7 @@ class Actor(object):
         self._actionTaken = False
         self._color = (255, 255, 255)
         self._inView = False
+        self._sceneObject = None
 
     #functions
     def __str__(self):

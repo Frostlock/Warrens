@@ -4,7 +4,7 @@ import sys
 
 from OpenGL import GL
 from WarrensGUI.Util.Constants import *
-from WarrensGame.Effects import EffectTarget
+from WarrensGame.Actors import Actor
 import pygame
 
 from WarrensGUI.States.State import State
@@ -13,9 +13,13 @@ class TargetingState(State):
     """
     State that allows targeting.
     """
+    @property
+    def selectedTarget(self):
+        return self._selectedTarget
 
-    #TODO: enable targeting of actors
-    #TODO: enable targeting of tiles
+    @selectedTarget.setter
+    def selectedTarget(self,target):
+        self._selectedTarget = target
 
     def __init__(self, window, parentState, seeker):
         """
@@ -29,18 +33,34 @@ class TargetingState(State):
         
         self.seeker = seeker
         self.header = "Select target for " + str(self.seeker.name)
-        self.availableTargets = []
-        for rectangle, actorObj in self.window.sceneObjectSelectionRectangles:
-            self.availableTargets.append(actorObj)
-        if len(self.availableTargets) == 0:
-            self.selected = None
-        else:
-            self.selected = 0
-
+        self._selectedTarget = None
 
     def loopInit(self):
-        #Nothing to be done but need to override super class method to avoid error message.
-        pass
+        # Determine available targets
+        self.targets = self.window.game.getPossibleTargets(self.seeker)
+        if len(self.targets) == 0:
+            self.close()
+        elif len(self.targets) == 1:
+            self.resolve(self.targets[0])
+        else:
+
+            # To enable mouse based selection, calculate a selection area for each possible target
+            self.targetRectangles = []
+            for target in self.targets:
+                # Can only target items that are visible in the GUI.
+                if not target.sceneObject is None:
+                    targetRect = self.window.getScreenRectangle(target.sceneObject)
+                    self.targetRectangles.append(targetRect)
+
+            # To enable TAB based selection, create a list of actor targets
+            self.actorTargets = []
+            for target in self.targets:
+                if isinstance(target, Actor):
+                    self.actorTargets.append(target)
+            if len(self.actorTargets) == 0:
+                self.selected = None
+            else:
+                self.selected = 0
 
     def loopDraw(self):
         # Draw parent behind this inventory
@@ -64,42 +84,66 @@ class TargetingState(State):
             # mouse
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    self.handleMouseClick()
+                    # Try to select a an object based on the mouse position
+                    target = self.selectedTarget
+                    if not target is None: self.resolve(target)
+            elif event.type == pygame.MOUSEMOTION:
+                self.handleMouseMotion()
             # keyboard events
-            if event.type == pygame.KEYDOWN:
-                #TODO: keyboard targetting, iterate over visible candidate targets
+            elif event.type == pygame.KEYDOWN:
                # Select up
                 if event.key == pygame.K_TAB:
-                    self.availableTargets[self.selected].selected = False
+                    self.actorTargets[self.selected].sceneObject.selected = False
                     # check for shift modifier
                     mods = pygame.key.get_mods()
                     if (mods & pygame.KMOD_LSHIFT) or (mods & pygame.KMOD_RSHIFT):
                         self.selected -= 1
-                        if self.selected < 0 : self.selected = len(self.availableTargets) - 1
-                        self.availableTargets[self.selected].selected = True
+                        if self.selected < 0 : self.selected = len(self.actorTargets) - 1
+                        self.actorTargets[self.selected].sceneObject.selected = True
                     else:
                         self.selected += 1
-                        if self.selected > len(self.availableTargets)-1: self.selected = 0
-                        self.availableTargets[self.selected].selected = True
+                        if self.selected > len(self.actorTargets)-1: self.selected = 0
+                        self.actorTargets[self.selected].sceneObject.selected = True
                 # Select
                 elif event.key == pygame.K_RETURN:
                     if not self.selected is None:
-                        target = (self.availableTargets[self.selected])
-                        self.window.game.player.tryUseItem(self.seeker, target)
-                        self.close()
+                        target = (self.actorTargets[self.selected])
+                        self.resolve(target)
                 elif event.key == pygame.K_ESCAPE:
                     self.close()
 
-    def handleMouseClick(self):
-        '''
-        Event handler for mouse click. It will ask the window for a object at the current mouse position
-        on which it will try to apply the effect that is being targeted.
-        :return: None
-        '''
-        # Try to select a an object based on the mouse position
+    def resolve(self, target):
+        self.window.game.player.tryUseItem(self.seeker, target)
+        self.close()
+
+    def handleMouseMotion(self):
+        # Unselect all targets
+        for target in self.targets:
+            if not target.sceneObject is None:
+                target.sceneObject.selected = False
+        # Get mouse position
         mousePos = pygame.mouse.get_pos()
-        target = self.window.selectSceneObject(mousePos)
-        # Object found
-        if not target is None:
-            self.window.game.player.tryUseItem(self.seeker, target)
-            self.close()
+        # Check if mouse position is in one of the item rectangles
+        for i in range(0, len(self.targetRectangles)):
+            if self.targetRectangles[i].collidepoint(mousePos):
+                self.selectedTarget = self.targets[i]
+                #print str(item) + " " + str(mousePos) + " collides with " + str(self.itemRectangles[i])
+                self.selected = i
+                if not self.selectedTarget.sceneObject is None:
+                    self.selectedTarget.sceneObject.selected = True
+                    # Refresh mesh (without waiting for animation to refresh it)
+                    self.selectedTarget.sceneObject.refreshMesh()
+                    self.window.selectedObject = self.selectedTarget.sceneObject
+                    break
+        # Attention:
+        #
+        # You should not call
+        # self.window.refreshStaticObjects()
+        # self.window.loadVAOStaticObjects()
+        # these kill performance as they would trigger whenever the mouse goes over a tile.
+        #
+        # You should not call
+        # self.window.refreshStaticObjects()
+        # self.window.refreshDynamicObjects()
+        # This will create new scene objects (voiding the ones we just did the effort to select.
+
