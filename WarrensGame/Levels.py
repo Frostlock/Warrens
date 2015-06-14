@@ -298,7 +298,7 @@ class CaveLevel(Level):
         #call constructor of super class
         super(CaveLevel, self).__init__(owner, difficulty, name)
         #generate the map
-        self._map = Maps.CaveMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
+        self._map = Maps.CaveMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT, self)
         #add some monsters
         self._placeMonsters()
         #add some items

@@ -115,7 +115,7 @@ class Map(object):
         return self._rangeOfView
     
     #constructor
-    def __init__(self, MapWidth, MapHeight, level=None):
+    def __init__(self, MapWidth, MapHeight, level):
         """
         Constructor to create a new empty map
         Arguments

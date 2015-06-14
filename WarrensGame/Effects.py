@@ -238,7 +238,6 @@ class DamageEffect(MagicEffect):
         :target: Actor or Tile Object
         :return: None
         '''
-        print target
         # Determine center tile for the area of effect
         if isinstance(target, Tile):
             self._centerTile = target
