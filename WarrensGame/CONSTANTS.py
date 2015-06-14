@@ -48,7 +48,7 @@ DATA_ITEM_MODIFIERS = "./WarrensGame/ItemModifiers.csv"
 SHOW_GAME_LOGGING = False
 SHOW_AI_LOGGING = False
 SHOW_GENERATION_LOGGING = True
-QUICKSTART = False
+QUICKSTART = True
 
 # Enumerator to describe the element of an effect.
 HEAL = 0

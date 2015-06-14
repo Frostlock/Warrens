@@ -165,13 +165,13 @@ class Game(object):
             # Add portal in previous level to current level
             downPortal = Portal()
             downPortal._char = '>'
-            downPortal._name = 'stairs leading down into darkness'
+            downPortal._name = 'stairs down'
             downPortal._message = 'You follow the stairs down, looking for more adventure.'
             downPortal.moveToLevel(lvl, lvl.getRandomEmptyTile())
             # Add portal in current level to previous level
             upPortal = Portal()
             upPortal._char = '<'
-            upPortal._name = 'stairs leading up'
+            upPortal._name = 'stairs up'
             upPortal._message = 'You follow the stairs up, hoping to find the exit.'
             upPortal.moveToLevel(dungeonLevel, dungeonLevel.getRandomEmptyTile())
             # Connect the two portals
@@ -195,14 +195,14 @@ class Game(object):
             # create a portal in the connected level that leads to the new cave
             downPortal = Portal()
             downPortal._char = '>'
-            downPortal._name = 'a deep pit with crumbling walls'
+            downPortal._name = 'Pit'
             downPortal._message = 'You jump into the pit. As you fall deeper and deeper, you realize you didn\'t ' \
                                   'think about how to get back out afterward...'
             downPortal.moveToLevel(lvl, lvl.getRandomEmptyTile())
             # create a portal in the new cave that leads back
             upPortal = Portal()
             upPortal._char = '<'
-            upPortal._name = 'an opening far up in the ceiling'
+            upPortal._name = 'Opening above'
             upPortal._message = 'After great difficulties you manage to get out of the pit.'
             upPortal.moveToLevel(caveLevel, caveLevel.getRandomEmptyTile())
             # connect the two portals
@@ -219,9 +219,18 @@ class Game(object):
 
         # Quickstart
         if CONSTANTS.QUICKSTART:
-            firstLevel = self.levels[0]
-            self._currentLevel = firstLevel
-            self.player.moveToLevel(firstLevel, firstLevel.portals[len(firstLevel.portals) - 2].tile)
+            town = self.levels[0]
+            # Group portals together
+            i = 1
+            for portal in town.portals:
+                print portal
+                if not portal.destinationPortal.level in town.subLevels:
+                    tile = town.map.tiles[1][i]
+                    i += 1
+                    portal.moveToTile(tile)
+            # Move player close to portals
+            tile = town.map.tiles[2][1]
+            self.player.moveToTile(tile)
 
         firstLevel.map.updateFieldOfView(
             self._player.tile.x, self._player.tile.y)
