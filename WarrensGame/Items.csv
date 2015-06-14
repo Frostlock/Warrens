@@ -1,4 +1,4 @@
-key,type,char,name,itemLevel,effect,targeted,effectRadius,effectHitDie,effectDuration,effectElement,defense_bonus,power_bonus,hitdie_bonus
+key,type,char,name,itemLevel,effect,targeted,effectRadius,effectHitDie,effectDuration,effectElement,armorBonus,attackBonus,hitdie_bonus
 healingvial,Consumable,!,healing vial,1,HealEffect,False,0,3d3,1,HEAL,0,0,0
 healingpotion,Consumable,!,healing potion,5,HealEffect,False,0,6d6,1,HEAL,0,0,0
 healingdraught,Consumable,!,healing draught,9,HealEffect,False,0,9d9,1,HEAL,0,0,0

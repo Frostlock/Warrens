@@ -342,24 +342,24 @@ class Character(Actor):
         return self._xpValue
 
     @property
-    def power(self):
+    def attackBonus(self):
         """
-        Return attack power
+        Return attack attack bonus
         """
         bonus = 0
         for item in self.equipedItems:
-            bonus += int(item.powerBonus)
-        return self._basePower + bonus
+            bonus += int(item.attackBonus)
+        return self._baseAttackBonus + bonus
 
     @property
-    def defense(self):
+    def armor(self):
         """
-        Return defense value
+        Return armor value
         """
         bonus = 0
         for item in self.equipedItems:
-            bonus += int(item.defenseBonus)
-        return self._baseDefense + bonus
+            bonus += item.armorBonus
+        return self._baseArmor + bonus
 
     @property
     def AI(self):
@@ -384,8 +384,8 @@ class Character(Actor):
         #call super class constructor
         super(Character, self).__init__()
         #initialize class variables
-        self._baseDefense = 0
-        self._basePower = 1
+        self._baseArmor = 0
+        self._baseAttack = 1
         self._equipedItems = []
         self._inventory = Inventory.Inventory(self)
         self._xpValue = 0
@@ -480,7 +480,9 @@ class Character(Actor):
             target - the Character to be attacked
         """
         #a simple formula for attack damage
-        damage = self.power - target.defense
+        #TODO: switch to DND style attack roll
+        
+        damage = self.attackBonus - target.armor
 
         if damage > 0:
             Utilities.message(self.name.capitalize() + ' attacks '
@@ -601,8 +603,8 @@ class Player(Character):
         #player is white
         self._color = (250,250,250)
         #Character properties
-        self._baseDefense = 2
-        self._basePower = 5
+        self._baseArmor = 2
+        self._baseAttackBonus = 5
         self._xpValue = 1
         self._AI = None
         #Player properties
@@ -630,8 +632,8 @@ class Player(Character):
         Utilities.message("You feel stronger!", "GAME")
         self._playerLevel += 1
         self._baseMaxHitPoints += 10
-        self._baseDefense += 1
-        self._basePower += 1
+        self._baseArmor += 1
+        self._baseAttackBonus += 1
          
     def gainXp(self, amount):
         """
@@ -824,8 +826,8 @@ class Monster(Character):
         self._color = baseMonster.color
 
         #Character components
-        self._baseDefense = baseMonster.defense
-        self._basePower = baseMonster.power
+        self._baseArmor = baseMonster.armor
+        self._baseAttackBonus = baseMonster.attackBonus
         self._xpValue = baseMonster.xp
         #gets a class object by name; and instanstiate it if not None
         ai_class = eval('AI.' + baseMonster.AI)
@@ -961,20 +963,19 @@ class Equipment(Item):
     Sub class for equipment = items that can be equiped
     Might need more subclasses for weapons versus armor
     """
-    #TODO: rename property to ArmorBonus
     @property
-    def defenseBonus(self):
+    def armorBonus(self):
         """
-        The defense bonus of this piece of equipment
+        The armor bonus of this piece of equipment
         """
-        return self._defenseBonus
+        return self._armorBonus
 
     @property
-    def powerBonus(self):
+    def attackBonus(self):
         """
-        The power bonus of this piece of equipment
+        The attack bonus of this piece of equipment
         """
-        return self._powerBonus
+        return self._attackBonus
 
     @property
     def isEquiped(self):
@@ -1009,8 +1010,8 @@ class Equipment(Item):
         #call super class constructor
         super(Equipment, self).__init__(baseItem)
         #Initialize equipment properties
-        self._defenseBonus = baseItem.defense_bonus
-        self._powerBonus = baseItem.power_bonus
+        self._armorBonus = baseItem.armorBonus
+        self._attackBonus = baseItem.attackBonus
         self._isEquiped = False
 
 class Consumable(Item):
