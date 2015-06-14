@@ -130,8 +130,6 @@ class TestGame(unittest.TestCase):
         confuseItem = self.game.itemLibrary.createItem("confuse")
         with self.assertRaises(GameError):
             confuseItem.applyTo(self.game)
-            
-    #TODO: Add testing code for the different Effects.
 
 if __name__ == "__main__":
     print 'Run this using RunUnitTests.py in base directory.'
