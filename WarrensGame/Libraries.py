@@ -331,6 +331,7 @@ class ItemLibrary():
             for modifierDataDict in reader:
                 # Ensure incoming data from csv file is interpreted correctly
                 modifierDataDict["modifierLevel"] = int(modifierDataDict["modifierLevel"])
+                modifierDataDict["damageModifier"] = int(modifierDataDict["damageModifier"])
                 modifierDataDict["targeted"] = eval(modifierDataDict["targeted"])
                 modifierDataDict["effectRadius"] = int(modifierDataDict["effectRadius"])
                 modifierDataDict["effectHitDie"] = int(modifierDataDict["effectHitDie"])

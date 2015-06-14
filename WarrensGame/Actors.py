@@ -370,6 +370,13 @@ class Character(Actor):
         return self._naturalArmor
 
     @property
+    def weapon(self):
+        for item in self.equipedItems:
+            if not item.damage == "None":
+                return item
+        return None
+
+    @property
     def AI(self):
         """
         Return AI associated to this character.
@@ -505,18 +512,26 @@ class Character(Actor):
             message(self.name.capitalize() + ' attacks ' + target.name + ' : Critical miss!', "GAME")
         elif attackRoll == 20:
             #Natural hit
-            damage = 20
-            #TODO: Implement critical hits (page 140 players handbook)
+            weapon = self.weapon
+            if weapon is None:
+                #Unarmed attack
+                damage = rollHitDie("1d3") * 2
+            else:
+                damage = rollHitDie(weapon.damage) * 2
             message(self.name.capitalize() + ' attacks ' + target.name + ' : Critical hit! (' + str(damage) + ' Damage)', "GAME")
             target.takeDamage(damage, self)
         elif attackRoll >= target.armorClass:
-            damage = 5 #self.attackBonus - target.armor
+            weapon = self.weapon
+            if weapon is None:
+                #Unarmed attack
+                damage = rollHitDie("1d3")
+            else:
+                damage = rollHitDie(weapon.damage)
             message(self.name.capitalize() + ' attacks ' + target.name + ' : Hit! (' + str(damage) + ' Damage)', "GAME")
             target.takeDamage(damage, self)
         else:
             message(self.name.capitalize() + ' attacks ' + target.name + ' : Miss!', "GAME")
 
-        #TODO: Minimu damage = 1
     def takeDamage(self, amount, attacker):
         """
         function to take damage from an attacker
@@ -656,9 +671,7 @@ class Player(Character):
         '''
         message("You feel stronger!", "GAME")
         self._playerLevel += 1
-        self._baseMaxHitPoints += 10
-        self._baseArmor += 1
-        self._baseAttackBonus += 1
+        self._baseMaxHitPoints += rollHitDie("1d10")
          
     def gainXp(self, amount):
         """
@@ -1003,6 +1016,10 @@ class Equipment(Item):
         return self._attackBonus
 
     @property
+    def damage(self):
+        return self._damage
+
+    @property
     def isEquiped(self):
         """
         Boolean indicating if this piece of equipment is equiped.
@@ -1037,6 +1054,7 @@ class Equipment(Item):
         #Initialize equipment properties
         self._armorBonus = baseItem.armorBonus
         self._attackBonus = baseItem.attackBonus
+        self._damage = baseItem.damage
         self._isEquiped = False
 
 class Consumable(Item):
