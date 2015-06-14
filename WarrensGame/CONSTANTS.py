@@ -45,8 +45,9 @@ DATA_ITEMS = "./WarrensGame/Items.csv"
 DATA_ITEM_MODIFIERS = "./WarrensGame/ItemModifiers.csv"
 
 #config switches
-SHOW_GAME_LOGGING = False
+SHOW_GAME_LOGGING = True
 SHOW_AI_LOGGING = False
+SHOW_COMBAT_LOGGING = True
 SHOW_GENERATION_LOGGING = True
 QUICKSTART = True
 

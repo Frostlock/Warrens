@@ -105,7 +105,7 @@ class MonsterLibrary():
             for monsterDataDict in reader:
                 # Ensure incoming data from csv file is interpreted correctly
                 monsterDataDict["attackBonus"] = int(monsterDataDict["attackBonus"])
-                monsterDataDict["armor"] = int(monsterDataDict["armor"])
+                monsterDataDict["naturalArmor"] = int(monsterDataDict["naturalArmor"])
                 monsterDataDict["xp"] = int(monsterDataDict["xp"])
                 monsterDataDict["unique"] = eval(monsterDataDict["unique"])
                 monsterDataDict["challengeRating"] = int(monsterDataDict["challengeRating"])
@@ -129,7 +129,7 @@ class MonsterLibrary():
         # Determine possibilities
         while not maxChallengeRating in self.challengeIndex.keys():
             maxChallengeRating -= 1
-            if maxChallengeRating <= 0: raise Utilities.GameError("No monsters available below the give challenge rating")
+            if maxChallengeRating <= 0: raise GameError("No monsters available below the give challenge rating")
         # Make a random choice
         possibilities = self.challengeIndex[maxChallengeRating]
         selection = random.choice(possibilities)
@@ -173,7 +173,7 @@ class MonsterLibrary():
         '''
         Completely random generation of a monster, not based on the csv data file.
         '''
-        #Utilities.message('generating monster from scratch', 'GENERATION')
+        #message('generating monster from scratch', 'GENERATION')
 
         monster_data = {}
 
@@ -185,7 +185,7 @@ class MonsterLibrary():
         monster_data['color'] = [65, 255, 85]
 
         #Character components
-        monster_data['armor'] = difficulty
+        monster_data['naturalArmor'] = difficulty
         monster_data['attackBonus'] = difficulty + 2
         monster_data['xp'] = difficulty * difficulty * 50
         monster_data['AI'] = 'BasicMonsterAI'

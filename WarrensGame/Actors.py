@@ -3,10 +3,10 @@
 #from Maps import Tile
 
 import random
-import Utilities
+from Utilities import message, rollHitDie, GameError, distanceBetween, clamp
 import CONSTANTS
 import Effects #this is used in an eval statement
-import AI
+import AI #this is used in an eval statement
 import Inventory
 
 ##########
@@ -101,8 +101,7 @@ class Actor(object):
         Maximum hitpoints of this Character (overrides Actor)
         """
         bonus = 0
-        #TODO medium:
-        #return actual max_hp, by summing up the bonuses from all equipped items
+        #TODO medium: return actual max_hp, by summing up the bonuses from all equipped items
         #bonus = sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
         return self._baseMaxHitPoints + bonus
 
@@ -178,7 +177,7 @@ class Actor(object):
         It has to be overridden in the Actor subclasses to ensure that the
         actor correctly registers with the level.
         """
-        raise Utilities.GameError('Missing implementation registerWithLevel()')
+        raise GameError('Missing implementation registerWithLevel()')
 
     def moveToRandomTile(self):
         """
@@ -221,8 +220,8 @@ class Actor(object):
             targetX = self.tile.x + vx
             targetY = self.tile.y + vy
             #avoid out of bounds
-            Utilities.clamp(targetX, 0, self.tile.map.width)
-            Utilities.clamp(targetY, 0, self.tile.map.height)
+            clamp(targetX, 0, self.tile.map.width)
+            clamp(targetY, 0, self.tile.map.height)
             targetTile = self.level.map.tiles[targetX][targetY]
             if self.tile is not targetTile:
                 self.moveToTile(targetTile)
@@ -237,7 +236,7 @@ class Actor(object):
         dx = targetActor.tile.x - self.tile.x
         dy = targetActor.tile.y - self.tile.y
         #distance towards the target
-        distance = Utilities.distanceBetween(self, targetActor)
+        distance = distanceBetween(self, targetActor)
         #normalize it to length 1 (preserving direction), then round it and
         #convert to integer so the movement is restricted to the map grid
         dx = int(round(dx / distance))
@@ -349,17 +348,26 @@ class Character(Actor):
         bonus = 0
         for item in self.equipedItems:
             bonus += int(item.attackBonus)
-        return self._baseAttackBonus + bonus
+        return self.baseAttackBonus + bonus
 
     @property
-    def armor(self):
+    def baseAttackBonus(self):
+        return self._baseAttackBonus
+
+    @property
+    def armorClass(self):
         """
         Return armor value
         """
         bonus = 0
         for item in self.equipedItems:
             bonus += item.armorBonus
-        return self._baseArmor + bonus
+        #TODO: Limit armor bonus to one equiped armor and one possible shield.
+        return 10 + self.naturalArmor + bonus
+
+    @property
+    def naturalArmor(self):
+        return self._naturalArmor
 
     @property
     def AI(self):
@@ -384,7 +392,7 @@ class Character(Actor):
         #call super class constructor
         super(Character, self).__init__()
         #initialize class variables
-        self._baseArmor = 0
+        self._naturalArmor = 0
         self._baseAttack = 1
         self._equipedItems = []
         self._inventory = Inventory.Inventory(self)
@@ -426,7 +434,7 @@ class Character(Actor):
             if item not in self.equipedItems:
                 self.equipedItems.append(item)
                 item.isEquiped = True
-                Utilities.message(self.name.capitalize() + ' equips a '
+                message(self.name.capitalize() + ' equips a '
                         + item.name + '.', "GAME")
 
     def unEquipItem(self, item):
@@ -438,7 +446,7 @@ class Character(Actor):
         if item in self.equipedItems:
             self.equipedItems.remove(item)
             item.isEquiped = False
-            Utilities.message(self.name.capitalize() + ' unequips a '
+            message(self.name.capitalize() + ' unequips a '
                         + item.name + '.', "GAME")
 
     def pickUpItem(self, item):
@@ -452,7 +460,7 @@ class Character(Actor):
         #add the item to the inventory of this character
         self.addItem(item)
         #message
-        Utilities.message(self.name.capitalize() + ' picks up a '
+        message(self.name.capitalize() + ' picks up a '
                     + item.name + '.', "GAME")
 
     def dropItem(self, item):
@@ -470,8 +478,18 @@ class Character(Actor):
         #add it to the current tile of the character
         item.moveToLevel(self.level, self.tile)
         #message
-        Utilities.message(self.name.capitalize() + ' drops a '
+        message(self.name.capitalize() + ' drops a '
                     + item.name + '.', "GAME")
+
+    def attackRoll(self):
+        '''
+        Rolls a D2O and applies this Characters attack bonus.
+        :return: attackRoll
+        '''
+        roll = rollHitDie("1d20")
+        if roll == 1: return 1   # natural 1 is always a miss
+        elif roll == 20: return 20 # natural 20 is always a hit
+        else: return roll + self.attackBonus
 
     def attack(self, target):
         """
@@ -479,19 +497,26 @@ class Character(Actor):
         Arguments
             target - the Character to be attacked
         """
-        #a simple formula for attack damage
-        #TODO: switch to DND style attack roll
-        
-        damage = self.attackBonus - target.armor
-
-        if damage > 0:
-            Utilities.message(self.name.capitalize() + ' attacks '
-                    + target.name + ' for ' + str(damage) + ' Damage.', "GAME")
+        # Check if the attack hits
+        attackRoll = self.attackRoll()
+        message(self.name.capitalize() + ': Attack Roll: ' + str(attackRoll) + ' Armor Class: ' + str(target.armorClass), "COMBAT")
+        if attackRoll == 1:
+            # Natural miss
+            message(self.name.capitalize() + ' attacks ' + target.name + ' : Critical miss!', "GAME")
+        elif attackRoll == 20:
+            #Natural hit
+            damage = 20
+            #TODO: Implement critical hits (page 140 players handbook)
+            message(self.name.capitalize() + ' attacks ' + target.name + ' : Critical hit! (' + str(damage) + ' Damage)', "GAME")
+            target.takeDamage(damage, self)
+        elif attackRoll >= target.armorClass:
+            damage = 5 #self.attackBonus - target.armor
+            message(self.name.capitalize() + ' attacks ' + target.name + ' : Hit! (' + str(damage) + ' Damage)', "GAME")
             target.takeDamage(damage, self)
         else:
-            Utilities.message(self.name.capitalize() + ' attacks '
-                    + target.name + ' but it has no effect!', "GAME")
+            message(self.name.capitalize() + ' attacks ' + target.name + ' : Miss!', "GAME")
 
+        #TODO: Minimu damage = 1
     def takeDamage(self, amount, attacker):
         """
         function to take damage from an attacker
@@ -505,7 +530,7 @@ class Character(Actor):
                 self.currentHitPoints -= amount
             #check for death
             if self.currentHitPoints <= 0:
-                Utilities.message(self.name.capitalize() + ' is killed!', "GAME")
+                message(self.name.capitalize() + ' is killed!', "GAME")
                 self._killedBy(attacker)
 
     def _killedBy(self, attacker):
@@ -515,11 +540,11 @@ class Character(Actor):
         if self.state == Character.ACTIVE:
             if type(attacker) is Player:
                 #yield experience to the player
-                Utilities.message(attacker.name + ' gains ' + str(self.xpValue) + ' XP.', "GAME")
+                message(attacker.name + ' gains ' + str(self.xpValue) + ' XP.', "GAME")
                 attacker.gainXp(self.xpValue)
             if type(attacker) is Monster:
                 if attacker.killedByText != '':
-                    Utilities.message(attacker.killedByText, "GAME")
+                    message(attacker.killedByText, "GAME")
             #transform this character into a corpse and remove AI
             self._char = '%'
             self._AI = None
@@ -536,7 +561,7 @@ class Character(Actor):
         #heal by the given amount
         if amount > 0:
             self.currentHitPoints += amount
-            Utilities.message(self.name.capitalize() + ' gains '
+            message(self.name.capitalize() + ' gains '
                     + str(amount) + ' hitpoints from a ' +  healer.name
                     + '.', "GAME")
 
@@ -603,8 +628,8 @@ class Player(Character):
         #player is white
         self._color = (250,250,250)
         #Character properties
-        self._baseArmor = 2
-        self._baseAttackBonus = 5
+        self._naturalArmor = 0
+        self._baseAttackBonus = 0
         self._xpValue = 1
         self._AI = None
         #Player properties
@@ -629,7 +654,7 @@ class Player(Character):
         '''
         Increase level of this player
         '''
-        Utilities.message("You feel stronger!", "GAME")
+        message("You feel stronger!", "GAME")
         self._playerLevel += 1
         self._baseMaxHitPoints += 10
         self._baseArmor += 1
@@ -651,7 +676,7 @@ class Player(Character):
         Send player through specified portal.
         """
         #Game message
-        Utilities.message(portal.message, "GAME")
+        message(portal.message, "GAME")
         #Move the player to the destination
         destinationLevel = portal.destinationPortal.level
         destinationTile = portal.destinationPortal.tile
@@ -747,7 +772,7 @@ class Player(Character):
                 #equip the item
                 self.equipItem(item)
         else:
-            raise Utilities.GameError("Missing implementation to use item")
+            raise GameError("Missing implementation to use item")
 
     def tryDropItem(self, item):
         """
@@ -756,7 +781,7 @@ class Player(Character):
         """
         if isinstance(item, Equipment):
             if item.isEquiped:
-                Utilities.message("You can't drop an equiped item.")
+                message("You can't drop an equiped item.")
                 return
         self.dropItem(item)
 
@@ -820,13 +845,13 @@ class Monster(Character):
         #Actor components
         self._id = baseMonster.key
         self._char = baseMonster.char
-        self._baseMaxHitPoints = Utilities.rollHitDie(baseMonster.hitdie)
+        self._baseMaxHitPoints = rollHitDie(baseMonster.hitdie)
         self._currentHitPoints = self._baseMaxHitPoints
         self._name = baseMonster.name
         self._color = baseMonster.color
 
         #Character components
-        self._baseArmor = baseMonster.armor
+        self._naturalArmor = baseMonster.naturalArmor
         self._baseAttackBonus = baseMonster.attackBonus
         self._xpValue = baseMonster.xp
         #gets a class object by name; and instanstiate it if not None

@@ -80,6 +80,9 @@ def message(text, category=None):
     elif category.upper() == "AI":
         if CONSTANTS.SHOW_AI_LOGGING is True:
             print "AI: " + text
+    elif category.upper() == "COMBAT":
+        if CONSTANTS.SHOW_COMBAT_LOGGING is True:
+            print "COMBAT: " + text
     elif category.upper() == "GENERATION":
         if CONSTANTS.SHOW_GENERATION_LOGGING is True:
             print "GENERATION: " + text

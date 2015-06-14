@@ -18,9 +18,10 @@ class TestGame(unittest.TestCase):
         """
         unittest framework will run this once before all the tests in this class.
         """
-        CONSTANTS.SHOW_AI_LOGGING = True
+        CONSTANTS.SHOW_AI_LOGGING = False
         CONSTANTS.SHOW_GAME_LOGGING = True
-        CONSTANTS.SHOW_GENERATION_LOGGING = True
+        CONSTANTS.SHOW_COMBAT_LOGGING = True
+        CONSTANTS.SHOW_GENERATION_LOGGING = False
 
         self.game = Game.Game()
         self.game.resetGame()
@@ -131,5 +132,10 @@ class TestGame(unittest.TestCase):
         with self.assertRaises(GameError):
             confuseItem.applyTo(self.game)
 
+    def test_combat(self):
+        player = self.game.player
+        aMonster = random.choice(self.game.monsterLibrary.monsters)
+        player.attack(aMonster)
+
 if __name__ == "__main__":
-    print 'Run this using RunUnitTests.py in base directory.'
+    TestGame.main()
