@@ -17,6 +17,7 @@ if __name__ == '__main__':
             # Run the 3D interface
             print "Running 3D interface."
             _application = MainWindow()
+            _application.run()
         elif FirstCommandLineArg == '-TEST':
             # Run testing suite
             import unittest

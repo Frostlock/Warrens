@@ -223,7 +223,6 @@ class Game(object):
             # Group portals together
             i = 1
             for portal in town.portals:
-                print portal
                 if not portal.destinationPortal.level in town.subLevels:
                     tile = town.map.tiles[1][i]
                     i += 1

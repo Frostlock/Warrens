@@ -372,6 +372,7 @@ class MainWindow(object):
         #Init OpenGl
         self.initOpenGl()
 
+    def run(self):
         #switch to main menu state
         self.state = MainMenuState(self)
 
