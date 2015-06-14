@@ -37,6 +37,17 @@ class TileSceneObject(SceneObject):
         self._tile = tile
         tile.sceneObject = self
 
+        #TODO: Unexplored tiles should not have any vertices. Easy to implement here but since all tiles are static objects they will not get rendered properly.
+        # Some ideas for review:
+        #   Add sceneobjects for gameobjects as these are encountered.
+        #   Add them first to dynamic objects
+        #   Move sceneobjects that go out of sight to static
+        #   Move tileSceneObjects that are empty to static
+        # Alternatively
+        #   Update only specific sections of the static buffer
+        #   Would need to use https://www.opengl.org/sdk/docs/man3/xhtml/glBufferSubData.xml
+        # Alternatively
+        #   Create more buffer objects (one per sceneObject is probably too many), only update changed buffer objects
         self.refreshMesh()
 
     def refreshMesh(self):
