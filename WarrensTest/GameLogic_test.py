@@ -90,7 +90,6 @@ class TestGame(unittest.TestCase):
         damageItem = self.game.itemLibrary.createItem("fireball")
         anItem = random.choice(self.game.itemLibrary.items)
         damageItem.applyTo(anItem)
-        #TODO: Figure out why this sometimes raises a GameError "Can't find a tile for Actor".
 
         # Damage a tile
         damageItem = self.game.itemLibrary.createItem("fireball")
