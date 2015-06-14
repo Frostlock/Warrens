@@ -58,12 +58,45 @@ class GameState(State):
         for event in events:
             self.handlePyGameEvent(event)
 
-        # handle game events
+        # Handle keys that stay pressed
+        self.handlePressedKeys()
+
+        # Handle game events
         self.window.progressGame()
+
+    def handlePressedKeys(self):
+        pressed = pygame.key.get_pressed()
+
+        #camera movement
+        if pressed[pygame.K_UP]:
+            self.window.cameraDistance -= 0.1
+        if pressed[pygame.K_DOWN]:
+            self.window.cameraDistance += 0.1
+        if pressed[pygame.K_RIGHT]:
+            self.window.cameraAngleXY -= 1
+        if pressed[pygame.K_LEFT]:
+            self.window.cameraAngleXY += 1
+        if pressed[pygame.K_PAGEDOWN]:
+            self.window.cameraAngleXZ -= 1
+        if pressed[pygame.K_PAGEUP]:
+            self.window.cameraAngleXZ += 1
+
+        #player movement
+        if self.window.game.state == Game.PLAYING:
+            player = self.window.game.player
+            if player.state == Character.ACTIVE:
+                # movement
+                global MOVEMENT_KEYS
+                for pygameKey in MOVEMENT_KEYS.keys():
+                    if pressed[pygameKey]:
+                        player.tryMoveOrAttack(*MOVEMENT_KEYS[pygameKey])
+                        #small delay to allow letting go of the key
+                        pygame.time.delay(50)
 
     def handlePyGameEvent(self, event):
         # Call super class event handler
         super(GameState, self).handlePyGameEvent(event)
+
         # mouse
         if event.type == MOUSEBUTTONDOWN:
             if event.button == 1:
@@ -91,30 +124,12 @@ class GameState(State):
             elif event.key == pygame.K_v:
                 self.window.cycleCameraMode()
 
-            #TODO: these should keep working while key is still pressed
-            elif event.key == pygame.K_UP:
-                self.window.cameraDistance -= 0.1
-            elif event.key == pygame.K_DOWN:
-                self.window.cameraDistance += 0.1
-            elif event.key == pygame.K_RIGHT:
-                self.window.cameraAngleXY -= 1
-            elif event.key == pygame.K_LEFT:
-                self.window.cameraAngleXY += 1
-            elif event.key == pygame.K_PAGEDOWN:
-                self.window.cameraAngleXZ -= 1
-            elif event.key == pygame.K_PAGEUP:
-                self.window.cameraAngleXZ += 1
-
             # Handle keys that are active while playing
             if self.window.game.state == Game.PLAYING:
                 player = self.window.game.player
                 if player.state == Character.ACTIVE:
-                    # movement
-                    global MOVEMENT_KEYS
-                    if event.key in MOVEMENT_KEYS:
-                        player.tryMoveOrAttack(*MOVEMENT_KEYS[event.key])
                     # portal keys
-                    elif event.key == pygame.K_LESS:
+                    if event.key == pygame.K_LESS:
                         # check for shift modifier to detect ">" key.
                         mods = pygame.key.get_mods()
                         if (mods & KMOD_LSHIFT) or (mods & KMOD_RSHIFT):
