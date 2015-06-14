@@ -9,6 +9,7 @@ from WarrensGame.Actors import Character
 from WarrensGUI.States.State import State
 from WarrensGUI.States.InventoryMenuState import InventoryMenuState
 from WarrensGUI.States.GameMenuState import GameMenuState
+from WarrensGUI.Util.Constants import *
 
 # Movement keys
 MOVEMENT_KEYS = {
@@ -92,6 +93,11 @@ class GameState(State):
                         player.tryMoveOrAttack(*MOVEMENT_KEYS[pygameKey])
                         #small delay to allow letting go of the key
                         pygame.time.delay(50)
+                                    # React to player death
+            elif player.state == Character.DEAD:
+                self.window.cameraMode = CAM_ISOMETRIC
+                self.window.cameraAngleXY += 1
+                self.window.cameraDistance -= 0.05
 
     def handlePyGameEvent(self, event):
         # Call super class event handler

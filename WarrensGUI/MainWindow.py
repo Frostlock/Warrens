@@ -164,7 +164,7 @@ class MainWindow(object):
 
     @cameraDistance.setter
     def cameraDistance(self,distance):
-        self._cameraDistance = distance
+        self._cameraDistance = Utilities.clamp(distance, CAM_MINIMUM_DISTANCE, CAM_MAXIMUM_DISTANCE)
 
     @property
     def cameraAngleXY(self):
@@ -1199,9 +1199,6 @@ class MainWindow(object):
             # On level change we refresh the static objects
             self.refreshStaticObjects()
             self.refreshDynamicObjects()
-        # React to player death
-        if self.game.player.state == Character.DEAD:
-            self.setCameraCenterOnActor(self.game.player)
 
     def eventDraggingStart(self):
         self.cameraMode = CAM_FREE
