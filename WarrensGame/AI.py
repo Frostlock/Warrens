@@ -5,8 +5,17 @@
 ######
 import Actors
 import Utilities
-import math
+import random
 
+# Possible directions for movement
+DIRECTIONS = [(-1, +0),
+              (+1, +0),
+              (+0, -1),
+              (+0, +1),
+              (-1, +1),
+              (+1, +1),
+              (-1, -1),
+              (+1, -1)]
 
 class AI(object):
     """
@@ -122,12 +131,39 @@ class ConfusedMonsterAI(AI):
         """
         Take one turn
         """
-        #act confused
-        #TODO: roam around in random directions
-        Utilities.message(self.character.name + ' stumbles around.', "GAME")
-        
+        # Try to move in a random direction
+        Utilities.message(self.character.name + ' stumbles around (confused).', "GAME")
+        direction = self.randomDirection()
+        if not direction is None:
+            self.character.moveAlongVector(*direction)
+
+        # Switch back to regular AI if confusedTurns are over
         self.confusedTurns -= 1
         if self.confusedTurns == 0:
-            #switch back to regular AI
             self.character.AI = self.originalAI
-        
+            Utilities.message(self.character.name + ' is no longer confused.', "GAME")
+
+    def randomDirection(self):
+        '''
+        Select a random direction away from the current location.
+        Returns None if no suitable direction is found.
+        :return: None or a tuple (x,y) direction
+        '''
+        # Available directions, take a copy to work with
+        directions = list(DIRECTIONS)
+        targetDirection = None
+        while len(directions) > 0:
+            # Find a random tile to move to
+            direction = random.choice(directions)
+            # Don't try the same direction again
+            directions.remove(direction)
+            x = self.character.tile.x + direction[0]
+            y = self.character.tile.y + direction[1]
+            targetTile = self.character.level.map.tiles[x][y]
+            # Check if the tile is occupied
+            if len(targetTile.actors) == 0:
+                if not targetTile.blocked:
+                    targetDirection = direction
+                    break
+        # Done
+        return targetDirection
