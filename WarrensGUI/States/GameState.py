@@ -27,8 +27,8 @@ class GameState(State):
             self.pressedTimes[pygameKey] = 0
 
     def loopInit(self):
-        #self.centerCameraOnActor(self.game.player)
-        self.window.setCameraCenterOnMap()
+        self.window.setCameraCenterOnActor(self.window.game.player)
+        #self.window.setCameraCenterOnMap()
 
     def loopDraw(self):
         # Animate every frame
