@@ -114,10 +114,13 @@ class ActorSceneObject(SceneObject):
         offset = ((1 - scale) / 2) * TILESIZE
 
         # Determine height
-        if self.actor.currentHitPoints > 0:
-            height = TILESIZE - (2 * offset)
+        if isinstance(self.actor, Character):
+            if self.actor.currentHitPoints > 0:
+                height = TILESIZE - (2 * offset)
+            else:
+                height = 0.05
         else:
-            height = 0.05
+            height = TILESIZE - (2 * offset)
 
         # Store the vertex coordinates: 4 components per vertex: x, y, z, w
         self.vertices.extend((tile.x * TILESIZE + offset, tile.y * TILESIZE + offset, 0.0, 1.0))

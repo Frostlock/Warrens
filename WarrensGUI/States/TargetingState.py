@@ -133,7 +133,7 @@ class TargetingState(State):
                     self.selectedTarget.sceneObject.selected = True
                     # Refresh mesh (without waiting for animation to refresh it)
                     self.selectedTarget.sceneObject.refreshMesh()
-                    self.window.selectedObject = self.selectedTarget.sceneObject
+                    self.window.selectedSceneObject = self.selectedTarget.sceneObject
                     break
         # Attention:
         #

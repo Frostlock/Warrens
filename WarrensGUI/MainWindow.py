@@ -37,6 +37,7 @@ from WarrensGUI.Util.Constants import *
 from WarrensGUI.States.MainMenuState import MainMenuState
 from WarrensGUI.States.GameState import GameState
 from WarrensGame.Maps import MaterialType
+import Hud
 
 class MainWindow(object):
     '''
@@ -293,7 +294,7 @@ class MainWindow(object):
         self._sceneObjectSelectionRectangles = rectangles
 
     @property
-    def selectedObject(self):
+    def selectedSceneObject(self):
         '''
         Property for the currently selected SceneObject.
         :return: Actor object or None
@@ -301,8 +302,8 @@ class MainWindow(object):
         return self._selectedObject
 
     toRemoveFromDynamicObjects = []
-    @selectedObject.setter
-    def selectedObject(self, sceneObject):
+    @selectedSceneObject.setter
+    def selectedSceneObject(self, sceneObject):
         '''
         Setter for the currently selected sceneObject.
         If it is a static object it will get added temporarily to the dynamic objects to allow
@@ -310,13 +311,14 @@ class MainWindow(object):
         :param sceneObject: Selected SceneObject
         :return: None
         '''
+        # Clear previous selection
+        if not self._selectedObject is None:
+            self._selectedObject.selected = False
+        # Register new selection
+        self._selectedObject = sceneObject
         if not sceneObject is None:
-            # Clear previous selection
-            if not self._selectedObject is None:
-                self._selectedObject.selected = False
             # Ensure selected boolean is set properly
             sceneObject.selected = True
-            self._selectedObject = sceneObject
             # Static objects that were selected before should be removed from the dynamic objects
             for staticObject in self.toRemoveFromDynamicObjects:
                 if staticObject in self.dynamicObjects:
@@ -324,9 +326,9 @@ class MainWindow(object):
                 self.toRemoveFromDynamicObjects.remove(staticObject)
             # To enable selection visualization:
             # If a static object is selected, temporarily add it to the dynamic objects.
-            if not self.selectedObject in self.dynamicObjects:
-                self.dynamicObjects.append(self.selectedObject)
-                self.toRemoveFromDynamicObjects.append(self.selectedObject)
+            if not self.selectedSceneObject in self.dynamicObjects:
+                self.dynamicObjects.append(self.selectedSceneObject)
+                self.toRemoveFromDynamicObjects.append(self.selectedSceneObject)
 
     def __init__(self):
         """
@@ -832,9 +834,10 @@ class MainWindow(object):
         for rectangle, sceneObj in self.sceneObjectSelectionRectangles:
             if rectangle.collidepoint(mousePos):
                 sceneObj.selected = True
-                self.selectedObject = sceneObj
+                self.selectedSceneObject = sceneObj
                 return sceneObj
         # No suitable candidate found
+        self.selectedSceneObject = None
         return None
 
     # End of Window utility functions
@@ -1030,10 +1033,10 @@ class MainWindow(object):
             self.setCameraFirstPersonView()
         elif self.cameraMode == CAM_FOLLOW:
             self.setCameraFollowPlayer()
-        # draw HUD
-        self.drawHUD()
         # draw Vector Buffer Arrays
         self.drawVBAs()
+        # draw HUD
+        self.drawHUD()
         # Register time
         #self.clock.tick_busy_loop(40) # This caps the framerate
         self.clock.tick() # No framerate cap
@@ -1112,11 +1115,17 @@ class MainWindow(object):
         For the HUD we use an Orthographic projection and some older style opengl code
         This is not using Vertex Buffers.
         """
+        # TODO: Instead of drawing the HUD piece by piece in OpenGl create one pygame surface on which the HUD is rendered
+
         # Switch to Orthographic projection
         zNear = 0.1
         zFar = 10.0
         GL.glOrtho(0.0, self.displayWidth, self.displayHeight, 0.0, zNear, zFar)
         GL.glClear(GL.GL_DEPTH_BUFFER_BIT)
+
+        # Enable transparancy
+        GL.glEnable(GL.GL_BLEND)
+        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
 
         # Level name
         GL.glLoadIdentity()
@@ -1224,6 +1233,23 @@ class MainWindow(object):
                 position=(-0.5, -0.88 - heightOffset, zNear)
                 self.drawText(position, textLines[nbrOfLines - l], FONT_HUD_XL, color)
             messageCounter += 1
+
+        # Selected object information panel
+        if not self.selectedSceneObject is None:
+            if isinstance(self.selectedSceneObject,ActorSceneObject):
+                panelWidthPixels = self.displayWidth / 4
+                #panelWidth = self.displayWidth / 4
+                surf = Hud.createInfoPanel(self.selectedSceneObject.actor, panelWidthPixels)
+                pixelX = self.displayWidth - SPACE_OUTER - surf.get_width()
+                pixelY = surf.get_height() + SPACE_OUTER
+                ndcX = (pixelX/float(self.displayWidth))*2.0 - 1.0
+                ndcY = 1.0 - (pixelY/float(self.displayHeight)) * 2.0
+                textData = pygame.image.tostring(surf, "RGBA", True)
+                # Draw on the OpenGl screen
+                GL.glLoadIdentity()
+                GL.glRasterPos3d(ndcX, ndcY, zNear)
+                GL.glDrawPixels(surf.get_width(), surf.get_height(), GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textData)
+
 
     def progressGame(self):
         # Let the game move forward

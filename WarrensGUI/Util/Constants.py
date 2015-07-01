@@ -40,6 +40,9 @@ SAVE_FILE = "save.warrens"
 # Colors used by PyGame
 COLOR_PG_HUD_TEXT = (255, 255, 255, 255)
 COLOR_PG_HUD_TEXT_SELECTED = (250, 125, 0, 255)
+COLOR_PG_HUD_BACKGROUND = (0, 0, 0, 180)
+COLOR_PG_BAR_HEALTH = (150, 0, 0, 255)
+COLOR_PG_BAR_HEALTH_BG = (25, 0, 0, 255)
 
 # Colors used by OpenGl
 COLOR_GL_BAR_HEALTH = (0.6, 0.0, 0.0, 1.0)
@@ -65,6 +68,10 @@ COLOR_RGB_ELEC = (140,170,205)
 COLOR_VAR_ELEC = (45,45,100)
 COLOR_RGB_MIND = (50,185,250)
 COLOR_VAR_MIND = (25,25,25)
+
+# Border spacing (in pixels)
+SPACE_OUTER = 5
+SPACE_INNER = 2
 
 ################
 # PYGAME FONTS #

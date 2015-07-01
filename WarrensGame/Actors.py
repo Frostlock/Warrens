@@ -96,30 +96,6 @@ class Actor(object):
         self._actionTaken = acted
 
     @property
-    def maxHitPoints(self):
-        """
-        Maximum hitpoints of this Character (overrides Actor)
-        """
-        bonus = 0
-        #TODO medium: return actual max_hp, by summing up the bonuses from all equipped items
-        #bonus = sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
-        return self._baseMaxHitPoints + bonus
-
-    @property
-    def currentHitPoints(self):
-        """
-        The current amount of hitpoints
-        """
-        return self._currentHitPoints
-
-    @currentHitPoints.setter
-    def currentHitPoints(self, hitPoints):
-        if hitPoints > self.maxHitPoints:
-            self._currentHitPoints = self.maxHitPoints
-        else:
-            self._currentHitPoints = hitPoints
-
-    @property
     def inView(self):
         """
         This actor is in view of the player.
@@ -155,9 +131,7 @@ class Actor(object):
         be called by subclasses.
         """
         # Initialize class properties
-        self._baseMaxHitPoints = 1
         self._char = '?'
-        self._currentHitPoints = 1
         self._id = 'not set'
         self._name = 'Nameless'
         self._tile = None
@@ -334,6 +308,30 @@ class Character(Actor):
         return self._state
 
     @property
+    def maxHitPoints(self):
+        """
+        Maximum hitpoints of this Character (overrides Actor)
+        """
+        bonus = 0
+        #TODO medium: return actual max_hp, by summing up the bonuses from all equipped items
+        #bonus = sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
+        return self._baseMaxHitPoints + bonus
+
+    @property
+    def currentHitPoints(self):
+        """
+        The current amount of hitpoints
+        """
+        return self._currentHitPoints
+
+    @currentHitPoints.setter
+    def currentHitPoints(self, hitPoints):
+        if hitPoints > self.maxHitPoints:
+            self._currentHitPoints = self.maxHitPoints
+        else:
+            self._currentHitPoints = hitPoints
+
+    @property
     def xpValue(self):
         """
         Return xp value
@@ -399,6 +397,8 @@ class Character(Actor):
         #call super class constructor
         super(Character, self).__init__()
         #initialize class variables
+        self._baseMaxHitPoints = 1
+        self._currentHitPoints = 1
         self._naturalArmor = 0
         self._baseAttack = 1
         self._equipedItems = []
