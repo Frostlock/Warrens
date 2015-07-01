@@ -41,7 +41,10 @@ class GameState(State):
         Constructor
         '''
         super(GameState, self).__init__(window, parentState)
-
+        # To keep track how long keys are pressed
+        self.pressedTimes = {}
+        for pygameKey in MOVEMENT_KEYS.keys():
+            self.pressedTimes[pygameKey] = 0
 
     def loopInit(self):
         #self.centerCameraOnActor(self.game.player)
@@ -90,10 +93,18 @@ class GameState(State):
                 global MOVEMENT_KEYS
                 for pygameKey in MOVEMENT_KEYS.keys():
                     if pressed[pygameKey]:
-                        player.tryMoveOrAttack(*MOVEMENT_KEYS[pygameKey])
-                        #small delay to allow letting go of the key
-                        pygame.time.delay(50)
-                                    # React to player death
+                        self.pressedTimes[pygameKey] += 1
+                        frames = self.window.clock.get_fps()
+                        # Move once on the first press
+                        if self.pressedTimes[pygameKey] == 1:
+                            player.tryMoveOrAttack(*MOVEMENT_KEYS[pygameKey])
+                        # Start moving continually after 1 second
+                        elif self.pressedTimes[pygameKey] > frames:
+                            player.tryMoveOrAttack(*MOVEMENT_KEYS[pygameKey])
+                    else:
+                        #reset pressed timer
+                        self.pressedTimes[pygameKey] = 0
+            # React to player death
             elif player.state == Character.DEAD:
                 self.window.cameraMode = CAM_ISOMETRIC
                 self.window.cameraAngleXY += 1
