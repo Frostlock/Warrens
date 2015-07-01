@@ -105,4 +105,5 @@ MOVEMENT_KEYS = {
     pygame.K_KP9: (+1, +1),
     pygame.K_KP1: (-1, -1),
     pygame.K_KP3: (+1, -1),
+    pygame.K_KP5: (+0, +0),
 }
