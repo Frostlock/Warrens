@@ -623,7 +623,7 @@ class MainWindow(object):
         :return: None
         """
         self.cameraMode += 1
-        if self.cameraMode > 3: self.cameraMode = 0
+        if self.cameraMode >= CAM_LAST: self.cameraMode = 0
 
     def setCameraIsometricView(self):
         """
@@ -645,6 +645,8 @@ class MainWindow(object):
         up = vec3(0,0,1)
 
         self.lookAt(eye,lookAt,up)
+        # Align movement keys
+        self.alignMovementKeys()
 
     def setCameraCenterOnActor(self, actor):
         """
@@ -655,6 +657,8 @@ class MainWindow(object):
         x = actor.tile.x
         y = actor.tile.y
         self.cameraMatrix = og_util.translationMatrix44(-1 * x * TILESIZE, -1 * y * TILESIZE, -1 * self.cameraDistance)
+        # Align movement keys
+        self.alignMovementKeys()
 
     def setCameraCenterOnMap(self):
         """
@@ -667,6 +671,8 @@ class MainWindow(object):
         y = map.height / 2
         yOffset = 1 #moves the view on the map slightly so it does not overlap with the hud
         self.cameraMatrix = og_util.translationMatrix44(-1 * x * TILESIZE, -1 * y * TILESIZE + yOffset, -10)
+        # Align movement keys
+        self.alignMovementKeys()
 
     def setCameraFirstPersonView(self):
         '''
@@ -686,7 +692,48 @@ class MainWindow(object):
         up = vec3(0,0,1)
         self.cameraMatrix = og_util.lookAtMatrix44(eye,lookAt,up)
 
-        # TODO: need to switch movement keys when in first person view
+        # Align movement keys with the new direction
+        self.alignMovementKeys(self.game.player.direction)
+
+    def setCameraFollowPlayer(self):
+        '''
+        Sets the camera to an "over the shoulder" view for the player
+        :return: None
+        '''
+        self.cameraMode = CAM_FOLLOW
+
+        dx = self.game.player.direction[0]
+        dy = self.game.player.direction[1]
+        # Eye behind and slightly above player
+        x, y, z, w = self.getPlayerPosition()
+        eye = vec3(x - dx * self.cameraDistance,y - dy * self.cameraDistance,z + self.cameraDistance)
+        # Look in the direction where the player is heading
+
+        dz = 0.1
+        lookAt = vec3(x + dx, y + dy, z + dz)
+        up = vec3(0,0,1)
+        self.cameraMatrix = og_util.lookAtMatrix44(eye,lookAt,up)
+
+        # Align movement keys with the new direction
+        self.alignMovementKeys(self.game.player.direction)
+
+    standardMoves = [(0,1),(1,1),(1,0),(1,-1),(0,-1),(-1,-1),(-1,0),(-1,1)]
+    def alignMovementKeys(self, direction=None):
+        # align movement keys based on the given direction
+        if direction is None:
+            moves = self.standardMoves
+        else:
+            i = self.standardMoves.index(direction)
+            moves = self.standardMoves[i:]
+            moves.extend(self.standardMoves[:i])
+        MOVEMENT_KEYS[pygame.K_KP8] = moves[0]
+        MOVEMENT_KEYS[pygame.K_KP9] = moves[1]
+        MOVEMENT_KEYS[pygame.K_KP6] = moves[2]
+        MOVEMENT_KEYS[pygame.K_KP3] = moves[3]
+        MOVEMENT_KEYS[pygame.K_KP2] = moves[4]
+        MOVEMENT_KEYS[pygame.K_KP1] = moves[5]
+        MOVEMENT_KEYS[pygame.K_KP4] = moves[6]
+        MOVEMENT_KEYS[pygame.K_KP7] = moves[7]
 
     # Window utility functions, these are used by the window states.
 
@@ -721,18 +768,6 @@ class MainWindow(object):
         playerY = self.game.player.tile.y * TILESIZE + (TILESIZE / 2)
         playerZ = TILESIZE / 2
         return (playerX, playerY, playerZ, 1.0)
-
-    # NO LONGER USED
-    # def getActorNormalizedCoords(self,actorObj):
-    #     '''
-    #     Calculates the normalized device coordinates for the give ActorSceneObject.
-    #     More explanation can be found here
-    #     https://www.opengl.org/discussion_boards/showthread.php/168819-Final-pixel-position-after-transformations
-    #     :param actorObj:ActorSceneObject
-    #     :return: Normalized Device Coordinates
-    #     '''
-    #     actorVec = actorObj.mainVertex
-    #     return self.getNormalizedCoords(actorVec)
 
     def getNormalizedCoords(self, vertex):
         # gl_position as it is calculated in the shader
@@ -989,10 +1024,12 @@ class MainWindow(object):
             self.setCameraCenterOnMap()
         elif self.cameraMode == CAM_ACTOR:
             self.setCameraCenterOnActor(self.game.player)
-        elif self.cameraMode == CAM_FIRSTPERSON:
-            self.setCameraFirstPersonView()
         elif self.cameraMode == CAM_ISOMETRIC:
             self.setCameraIsometricView()
+        elif self.cameraMode == CAM_FIRSTPERSON:
+            self.setCameraFirstPersonView()
+        elif self.cameraMode == CAM_FOLLOW:
+            self.setCameraFollowPlayer()
         # draw HUD
         self.drawHUD()
         # draw Vector Buffer Arrays
