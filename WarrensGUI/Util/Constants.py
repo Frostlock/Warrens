@@ -20,7 +20,9 @@ CAM_MAP = 0
 CAM_ACTOR = 1
 CAM_ISOMETRIC = 2
 CAM_FIRSTPERSON = 3
-CAM_FREE = 4
+CAM_FOLLOW = 4
+CAM_FREE = 5
+CAM_LAST = 6 # Leave this one last, used to detect last mode when cycling cameramodes
 
 CAM_MINIMUM_DISTANCE = 0.4
 CAM_MAXIMUM_DISTANCE = 5.0
@@ -83,3 +85,24 @@ FONT_HUD_M = pygame.font.Font(None, 16)
 FONT_HUD_M_HEIGHT = (FONT_HUD_M.render("Dummy", 1, COLOR_PG_HUD_TEXT)).get_height()
 FONT_HUD_S = pygame.font.Font(None, 12)
 FONT_HUD_S_HEIGHT = (FONT_HUD_S.render("Dummy", 1, COLOR_PG_HUD_TEXT)).get_height()
+
+
+# Movement keys
+MOVEMENT_KEYS = {
+    pygame.K_h: (-1, +0),  # vi keys
+    pygame.K_l: (+1, +0),
+    pygame.K_j: (+0, -1),
+    pygame.K_k: (+0, +1),
+    pygame.K_y: (-1, +1),
+    pygame.K_u: (+1, +1),
+    pygame.K_b: (-1, -1),
+    pygame.K_n: (+1, -1),
+    pygame.K_KP4: (-1, +0),  # numerical keypad
+    pygame.K_KP6: (+1, +0),
+    pygame.K_KP2: (+0, -1),
+    pygame.K_KP8: (+0, +1),
+    pygame.K_KP7: (-1, +1),
+    pygame.K_KP9: (+1, +1),
+    pygame.K_KP1: (-1, -1),
+    pygame.K_KP3: (+1, -1),
+}

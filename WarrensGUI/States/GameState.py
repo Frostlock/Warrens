@@ -11,26 +11,6 @@ from WarrensGUI.States.InventoryMenuState import InventoryMenuState
 from WarrensGUI.States.GameMenuState import GameMenuState
 from WarrensGUI.Util.Constants import *
 
-# Movement keys
-MOVEMENT_KEYS = {
-    pygame.K_h: (-1, +0),  # vi keys
-    pygame.K_l: (+1, +0),
-    pygame.K_j: (+0, -1),
-    pygame.K_k: (+0, +1),
-    pygame.K_y: (-1, +1),
-    pygame.K_u: (+1, +1),
-    pygame.K_b: (-1, -1),
-    pygame.K_n: (+1, -1),
-    pygame.K_KP4: (-1, +0),  # numerical keypad
-    pygame.K_KP6: (+1, +0),
-    pygame.K_KP2: (+0, -1),
-    pygame.K_KP8: (+0, +1),
-    pygame.K_KP7: (-1, +1),
-    pygame.K_KP9: (+1, +1),
-    pygame.K_KP1: (-1, -1),
-    pygame.K_KP3: (+1, -1),
-}
-
 class GameState(State):
     '''
     State to show a game in progress.
