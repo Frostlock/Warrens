@@ -21,11 +21,11 @@ def createInfoPanel(actor, width):
     infoPanel = pygame.Surface((width,height), SRCALPHA)
     infoPanel.fill(COLOR_PG_HUD_BACKGROUND)
     yOffset = 2 * SPACE_INNER
-    xOffset = 2 * SPACE_INNER
 
     # Actor name
     if hasattr(actor, "name"):
         text = actor.name.capitalize()
+        xOffset = 2 * SPACE_INNER
         textSurface = FONT_HUD_XL.render(text, True, COLOR_PG_HUD_TEXT)
         infoPanel.blit(textSurface, (xOffset, yOffset))
         # Challenge rating
@@ -36,7 +36,7 @@ def createInfoPanel(actor, width):
             xOffset = width - 2 * SPACE_INNER - crSurface.get_width()
             infoPanel.blit(crSurface, (xOffset, yOffset + textSurface.get_height() - crSurface.get_height()))
         yOffset += textSurface.get_height() + 2 * SPACE_INNER
-        xOffset = 2 * SPACE_INNER
+
 
     # Actor hitpoints
     if hasattr(actor, "currentHitPoints") and hasattr(actor, "maxHitPoints"):
@@ -54,8 +54,22 @@ def createInfoPanel(actor, width):
         yOffset += barHeight + SPACE_INNER
 
     # Picture
-    # TODO: Show a picture?
+    #
+    # TODO: Decide GO / NOGO for actor pictures
+    #  - Get the picture from the actor and only load it once for efficiency
+    #  - Define picture URL for every actor, default pictures for actor classes
+    #  - Code below works but needs image files
+    #
+    # yOffset += SPACE_INNER
+    # xOffset = 4 * SPACE_INNER
     # picture = "./WarrensGUI/Assets/default.jpg"
+    # img = pygame.image.load(picture)
+    # scaleWidth = width - 2 * xOffset
+    # scaleHeight = int((scaleWidth / float(img.get_width()))* img.get_height())
+    # img = pygame.transform.scale(img, (scaleWidth, scaleHeight))
+    # rect = infoPanel.blit(img, (xOffset, yOffset))
+    # pygame.draw.rect(infoPanel, COLOR_PG_HUD_TEXT, rect, 1)
+    # yOffset += img.get_height() + SPACE_INNER
 
     # Flavor text
     if hasattr(actor, "flavorText"):
@@ -69,6 +83,7 @@ def createInfoPanel(actor, width):
             yOffset +=surface.get_height() + SPACE_INNER
 
     # Shrink to be just big enough
+    yOffset += 3 * SPACE_INNER
     borderThickness = SPACE_INNER
     infoPanel = infoPanel.subsurface((0,0,width,yOffset + borderThickness))
 
