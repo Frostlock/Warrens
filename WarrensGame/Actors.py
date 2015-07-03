@@ -313,8 +313,8 @@ class Container(Actor):
         """
         super(Container, self).__init__()
         self._inventory = Inventory(self)
-        #containers are brown
-        self._color = (110, 65, 25)
+        #containers are gray
+        self._color = (45, 45, 45)
 
     def addItem(self, newItem):
         self.inventory.add(newItem)
