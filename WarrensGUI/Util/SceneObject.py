@@ -30,6 +30,14 @@ class SceneObject(object):
         return self._triangleIndices
 
     @property
+    def alpha(self):
+        return self._alpha
+
+    @alpha.setter
+    def alpha(self, alpha):
+        self._alpha = alpha
+
+    @property
     def vertexCount(self):
         return len(self._vertices) / 4
 
@@ -56,6 +64,7 @@ class SceneObject(object):
         self._colors = []
         self._texCoords = []
         self._triangleIndices = []
+        self._alpha = 1.0
         self._timeSinceLastAnimation = 0
         self._selected = False
 

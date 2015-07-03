@@ -283,7 +283,7 @@ class Portal(Actor):
         #portals are purple
         self._message = ""
         self._destination = None
-        self._color = (191, 0, 255)
+        self._color = (150, 0, 255)
 
     def connectTo(self, otherPortal):
         """

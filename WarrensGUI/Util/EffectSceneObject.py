@@ -48,10 +48,6 @@ class EffectSceneObject(SceneObject):
         return self._colorVariance
 
     @property
-    def alpha(self):
-        return self._alpha
-
-    @property
     def minHeight(self):
         return self._minHeight
 
@@ -103,7 +99,7 @@ class EffectSceneObject(SceneObject):
         self._colorMap = {}
 
         # Effects are always somewhat transparent to show the underlying tile and actors
-        self._alpha = 0.5
+        self.alpha = 0.5
 
         self.refreshMesh()
 
