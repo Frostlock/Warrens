@@ -840,24 +840,24 @@ class MainWindow(object):
         return None
 
     def selectNextSceneObject(self):
-        availableActorObjects = [x[1].actor for x in self.sceneObjectSelectionRectangles]
+        availableActorObjects = [x[1] for x in self.sceneObjectSelectionRectangles]
         if self.selectedSceneObject is None:
-            self.selectedSceneObject = availableActorObjects[0].sceneObject
+            self.selectedSceneObject = availableActorObjects[0]
         else:
-            i = availableActorObjects.index(self.selectedSceneObject.actor)
+            i = availableActorObjects.index(self.selectedSceneObject)
             i += 1
             if i > len(availableActorObjects) - 1: i = 0
-            self.selectedSceneObject = availableActorObjects[i].sceneObject
+            self.selectedSceneObject = availableActorObjects[i]
 
     def selectPreviousSceneObject(self):
-        availableActorObjects = [x[1].actor for x in self.sceneObjectSelectionRectangles]
+        availableActorObjects = [x[1] for x in self.sceneObjectSelectionRectangles]
         if self.selectedSceneObject is None:
-            self.selectedSceneObject = availableActorObjects[0].sceneObject
+            self.selectedSceneObject = availableActorObjects[0]
         else:
-            i = availableActorObjects.index(self.selectedSceneObject.actor)
+            i = availableActorObjects.index(self.selectedSceneObject)
             i -= 1
             if i < 0 : i = len(availableActorObjects) - 1
-            self.selectedSceneObject = availableActorObjects[i].sceneObject
+            self.selectedSceneObject = availableActorObjects[i]
 
     # End of Window utility functions
 
