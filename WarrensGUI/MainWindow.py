@@ -833,12 +833,31 @@ class MainWindow(object):
         # Try to find a selection candidate
         for rectangle, sceneObj in self.sceneObjectSelectionRectangles:
             if rectangle.collidepoint(mousePos):
-                sceneObj.selected = True
                 self.selectedSceneObject = sceneObj
                 return sceneObj
         # No suitable candidate found
         self.selectedSceneObject = None
         return None
+
+    def selectNextSceneObject(self):
+        availableActorObjects = [x[1].actor for x in self.sceneObjectSelectionRectangles]
+        if self.selectedSceneObject is None:
+            self.selectedSceneObject = availableActorObjects[0].sceneObject
+        else:
+            i = availableActorObjects.index(self.selectedSceneObject.actor)
+            i += 1
+            if i > len(availableActorObjects) - 1: i = 0
+            self.selectedSceneObject = availableActorObjects[i].sceneObject
+
+    def selectPreviousSceneObject(self):
+        availableActorObjects = [x[1].actor for x in self.sceneObjectSelectionRectangles]
+        if self.selectedSceneObject is None:
+            self.selectedSceneObject = availableActorObjects[0].sceneObject
+        else:
+            i = availableActorObjects.index(self.selectedSceneObject.actor)
+            i -= 1
+            if i < 0 : i = len(availableActorObjects) - 1
+            self.selectedSceneObject = availableActorObjects[i].sceneObject
 
     # End of Window utility functions
 
@@ -923,6 +942,8 @@ class MainWindow(object):
         This should be called every game turn.
         :return:
         '''
+        #TODO: keep a potentially selected object as selected.
+        #TODO: avoid recreating dynamic sceneobjects? Just refresh their mesh instead?
         self.dynamicObjects = []
         if self.level is not None:
             #Check the visible tiles

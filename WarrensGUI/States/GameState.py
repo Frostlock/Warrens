@@ -147,3 +147,11 @@ class GameState(State):
                             state = InteractionState(self.window, self, interaction)
                             state.mainLoop()
                         self.window.refreshDynamicObjects()
+                    # select
+                    elif event.key == pygame.K_TAB:
+                         # check for shift modifier
+                        mods = pygame.key.get_mods()
+                        if (mods & KMOD_LSHIFT) or (mods & KMOD_RSHIFT):
+                            self.window.selectPreviousSceneObject()
+                        else:
+                            self.window.selectNextSceneObject()
