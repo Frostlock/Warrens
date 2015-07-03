@@ -8,6 +8,7 @@ import CONSTANTS
 import Effects #this is used in an eval statement
 import AI #this is used in an eval statement
 from Inventory import Inventory
+from Interaction import Interaction
 
 ##########
 # ACTORS #
@@ -315,10 +316,10 @@ class Container(Actor):
         #containers are brown
         self._color = (110, 65, 25)
 
-    def add(self, newItem):
+    def addItem(self, newItem):
         self.inventory.add(newItem)
 
-    def remove(self, removeItem):
+    def removeItem(self, removeItem):
         self.inventory.remove(removeItem)
 
 ##############
@@ -798,15 +799,21 @@ class Player(Character):
                 self.followPortal(a)
                 break
 
-    def tryPickUp(self):
+    def tryInteract(self):
         """
-        Player attempts to pick up something on the current location.
+        Player attempts to interact with actors on the current tile.
         This function is meant to be called from the GUI.
+        If the interaction requires further handling in the GUI and interaction object will be returned.
+        Returns None if the interaction can be completed without further GUI activities.
         """
-        #check if there is an item on the current tile
+        #check if there are items on the current tile to interact with
         for a in self.tile.actors:
             if isinstance(a, Item):
                 self.pickUpItem(a)
+                return None
+            if isinstance(a, Container):
+                interaction = Interaction(CONSTANTS.INTERACTION_CONTAINER, self, a)
+                return interaction
 
     def tryUseItem(self, item, target=None):
         """

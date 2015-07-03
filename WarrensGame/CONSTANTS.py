@@ -52,6 +52,7 @@ SHOW_GENERATION_LOGGING = True
 QUICKSTART = True
 
 # Enumerator to describe the element of an effect.
+# The naming is intentionally without prefix, it looks nicer in the CSV files.
 HEAL = 0
 WATER = 1
 AIR = 2
@@ -59,3 +60,6 @@ FIRE = 3
 EARTH = 4
 ELEC = 5
 MIND = 6
+
+# Enumerator to describe available interaction types
+INTERACTION_CONTAINER = 0

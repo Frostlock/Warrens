@@ -31,6 +31,7 @@ class State(object):
         '''
         self._window = window
         self._parentState = parent
+        self._mouseHandlers = []
 
     def mainLoop(self):
         '''
@@ -84,6 +85,38 @@ class State(object):
         # Window resize
         elif event.type == VIDEORESIZE:
             self.window.resizeWindow(event.dict['size'])
+
+        # mouse events
+        elif event.type == MOUSEBUTTONDOWN:
+            # Left mouse button
+            if event.button == 1:
+                self.handleClick(event)
+
+    @property
+    def mouseHandlers(self):
+        return self._mouseHandlers
+
+    def clearMouseHandlers(self):
+        self._mouseHandlers = []
+
+    def registerMouseHandler(self, rectangle, handler, object):
+        '''
+        registers an area of the screen as a clickable button
+        :param rectangle: rectangle for the button
+        :param handler: function to call when button is clicked
+        :param object: object that will be passed to the handler
+        :return: None
+        '''
+        self.mouseHandlers.append((rectangle,handler, object))
+
+    def handleClick(self, event):
+        # Check if we clicked in one of the know mouse areas
+        for rect, handler, object in self.mouseHandlers:
+            if rect.collidepoint(event.pos):
+                if object is None:
+                    handler()
+                else:
+                    handler(object)
 
 class MenuState(State):
     """

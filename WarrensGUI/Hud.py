@@ -20,12 +20,12 @@ def createInfoPanel(actor, width):
     height = 1024
     infoPanel = pygame.Surface((width,height), SRCALPHA)
     infoPanel.fill(COLOR_PG_HUD_BACKGROUND)
-    yOffset = 2 * SPACE_INNER
+    yOffset = BORDER_SIZE + SPACE_INNER
 
     # Actor name
     if hasattr(actor, "name"):
         text = actor.name.capitalize()
-        xOffset = 2 * SPACE_INNER
+        xOffset = BORDER_SIZE + SPACE_INNER
         textSurface = FONT_HUD_XL.render(text, True, COLOR_PG_HUD_TEXT)
         infoPanel.blit(textSurface, (xOffset, yOffset))
         # Challenge rating
@@ -68,7 +68,7 @@ def createInfoPanel(actor, width):
     # scaleHeight = int((scaleWidth / float(img.get_width()))* img.get_height())
     # img = pygame.transform.scale(img, (scaleWidth, scaleHeight))
     # rect = infoPanel.blit(img, (xOffset, yOffset))
-    # pygame.draw.rect(infoPanel, COLOR_PG_HUD_TEXT, rect, 1)
+    # pygame.draw.rect(infoPanel, COLOR_PG_HUD_BORDER, rect, BORDER_SIZE)
     # yOffset += img.get_height() + SPACE_INNER
 
     # Flavor text
@@ -84,11 +84,33 @@ def createInfoPanel(actor, width):
 
     # Shrink to be just big enough
     yOffset += 3 * SPACE_INNER
-    borderThickness = SPACE_INNER
-    infoPanel = infoPanel.subsurface((0,0,width,yOffset + borderThickness))
+    infoPanel = infoPanel.subsurface((0,0,width,yOffset + BORDER_SIZE))
 
     # Border
-    pygame.draw.rect(infoPanel, COLOR_PG_HUD_TEXT, infoPanel.get_rect(), borderThickness)
+    pygame.draw.rect(infoPanel, COLOR_PG_HUD_BORDER, infoPanel.get_rect(), BORDER_SIZE)
 
     # Done
     return infoPanel
+
+
+def createButton(color, width, height, text, text_color, border_color=None):
+    '''
+    Creates a pygame surface to represent a button.
+    :param color:
+    :param width:
+    :param height:
+    :param text:
+    :param text_color:
+    :return: pygame Surface
+    '''
+    buttonSurf = pygame.Surface((width,height), SRCALPHA)
+    # Background
+    buttonSurf.fill(color)
+    # Border
+    if not border_color is None:
+        pygame.draw.rect(buttonSurf, border_color, buttonSurf.get_rect(), 1)
+    # Text
+    textSurf = FONT_HUD_M.render(text, 1, text_color)
+    buttonSurf.blit(textSurf, (width / 2 - textSurf.get_width() / 2, height / 2 - textSurf.get_height() / 2))
+    # Done
+    return buttonSurf

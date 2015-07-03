@@ -9,6 +9,7 @@ from WarrensGame.Actors import Character
 from WarrensGUI.States.State import State
 from WarrensGUI.States.InventoryMenuState import InventoryMenuState
 from WarrensGUI.States.GameMenuState import GameMenuState
+from WarrensGUI.States.InteractionState import InteractionState
 from WarrensGUI.Util.Constants import *
 
 class GameState(State):
@@ -141,5 +142,8 @@ class GameState(State):
                         raise NotImplementedError()
                     # interact
                     elif event.key == pygame.K_COMMA:
-                        player.tryPickUp()
+                        interaction = player.tryInteract()
+                        if not interaction is None:
+                            state = InteractionState(self.window, self, interaction)
+                            state.mainLoop()
                         self.window.refreshDynamicObjects()
