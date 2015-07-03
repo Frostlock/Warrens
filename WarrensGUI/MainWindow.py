@@ -866,8 +866,11 @@ class MainWindow(object):
         if self.level is not None:
             for tileRow in self.level.map.tiles:
                 for tile in tileRow:
-                    tileObj = TileSceneObject(tile)
-                    self.staticObjects.append(tileObj)
+                    if tile.sceneObject is None:
+                        tile.sceneObject = TileSceneObject(tile)
+                    else:
+                        tile.sceneObject.refreshMesh()
+                    self.staticObjects.append(tile.sceneObject)
             # Load the static objects in vertex buffers
             self.loadVAOStaticObjects()
 
@@ -942,28 +945,35 @@ class MainWindow(object):
         This should be called every game turn.
         :return:
         '''
-        #TODO: keep a potentially selected object as selected.
-        #TODO: avoid recreating dynamic sceneobjects? Just refresh their mesh instead?
         self.dynamicObjects = []
         if self.level is not None:
             #Check the visible tiles
             for tile in self.level.map.visible_tiles:
                 # Create tile object for dynamic tiles
                 if tile.material == MaterialType.WATER:
-                    tileObj = TileSceneObject(tile)
-                    self.dynamicObjects.append(tileObj)
+                    if tile.sceneObject is None:
+                        tile.sceneObject = TileSceneObject(tile)
+                    else:
+                        tile.sceneObject.refreshMesh()
+                    self.dynamicObjects.append(tile.sceneObject)
                 # Create scene object for every actor on the tile
                 for actor in tile.actors:
-                    actorObj = ActorSceneObject(actor)
+                    if actor.sceneObject is None:
+                        actor.sceneObject = ActorSceneObject(actor)
+                    else:
+                        actor.sceneObject.refreshMesh()
                     # Check if there is an effect on the actor
                     for effect in self.game.activeEffects:
                         if actor in effect.actors:
-                            actorObj.effect = effect
-                    self.dynamicObjects.append(actorObj)
+                            actor.sceneObject.effect = effect
+                    self.dynamicObjects.append(actor.sceneObject)
             # Create an effect object for every effect on the tile
             for effect in self.game.activeEffects:
-                effectObj = EffectSceneObject(effect)
-                self.dynamicObjects.append(effectObj)
+                if effect.sceneObject is None:
+                    effect.sceneObject = EffectSceneObject(effect)
+                else:
+                    effect.sceneObject.refreshMesh()
+                self.dynamicObjects.append(effect.sceneObject)
         # Load the dynamic objects in vertex buffers
         self.loadVAODynamicObjects()
 
