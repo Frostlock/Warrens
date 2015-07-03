@@ -100,6 +100,18 @@ class Effect(object):
         """
         return self.source.effectElement
 
+    @property
+    def sceneObject(self):
+        '''
+        Property used to store the scene object that represents this actor in the GUI.
+        :return: SceneObject
+        '''
+        return self._sceneObject
+
+    @sceneObject.setter
+    def sceneObject(self, sceneObject):
+        self._sceneObject = sceneObject
+
     def __init__(self, source):
         """
         Constructor for a new Effect, meant to be used by the Effect subclasses.
@@ -112,6 +124,7 @@ class Effect(object):
         self._targetType = EffectTarget.SELF
         self._effectDuration = self.source.effectDuration
         self._effectDescription = "Description not set"
+        self._sceneObject = None
 
     def applyTo(self, target):
         """
