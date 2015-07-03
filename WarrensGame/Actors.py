@@ -7,7 +7,7 @@ from Utilities import message, rollHitDie, GameError, distanceBetween, clamp
 import CONSTANTS
 import Effects #this is used in an eval statement
 import AI #this is used in an eval statement
-import Inventory
+from Inventory import Inventory
 
 ##########
 # ACTORS #
@@ -36,12 +36,31 @@ class Actor(object):
         """
         return self._name
 
+    @name.setter
+    def name(self, newName):
+        self._name = newName
+
+    @property
+    def flavorText(self):
+        """
+        Fancy description of the monster.
+        """
+        return self._flavorText
+
+    @flavorText.setter
+    def flavorText(self, text):
+        self._flavorText = text
+
     @property
     def char(self):
         """
         Returns a 1 char shorthand for this actor.
         """
         return self._char
+
+    @char.setter
+    def char(self, newChar):
+        self._char = newChar
 
     @property
     def tile(self):
@@ -131,9 +150,10 @@ class Actor(object):
         be called by subclasses.
         """
         # Initialize class properties
-        self._char = '?'
-        self._id = 'not set'
-        self._name = 'Nameless'
+        self._char = "?"
+        self._id = "not set"
+        self._name = "Nameless"
+        self._flavorText = ""
         self._tile = None
         self._level = None
         self._actionTaken = False
@@ -228,11 +248,13 @@ class Actor(object):
         #base Actors are invulnerable
         pass
 
+############
+# Specials #
+############
 class Portal(Actor):
     """
     This class can be used to represent portals in and out of a level
     """
-    _message = ''
 
     @property
     def message(self):
@@ -241,7 +263,9 @@ class Portal(Actor):
         """
         return self._message
 
-    _destination = None
+    @message.setter
+    def message(self, msg):
+        self._message = msg
 
     @property
     def destinationPortal(self):
@@ -256,6 +280,8 @@ class Portal(Actor):
         """
         super(Portal, self).__init__()
         #portals are purple
+        self._message = ""
+        self._destination = None
         self._color = (191, 0, 255)
 
     def connectTo(self, otherPortal):
@@ -271,6 +297,29 @@ class Portal(Actor):
         """
         level.addPortal(self)
 
+class Container(Actor):
+    '''
+    Sub class representing a container object.
+    '''
+
+    @property
+    def inventory(self):
+        return self._inventory
+
+    def __init__(self):
+        """
+        Constructor to create a new portal
+        """
+        super(Container, self).__init__()
+        self._inventory = Inventory(self)
+        #containers are brown
+        self._color = (110, 65, 25)
+
+    def add(self, newItem):
+        self.inventory.add(newItem)
+
+    def remove(self, removeItem):
+        self.inventory.remove(removeItem)
 
 ##############
 # CHARACTERS #
@@ -402,7 +451,7 @@ class Character(Actor):
         self._naturalArmor = 0
         self._baseAttack = 1
         self._equipedItems = []
-        self._inventory = Inventory.Inventory(self)
+        self._inventory = Inventory(self)
         self._xpValue = 0
         self._AI = None
         self._state = Character.ACTIVE
@@ -816,13 +865,6 @@ class Monster(Character):
         return self._baseMonster
 
     @property
-    def flavorText(self):
-        """
-        Fancy description of the monster.
-        """
-        return self.baseMonster.flavor
-
-    @property
     def killedByText(self):
         """
         Killed by message that can be shown if this monster kills the player.
@@ -861,6 +903,7 @@ class Monster(Character):
         self._baseMaxHitPoints = rollHitDie(baseMonster.hitdie)
         self._currentHitPoints = self._baseMaxHitPoints
         self._name = baseMonster.name
+        self._flavorText = baseMonster.flavor
         self._color = baseMonster.color
 
         #Character components

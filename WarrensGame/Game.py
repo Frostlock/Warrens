@@ -164,15 +164,15 @@ class Game(object):
         for lvl in connectedLevels:
             # Add portal in previous level to current level
             downPortal = Portal()
-            downPortal._char = '>'
-            downPortal._name = 'stairs down'
-            downPortal._message = 'You follow the stairs down, looking for more adventure.'
+            downPortal.char = '>'
+            downPortal.name = 'stairs down'
+            downPortal.message = 'You follow the stairs down, looking for more adventure.'
             downPortal.moveToLevel(lvl, lvl.getRandomEmptyTile())
             # Add portal in current level to previous level
             upPortal = Portal()
-            upPortal._char = '<'
-            upPortal._name = 'stairs up'
-            upPortal._message = 'You follow the stairs up, hoping to find the exit.'
+            upPortal.char = '<'
+            upPortal.name = 'stairs up'
+            upPortal.message = 'You follow the stairs up, hoping to find the exit.'
             upPortal.moveToLevel(dungeonLevel, dungeonLevel.getRandomEmptyTile())
             # Connect the two portals
             downPortal.connectTo(upPortal)
@@ -194,16 +194,16 @@ class Game(object):
         for lvl in connectedLevels:
             # create a portal in the connected level that leads to the new cave
             downPortal = Portal()
-            downPortal._char = '>'
-            downPortal._name = 'Pit'
-            downPortal._message = 'You jump into the pit. As you fall deeper and deeper, you realize you didn\'t ' \
+            downPortal.char = '>'
+            downPortal.name = 'Pit'
+            downPortal.message = 'You jump into the pit. As you fall deeper and deeper, you realize you didn\'t ' \
                                   'think about how to get back out afterward...'
             downPortal.moveToLevel(lvl, lvl.getRandomEmptyTile())
             # create a portal in the new cave that leads back
             upPortal = Portal()
-            upPortal._char = '<'
-            upPortal._name = 'Opening above'
-            upPortal._message = 'After great difficulties you manage to get out of the pit.'
+            upPortal.char = '<'
+            upPortal.name = 'Opening above'
+            upPortal.message = 'After great difficulties you manage to get out of the pit.'
             upPortal.moveToLevel(caveLevel, caveLevel.getRandomEmptyTile())
             # connect the two portals
             downPortal.connectTo(upPortal)
@@ -216,6 +216,12 @@ class Game(object):
         self._player = Player()
         firstLevel = self.levels[0]
         self.player.moveToLevel(firstLevel, firstLevel.getRandomEmptyTile())
+
+        # Starting gear
+        potion = self.itemLibrary.createItem("healingpotion")
+        self.player.addItem(potion)
+        potion = self.itemLibrary.createItem("healingpotion")
+        self.player.addItem(potion)
 
         # Quickstart
         if CONSTANTS.QUICKSTART:
@@ -230,31 +236,35 @@ class Game(object):
             # Move player close to portals
             tile = town.map.tiles[2][1]
             self.player.moveToTile(tile)
+            # Provide more starting gear
+            scroll = self.itemLibrary.createItem("firenova", "double")
+            self.player.addItem(scroll)
+            scroll = self.itemLibrary.createItem("tremor")
+            self.player.addItem(scroll)
+            potion = self.itemLibrary.createItem("healingvial", "exquisite")
+            self.player.addItem(potion)
+            cloak = self.itemLibrary.createItem("cloak")
+            self.player.addItem(cloak)
+            scroll = self.itemLibrary.createItem("fireball")
+            self.player.addItem(scroll)
+            scroll = self.itemLibrary.createItem("confuse")
+            self.player.addItem(scroll)
+            scroll = self.itemLibrary.createItem("lightning")
+            self.player.addItem(scroll)
+            # Add a chest with extra gear
+            chest = Container()
+            tile = town.map.tiles[2][2]
+            chest.moveToTile(tile)
+            chest.name = "Ancient chest"
+            chest.flavorText = "A sturdy wooden chest. It looks very old."
+            for i in range(1,15):
+                item = self.itemLibrary.getRandomItem(i)
+                chest.inventory.add(item)
 
         firstLevel.map.updateFieldOfView(
             self._player.tile.x, self._player.tile.y)
 
-        # Starting gear
-        scroll = self.itemLibrary.createItem("firenova", "double")
-        self.player.addItem(scroll)
-        scroll = self.itemLibrary.createItem("tremor")
-        self.player.addItem(scroll)
-        potion = self.itemLibrary.createItem("healingvial", "exquisite")
-        self.player.addItem(potion)
-        potion = self.itemLibrary.createItem("healingpotion")
-        self.player.addItem(potion)
-        potion = self.itemLibrary.createItem("healingpotion")
-        self.player.addItem(potion)
-        cloak = self.itemLibrary.createItem("cloak")
-        self.player.addItem(cloak)
-#        scroll = self.itemLibrary.createItem("firenova")
-#        self.player.addItem(scroll)
-        scroll = self.itemLibrary.createItem("fireball")
-        self.player.addItem(scroll)
-        scroll = self.itemLibrary.createItem("confuse")
-        self.player.addItem(scroll)
-        scroll = self.itemLibrary.createItem("lightning")
-        self.player.addItem(scroll)
+
 
     def loadGame(self, fileName):
         """

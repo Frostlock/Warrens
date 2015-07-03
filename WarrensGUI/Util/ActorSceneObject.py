@@ -100,6 +100,7 @@ class ActorSceneObject(SceneObject):
         tile = self.actor.tile
 
         # Determine scale
+        # TODO: different geometric shapes for different objects
         if isinstance(self.actor, Player):
             scale = 0.9
         elif isinstance(self.actor, Portal):
@@ -108,6 +109,8 @@ class ActorSceneObject(SceneObject):
             scale = 0.7
         elif isinstance(self.actor, Item):
             scale = 0.4
+        elif isinstance(self.actor, Container):
+            scale = 0.5
         else:
             raise NotImplementedError("Unknown actor type")
         # Offset within the tile area
