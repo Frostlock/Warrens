@@ -344,7 +344,7 @@ class GuiApplication(object):
                         self.dropInventory()
                     #interact
                     elif event.key == pygame.K_COMMA:
-                        player.tryPickUp()
+                        player.tryInteract()
         
     
     def renderGame(self):
