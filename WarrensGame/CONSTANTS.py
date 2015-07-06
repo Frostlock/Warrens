@@ -35,10 +35,6 @@ WATER_COLOR = (30,144,255)
 TORCH_RADIUS = 10
 TOWN_RADIUS = 30
 
-#experience and level-ups
-LEVEL_UP_BASE = 200
-LEVEL_UP_FACTOR = 150
-
 #data files
 DATA_MONSTERS = "./WarrensGame/Monsters.csv"
 DATA_ITEMS = "./WarrensGame/Items.csv"
@@ -63,3 +59,10 @@ MIND = 6
 
 # Enumerator to describe available interaction types
 INTERACTION_CONTAINER = 0
+
+# Game system parameters
+GAME_XP_FACTOR = 1.3
+GAME_XP_EQUAL_CHALLENGE = 50
+#GAME_XP_KILLS_FOR_LVL_1	= 6
+GAME_XP_BASE = 300
+

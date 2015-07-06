@@ -18,9 +18,7 @@ class Actor(object):
     Base class for everything that can occur in the gameworld.
     Example sub classes: Items and Characters.
     """
-    #Frostlock: I'm not completely happy with the name Actor but haven't
-    # found anything better yet :-)
-    # Also I added hitpoints on this level, every Actor can be destroyed,
+    #I added hitpoints on this level, every Actor can be destroyed,
     # including items and portals.
 
     @property
@@ -653,7 +651,7 @@ class Player(Character):
         """
         Returns the required Xp to reach the next player level
         """
-        return CONSTANTS.LEVEL_UP_BASE + self.playerLevel * CONSTANTS.LEVEL_UP_FACTOR
+        return self._nextLevelXp
 
     @property
     def playerLevel(self):
@@ -700,6 +698,7 @@ class Player(Character):
         #Player properties
         self._xp = 0
         self._playerLevel = 1
+        self._nextLevelXp = CONSTANTS.GAME_XP_BASE
         self.direction = (1,1)
 
     def _killedBy(self, attacker):
@@ -721,6 +720,7 @@ class Player(Character):
         '''
         message("You feel stronger!", "GAME")
         self._playerLevel += 1
+        self._nextLevelXp = CONSTANTS.GAME_XP_BASE + CONSTANTS.GAME_XP_BASE * CONSTANTS.GAME_XP_FACTOR * (self.playerLevel * self.playerLevel - 1)
         self._baseMaxHitPoints += rollHitDie("1d10")
          
     def gainXp(self, amount):
