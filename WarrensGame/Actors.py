@@ -333,18 +333,6 @@ class Character(Actor):
     Every character manages an inventory of items
     """
 
-    @property
-    def inventory(self):
-        return self._inventory
-
-    @property
-    def equipedItems(self):
-        """
-        Returns a list of items that this characters has equiped.
-        These are the equiped items only.
-        """
-        return self._equipedItems
-
     ACTIVE = 0
     DEAD = 1
 
@@ -360,18 +348,13 @@ class Character(Actor):
         """
         Maximum hitpoints of this Character (overrides Actor)
         """
-        bonus = 0
-        #TODO medium: return actual max_hp, by summing up the bonuses from all equipped items
-        #bonus = sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
-        return self._baseMaxHitPoints + bonus
-
+        return self.body * CONSTANTS.GAME_PLAYER_HITPOINT_FACTOR
     @property
     def currentHitPoints(self):
         """
         The current amount of hitpoints
         """
         return self._currentHitPoints
-
     @currentHitPoints.setter
     def currentHitPoints(self, hitPoints):
         if hitPoints > self.maxHitPoints:
@@ -387,40 +370,90 @@ class Character(Actor):
         return self._xpValue
 
     @property
-    def attackBonus(self):
+    def inventory(self):
+        return self._inventory
+
+    @property
+    def equipedItems(self):
         """
-        Return attack attack bonus
+        Returns a list of items that this characters has equiped.
+        These are the equiped items only.
         """
+        return self._equipedItems
+    @property
+    def equipmentBonusAccuracy(self):
         bonus = 0
         for item in self.equipedItems:
-            bonus += int(item.attackBonus)
-        return self.baseAttackBonus + bonus
-
+            bonus += item.accuracy
+        return bonus
     @property
-    def baseAttackBonus(self):
-        return self._baseAttackBonus
-
-    @property
-    def armorClass(self):
-        """
-        Return armor value
-        """
+    def equipmentBonusDodge(self):
         bonus = 0
         for item in self.equipedItems:
-            bonus += item.armorBonus
-        #TODO: Limit armor bonus to one equiped armor and one possible shield.
-        return 10 + self.naturalArmor + bonus
-
+            bonus += item.dodge
+        return bonus
     @property
-    def naturalArmor(self):
-        return self._naturalArmor
-
-    @property
-    def weapon(self):
+    def equipmentBonusDamage(self):
+        bonus = 0
         for item in self.equipedItems:
-            if not item.damage == "None":
-                return item
-        return None
+            bonus += item.damage
+        return bonus
+    @property
+    def equipmentBonusArmor(self):
+        bonus = 0
+        for item in self.equipedItems:
+            bonus += item.armor
+        return bonus
+    @property
+    def equipmentBonusBody(self):
+        bonus = 0
+        for item in self.equipedItems:
+            bonus += item.body
+        return bonus
+    @property
+    def equipmentBonusMind(self):
+        bonus = 0
+        for item in self.equipedItems:
+            bonus += item.mind
+        return bonus
+
+    @property
+    def baseAccuracy(self):
+        return self._baseAccuracy
+    @property
+    def baseDodge(self):
+        return self._baseDodge
+    @property
+    def baseDamage(self):
+        return self._baseDamage
+    @property
+    def baseArmor(self):
+        return self._baseArmor
+    @property
+    def baseBody(self):
+        return self._baseBody
+    @property
+    def baseMind(self):
+        return self._baseMind
+
+    @property
+    def accuracy(self):
+        return self.baseAccuracy + self.equipmentBonusAccuracy
+    @property
+    def dodge(self):
+        return self.baseDodge + self.equipmentBonusDodge
+    @property
+    def damage(self):
+        return self.baseDamage + self.equipmentBonusDamage
+    @property
+    def armor(self):
+        return self.baseArmor + self.equipmentBonusArmor
+    @property
+    def body(self):
+        return self.baseBody + self.equipmentBonusBody
+    @property
+    def mind(self):
+        return self.baseMind + self.equipmentBonusMind
 
     @property
     def AI(self):
@@ -428,7 +461,6 @@ class Character(Actor):
         Return AI associated to this character.
         """
         return self._AI
-    
     @AI.setter
     def AI(self,myAI):
         """
@@ -442,20 +474,25 @@ class Character(Actor):
         Creates a new character object, normally not used directly but called
         by sub class constructors.
         """
+        self._equipedItems = []
+        self._inventory = Inventory(self)
+
         #call super class constructor
         super(Character, self).__init__()
         #initialize class variables
-        self._baseMaxHitPoints = 1
-        self._currentHitPoints = 1
-        self._naturalArmor = 0
-        self._baseAttack = 1
-        self._equipedItems = []
-        self._inventory = Inventory(self)
+        self._baseAccuracy = 10
+        self._baseDodge = 10
+        self._baseDamage = 10
+        self._baseArmor = 10
+        self._baseBody = 10
+        self._baseMind = 10
+
+        self._currentHitPoints =  self.maxHitPoints
+
         self._xpValue = 0
         self._AI = None
         self._state = Character.ACTIVE
 
-    #Functions
     def registerWithLevel(self, level):
         """
         Makes the level aware that this character is on it.
@@ -536,16 +573,6 @@ class Character(Actor):
         message(self.name.capitalize() + ' drops a '
                     + item.name + '.', "GAME")
 
-    def attackRoll(self):
-        '''
-        Rolls a D2O and applies this Characters attack bonus.
-        :return: attackRoll
-        '''
-        roll = rollHitDie("1d20")
-        if roll == 1: return 1   # natural 1 is always a miss
-        elif roll == 20: return 20 # natural 20 is always a hit
-        else: return roll + self.attackBonus
-
     def attack(self, target):
         """
         Attack another Character
@@ -553,32 +580,24 @@ class Character(Actor):
             target - the Character to be attacked
         """
         # Check if the attack hits
-        attackRoll = self.attackRoll()
-        message(self.name.capitalize() + ': Attack Roll: ' + str(attackRoll) + ' Armor Class: ' + str(target.armorClass), "COMBAT")
-        if attackRoll == 1:
-            # Natural miss
-            message(self.name.capitalize() + ' attacks ' + target.name + ' : Critical miss!', "GAME")
-        elif attackRoll == 20:
-            #Natural hit
-            weapon = self.weapon
-            if weapon is None:
-                #Unarmed attack
-                damage = rollHitDie("1d3") * 2
-            else:
-                damage = rollHitDie(weapon.damage) * 2
-            message(self.name.capitalize() + ' attacks ' + target.name + ' : Critical hit! (' + str(damage) + ' Damage)', "GAME")
-            target.takeDamage(damage, self)
-        elif attackRoll >= target.armorClass:
-            weapon = self.weapon
-            if weapon is None:
-                #Unarmed attack
-                damage = rollHitDie("1d3")
-            else:
-                damage = rollHitDie(weapon.damage)
-            message(self.name.capitalize() + ' attacks ' + target.name + ' : Hit! (' + str(damage) + ' Damage)', "GAME")
-            target.takeDamage(damage, self)
+        hitRoll = rollHitDie("1d100")
+        # In case of an equal accuracy and dodge rating there is a 50% chance to hit
+        toHit = 100 - (50 + self.accuracy - target.dodge)
+        message(self.name.capitalize() + ' attacks ' + target.name + ': ' + str(hitRoll) + ' vs ' + str(toHit), "GAME")
+        if hitRoll < toHit:
+            # Miss, no damage
+            message(self.name.capitalize() + ' attacks ' + target.name + ' but misses!', "GAME")
         else:
-            message(self.name.capitalize() + ' attacks ' + target.name + ' : Miss!', "GAME")
+            # Hit, there will be damage, bonusDamage depends on how strongly the hit connects
+            bonusDamagePercent = (hitRoll - toHit) / 100.0
+            damagePercent = 1 + bonusDamagePercent
+            # targets armor neutralizes part of the damage
+            damage = int(damagePercent * self.damage) - target.armor
+            if damage > 0:
+                message(self.name.capitalize() + ' attacks ' + target.name + ' and hits for ' + str(damage) + ' Damage (' + str(damagePercent) +' damage factor)', "GAME")
+                target.takeDamage(damage, self)
+            else:
+                message(self.name.capitalize() + ' attacks ' + target.name + ' and hits but it has no effect.', "GAME")
 
     def takeDamage(self, amount, attacker):
         """
@@ -672,7 +691,6 @@ class Player(Character):
     def direction(self,direction):
         self._direction = direction
 
-    #constructor
     def __init__(self):
         """
         Creates and initializes new player object. Note that the object is not
@@ -685,8 +703,6 @@ class Player(Character):
         #Actor properties
         self._id = 'player'
         self._char = '@'
-        self._baseMaxHitPoints = 60
-        self._currentHitPoints = 60
         self._name = random.choice(('Joe', 'Wesley', 'Frost'))
         #player is white
         self._color = (250,250,250)
@@ -721,7 +737,16 @@ class Player(Character):
         message("You feel stronger!", "GAME")
         self._playerLevel += 1
         self._nextLevelXp = CONSTANTS.GAME_XP_BASE + CONSTANTS.GAME_XP_BASE * CONSTANTS.GAME_XP_FACTOR * (self.playerLevel * self.playerLevel - 1)
+
+        # TODO make hitpoints dependent on body attribute
         self._baseMaxHitPoints += rollHitDie("1d10")
+
+        self._baseAccuracy += CONSTANTS.GAME_PLAYER_LEVEL_ACCURACY
+        self._baseDodge += CONSTANTS.GAME_PLAYER_LEVEL_DODGE
+        self._baseDamage += CONSTANTS.GAME_PLAYER_LEVEL_DAMAGE
+        self._baseArmor += CONSTANTS.GAME_PLAYER_LEVEL_ARMOR
+        self._baseBody += CONSTANTS.GAME_PLAYER_LEVEL_BODY
+        self._baseMind += CONSTANTS.GAME_PLAYER_LEVEL_MIND
          
     def gainXp(self, amount):
         """
@@ -868,15 +893,45 @@ class Monster(Character):
     for example Humanoid, Undead, Animal
     """
     @property
-    def baseMonster(self):
-        return self._baseMonster
+    def accuracy(self):
+        return self.baseAccuracy + self.modifierBonusAccuracy + self.equipmentBonusAccuracy
+    @property
+    def dodge(self):
+        return self.baseDodge + self.modifierBonusDodge + self.equipmentBonusDodge
+    @property
+    def damage(self):
+        return self.baseDamage + self.modifierBonusDamage + self.equipmentBonusDamage
+    @property
+    def armor(self):
+        return self.baseArmor + self.modifierBonusArmor + self.equipmentBonusArmor
+    @property
+    def body(self):
+        return self.baseBody + self.modifierBonusBody + self.equipmentBonusBody
+    @property
+    def mind(self):
+        return self.baseMind + self.modifierBonusMind + self.equipmentBonusMind
 
     @property
-    def killedByText(self):
-        """
-        Killed by message that can be shown if this monster kills the player.
-        """
-        return self.baseMonster.killedBy
+    def baseMonster(self):
+        return self._baseMonster
+    @property
+    def baseAccuracy(self):
+        return self.baseMonster.accuracy
+    @property
+    def baseDodge(self):
+        return self.baseMonster.dodge
+    @property
+    def baseDamage(self):
+        return self.baseMonster.damage
+    @property
+    def baseArmor(self):
+        return self.baseMonster.armor
+    @property
+    def baseBody(self):
+        return self.baseMonster.body
+    @property
+    def baseMind(self):
+        return self.baseMonster.mind
 
     @property
     def modifiers(self):
@@ -884,6 +939,42 @@ class Monster(Character):
         Modifiers linked to this item
         '''
         return self._modifiers
+    @property
+    def modifierBonusAccuracy(self):
+        bonus = 0
+        for modifier in self.modifiers:
+            bonus += modifier.bonusAccuracy
+        return bonus
+    @property
+    def modifierBonusDodge(self):
+        bonus = 0
+        for modifier in self.modifiers:
+            bonus += modifier.bonusDodge
+        return bonus
+    @property
+    def modifierBonusDamage(self):
+        bonus = 0
+        for modifier in self.modifiers:
+            bonus += modifier.bonusDamage
+        return bonus
+    @property
+    def modifierBonusArmor(self):
+        bonus = 0
+        for modifier in self.modifiers:
+            bonus += modifier.bonusArmor
+        return bonus
+    @property
+    def modifierBonusBody(self):
+        bonus = 0
+        for modifier in self.modifiers:
+            bonus += modifier.bonusBody
+        return bonus
+    @property
+    def modifierBonusMind(self):
+        bonus = 0
+        for modifier in self.modifiers:
+            bonus += modifier.bonusMind
+        return bonus
 
     @property
     def challengeRating(self):
@@ -892,17 +983,23 @@ class Monster(Character):
             cRating += modifier.modifierLevel
         return cRating
 
-    #constructor
+    @property
+    def killedByText(self):
+        """
+        Killed by message that can be shown if this monster kills the player.
+        """
+        return self.baseMonster.killedBy
+
     def __init__(self, baseMonster):
         """
         Creates a new uninitialized Monster object.
         Use MonsterLibrary.createMonster() to create an initialized Monster.
         """
-        #call super class constructor
-        super(Monster, self).__init__()
-
         self._baseMonster = baseMonster
         self._modifiers = []
+
+        #call super class constructor
+        super(Monster, self).__init__()
 
         #Actor components
         self._id = baseMonster.key
@@ -914,8 +1011,6 @@ class Monster(Character):
         self._color = baseMonster.color
 
         #Character components
-        self._naturalArmor = baseMonster.naturalArmor
-        self._baseAttackBonus = baseMonster.attackBonus
         self._xpValue = baseMonster.xp
         #gets a class object by name; and instanstiate it if not None
         ai_class = eval('AI.' + baseMonster.AI)
@@ -963,11 +1058,48 @@ class Item(Actor):
         self._stackSize = newStackSize
 
     @property
+    def accuracy(self):
+        return self.baseAccuracy + self.modifierBonusAccuracy
+    @property
+    def dodge(self):
+        return self.baseDodge + self.modifierBonusDodge
+    @property
+    def damage(self):
+        return self.baseDamage + self.modifierBonusDamage
+    @property
+    def armor(self):
+        return self.baseArmor + self.modifierBonusArmor
+    @property
+    def body(self):
+        return self.baseBody + self.modifierBonusBody
+    @property
+    def mind(self):
+        return self.baseMind + self.modifierBonusMind
+
+    @property
     def baseItem(self):
         '''
         Base item for this item.
         '''
         return self._baseItem
+    @property
+    def baseAccuracy(self):
+        return self.baseItem.bonusAccuracy
+    @property
+    def baseDodge(self):
+        return self.baseItem.bonusDodge
+    @property
+    def baseDamage(self):
+        return self.baseItem.bonusDamage
+    @property
+    def baseArmor(self):
+        return self.baseItem.bonusArmor
+    @property
+    def baseBody(self):
+        return self.baseItem.bonusBody
+    @property
+    def baseMind(self):
+        return self.baseItem.bonusMind
 
     @property
     def modifiers(self):
@@ -975,6 +1107,42 @@ class Item(Actor):
         Modifiers linked to this item
         '''
         return self._modifiers
+    @property
+    def modifierBonusAccuracy(self):
+        bonus = 0
+        for modifier in self.modifiers:
+            bonus += modifier.bonusAccuracy
+        return bonus
+    @property
+    def modifierBonusDodge(self):
+        bonus = 0
+        for modifier in self.modifiers:
+            bonus += modifier.bonusDodge
+        return bonus
+    @property
+    def modifierBonusDamage(self):
+        bonus = 0
+        for modifier in self.modifiers:
+            bonus += modifier.bonusDamage
+        return bonus
+    @property
+    def modifierBonusArmor(self):
+        bonus = 0
+        for modifier in self.modifiers:
+            bonus += modifier.bonusArmor
+        return bonus
+    @property
+    def modifierBonusBody(self):
+        bonus = 0
+        for modifier in self.modifiers:
+            bonus += modifier.bonusBody
+        return bonus
+    @property
+    def modifierBonusMind(self):
+        bonus = 0
+        for modifier in self.modifiers:
+            bonus += modifier.bonusMind
+        return bonus
 
     @property
     def name(self):
@@ -1052,24 +1220,6 @@ class Equipment(Item):
     Might need more subclasses for weapons versus armor
     """
     @property
-    def armorBonus(self):
-        """
-        The armor bonus of this piece of equipment
-        """
-        return self._armorBonus
-
-    @property
-    def attackBonus(self):
-        """
-        The attack bonus of this piece of equipment
-        """
-        return self._attackBonus
-
-    @property
-    def damage(self):
-        return self._damage
-
-    @property
     def isEquiped(self):
         """
         Boolean indicating if this piece of equipment is equiped.
@@ -1102,9 +1252,6 @@ class Equipment(Item):
         #call super class constructor
         super(Equipment, self).__init__(baseItem)
         #Initialize equipment properties
-        self._armorBonus = baseItem.armorBonus
-        self._attackBonus = baseItem.attackBonus
-        self._damage = baseItem.damage
         self._isEquiped = False
 
 class Consumable(Item):

@@ -104,8 +104,13 @@ class MonsterLibrary():
             reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for monsterDataDict in reader:
                 # Ensure incoming data from csv file is interpreted correctly
-                monsterDataDict["attackBonus"] = int(monsterDataDict["attackBonus"])
-                monsterDataDict["naturalArmor"] = int(monsterDataDict["naturalArmor"])
+                monsterDataDict["accuracy"] = int(monsterDataDict["accuracy"])
+                monsterDataDict["dodge"] = int(monsterDataDict["dodge"])
+                monsterDataDict["damage"] = int(monsterDataDict["damage"])
+                monsterDataDict["armor"] = int(monsterDataDict["armor"])
+                monsterDataDict["body"] = int(monsterDataDict["body"])
+                monsterDataDict["mind"] = int(monsterDataDict["mind"])
+
                 monsterDataDict["xp"] = int(monsterDataDict["xp"])
                 monsterDataDict["unique"] = eval(monsterDataDict["unique"])
                 monsterDataDict["challengeRating"] = int(monsterDataDict["challengeRating"])
@@ -185,8 +190,13 @@ class MonsterLibrary():
         monster_data['color'] = [65, 255, 85]
 
         #Character components
-        monster_data['naturalArmor'] = difficulty
-        monster_data['attackBonus'] = difficulty + 2
+        monster_data['accuracy'] = difficulty * 10
+        monster_data['dodge'] = difficulty * 10
+        monster_data['damage'] = difficulty * 10
+        monster_data['armor'] = difficulty * 10
+        monster_data['body'] = difficulty * 10
+        monster_data['mind'] = difficulty * 10
+
         monster_data['xp'] = difficulty * difficulty * 50
         monster_data['AI'] = 'BasicMonsterAI'
 
@@ -313,9 +323,12 @@ class ItemLibrary():
                 itemDataDict["effectRadius"] = int(itemDataDict["effectRadius"])
                 itemDataDict["effectDuration"] = int(itemDataDict["effectDuration"])
                 itemDataDict["effectElement"] = eval(itemDataDict["effectElement"])
-                itemDataDict["armorBonus"]= int(itemDataDict["armorBonus"])
-                itemDataDict["attackBonus"] = int(itemDataDict["attackBonus"])
-                itemDataDict["hitdie_bonus"] = int(itemDataDict["hitdie_bonus"])
+                itemDataDict["bonusAccuracy"]= int(itemDataDict["bonusAccuracy"])
+                itemDataDict["bonusDodge"] = int(itemDataDict["bonusDodge"])
+                itemDataDict["bonusDamage"] = int(itemDataDict["bonusDamage"])
+                itemDataDict["bonusArmor"] = int(itemDataDict["bonusArmor"])
+                itemDataDict["bonusBody"] = int(itemDataDict["bonusBody"])
+                itemDataDict["bonusMind"] = int(itemDataDict["bonusMind"])
                 # Create the BaseItem object
                 baseItem = BaseItem(itemDataDict)
                 # Register the item data in the data dictionary
@@ -331,15 +344,17 @@ class ItemLibrary():
             for modifierDataDict in reader:
                 # Ensure incoming data from csv file is interpreted correctly
                 modifierDataDict["modifierLevel"] = int(modifierDataDict["modifierLevel"])
-                modifierDataDict["damageModifier"] = int(modifierDataDict["damageModifier"])
                 modifierDataDict["targeted"] = eval(modifierDataDict["targeted"])
                 modifierDataDict["effectRadius"] = int(modifierDataDict["effectRadius"])
                 modifierDataDict["effectHitDie"] = int(modifierDataDict["effectHitDie"])
                 modifierDataDict["effectDuration"] = int(modifierDataDict["effectDuration"])
                 modifierDataDict["effectElement"] = eval(modifierDataDict["effectElement"])
-                modifierDataDict["armorBonus"]= int(modifierDataDict["armorBonus"])
-                modifierDataDict["attackBonus"] = int(modifierDataDict["attackBonus"])
-                modifierDataDict["hitdie_bonus"] = int(modifierDataDict["hitdie_bonus"])
+                modifierDataDict["bonusAccuracy"]= int(modifierDataDict["bonusAccuracy"])
+                modifierDataDict["bonusDodge"] = int(modifierDataDict["bonusDodge"])
+                modifierDataDict["bonusDamage"] = int(modifierDataDict["bonusDamage"])
+                modifierDataDict["bonusArmor"] = int(modifierDataDict["bonusArmor"])
+                modifierDataDict["bonusBody"] = int(modifierDataDict["bonusBody"])
+                modifierDataDict["bonusMind"] = int(modifierDataDict["bonusMind"])
                 # Create the ItemModifier object
                 itemModifier = ItemModifier(modifierDataDict)
                 # Register the item modifier data in the data dictionary
