@@ -750,9 +750,6 @@ class Player(Character):
         self._playerLevel += 1
         self._nextLevelXp = CONSTANTS.GAME_XP_BASE + CONSTANTS.GAME_XP_BASE * CONSTANTS.GAME_XP_FACTOR * (self.playerLevel * self.playerLevel - 1)
 
-        # TODO make hitpoints dependent on body attribute
-        self._baseMaxHitPoints += rollHitDie("1d10")
-
         self._baseAccuracy += CONSTANTS.GAME_PLAYER_LEVEL_ACCURACY
         self._baseDodge += CONSTANTS.GAME_PLAYER_LEVEL_DODGE
         self._baseDamage += CONSTANTS.GAME_PLAYER_LEVEL_DAMAGE
