@@ -10,6 +10,7 @@ import random
 import WarrensGame.Game as Game
 import WarrensGame.CONSTANTS as CONSTANTS
 from WarrensGame.Utilities import GameError
+from WarrensGame.Actors import Character
 
 class TestGame(unittest.TestCase):
     
@@ -19,7 +20,7 @@ class TestGame(unittest.TestCase):
         unittest framework will run this once before all the tests in this class.
         """
         CONSTANTS.SHOW_AI_LOGGING = False
-        CONSTANTS.SHOW_GAME_LOGGING = True
+        CONSTANTS.SHOW_GAME_LOGGING = False
         CONSTANTS.SHOW_COMBAT_LOGGING = True
         CONSTANTS.SHOW_GENERATION_LOGGING = False
 
@@ -135,7 +136,11 @@ class TestGame(unittest.TestCase):
     def test_combat(self):
         player = self.game.player
         aMonster = random.choice(self.game.monsterLibrary.monsters)
-        player.attack(aMonster)
+        while not (player.state == Character.DEAD or aMonster.state == Character.DEAD):
+            #print "Attacker: " + str(player)
+            #print "Target: " + str(aMonster)
+            player.attack(aMonster)
+            aMonster.attack(player)
 
 if __name__ == "__main__":
     TestGame.main()

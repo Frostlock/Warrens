@@ -595,12 +595,10 @@ class Character(Actor):
         hitRoll = rollHitDie("1d100")
         # In case of an equal accuracy and dodge rating there is a 50% chance to hit
         toHit = 100 - (50 + self.accuracy - target.dodge)
-        message("Attacker: " + str(self), "GAME")
-        message("Target: " + str(target), "GAME")
-        message(self.name.capitalize() + ' attacks ' + target.name + ': ' + str(hitRoll) + ' vs ' + str(toHit), "GAME")
+        message(self.name.capitalize() + ' attacks ' + target.name + ': ' + str(hitRoll) + ' vs ' + str(toHit), "COMBAT")
         if hitRoll < toHit:
             # Miss, no damage
-            message(self.name.capitalize() + ' attacks ' + target.name + ' but misses!', "GAME")
+            message(self.name.capitalize() + ' attacks ' + target.name + ' but misses!', "COMBAT")
         else:
             # Hit, there will be damage, bonusDamage depends on how strongly the hit connects
             bonusDamagePercent = (hitRoll - toHit) / 100.0
@@ -608,10 +606,10 @@ class Character(Actor):
             # targets armor neutralizes part of the damage
             damage = int(damagePercent * self.damage) - target.armor
             if damage > 0:
-                message(self.name.capitalize() + ' attacks ' + target.name + ' and hits for ' + str(damage) + ' Damage (' + str(damagePercent) +' damage factor)', "GAME")
+                message(self.name.capitalize() + ' attacks ' + target.name + ' and hits for ' + str(damage) + ' Damage (' + str(damagePercent) +' damage factor)', "COMBAT")
                 target.takeDamage(damage, self)
             else:
-                message(self.name.capitalize() + ' attacks ' + target.name + ' and hits but it has no effect.', "GAME")
+                message(self.name.capitalize() + ' attacks ' + target.name + ' and hits but it has no effect.', "COMBAT")
 
     def takeDamage(self, amount, attacker):
         """
@@ -626,7 +624,7 @@ class Character(Actor):
                 self.currentHitPoints -= amount
             #check for death
             if self.currentHitPoints <= 0:
-                message(self.name.capitalize() + ' is killed!', "GAME")
+                message(self.name.capitalize() + ' is killed!', "COMBAT")
                 self._killedBy(attacker)
 
     def _killedBy(self, attacker):
