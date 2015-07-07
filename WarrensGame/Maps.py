@@ -584,17 +584,34 @@ class CaveMap(Map):
                 myTile.material = MaterialType.STONE 
         
         #Cut out a starting cave area
-        x = random.randrange(0, self.width)
-        y = random.randrange(0, self.height)
-        radius = random.randrange(5, 15)
+        x = random.randrange(2, self.width - 2)
+        y = random.randrange(2, self.height - 2)
+        radius = random.randrange(5, 10)
         fullCircle = True
         circleTiles = self.getCircleTiles(x, y, radius, fullCircle)
         for tile in circleTiles:
-            tile.blocked = False
-            tile.blockSight = False
-            tile.color = CONSTANTS.CAVE_COLOR_DIRT
-            tile.material = MaterialType.DIRT
-        
+            self.clearTile(tile)
+
+        firstX = x
+        firstY = y
+        #Grow additional cave areas.
+        for i in range(2, random.randint(3,8)):
+            prevX = x
+            prevY = y
+            prevRadius = radius
+            x = random.randrange(2, self.width - 3)
+            y = random.randrange(2, self.height - 3)
+            radius = random.randrange(5, 15)
+            fullCircle = True
+            circleTiles = self.getCircleTiles(x, y, radius, fullCircle)
+            for tile in circleTiles:
+                self.clearTile(tile)
+            # Link this cave to the previous one
+            self.createCorridor(x, y, prevX, prevY)
+
+        #link the last cave to the first one
+        self.createCorridor(x, y, firstX, firstY)
+
         #Create a bit of water
         circleTiles = self.getCircleTiles(x, y, 2, fullCircle)
         for tile in circleTiles:
@@ -602,8 +619,35 @@ class CaveMap(Map):
             tile.blocked = False
             tile.blockSight = False
             tile.color = CONSTANTS.WATER_COLOR
-            
-        #TODO: Grow additional cave areas.
+
+        # Ensure the border of the map is blocked
+        for y in range(self.height):
+            for x in range(self.width):
+                myTile = self.tiles[x][y]
+                if x == 0 or y == 0 \
+                        or x == self.width - 1 or y == self.height - 1:
+                    myTile.blocked = True
+                    myTile.blockSight = True
+                    myTile.color = CONSTANTS.CAVE_COLOR_ROCK
+                    myTile.material = MaterialType.STONE
+
+    def createCorridor(self, x, y, prevX, prevY):
+        modX, modY = 0, 0
+        if prevX <> x: modX = (prevX - x) / abs(prevX - x)
+        if prevY <> y: modY = (prevY - y) / abs(prevY - y)
+        while not (prevX == x and prevY ==y):
+            if prevX <> x: x += modX
+            if prevY <> y: y += modY
+            for i in range(0, random.randrange(1,3)):
+                self.clearTile(self.tiles[x+i][y+i])
+                self.clearTile(self.tiles[x+i][y])
+                self.clearTile(self.tiles[x][y+i])
+
+    def clearTile(self, tile):
+        tile.blocked = False
+        tile.blockSight = False
+        tile.color = CONSTANTS.CAVE_COLOR_DIRT
+        tile.material = MaterialType.DIRT
 
 class Room():
     """
