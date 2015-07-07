@@ -20,6 +20,21 @@ class Actor(object):
     """
     #I added hitpoints on this level, every Actor can be destroyed,
     # including items and portals.
+    @property
+    def currentHitPoints(self):
+        """
+        The current amount of hitpoints
+        """
+        return self._currentHitPoints
+    @currentHitPoints.setter
+    def currentHitPoints(self, hitPoints):
+        if hitPoints > self.maxHitPoints:
+            self._currentHitPoints = self.maxHitPoints
+        else:
+            self._currentHitPoints = hitPoints
+    @property
+    def maxHitPoints(self):
+        return 1
 
     @property
     def id(self):
@@ -159,6 +174,7 @@ class Actor(object):
         self._color = (255, 255, 255)
         self._inView = False
         self._sceneObject = None
+        self._currentHitPoints = self.maxHitPoints
 
     #functions
     def __str__(self):
@@ -349,18 +365,6 @@ class Character(Actor):
         Maximum hitpoints of this Character (overrides Actor)
         """
         return self.body * CONSTANTS.GAME_PLAYER_HITPOINT_FACTOR
-    @property
-    def currentHitPoints(self):
-        """
-        The current amount of hitpoints
-        """
-        return self._currentHitPoints
-    @currentHitPoints.setter
-    def currentHitPoints(self, hitPoints):
-        if hitPoints > self.maxHitPoints:
-            self._currentHitPoints = self.maxHitPoints
-        else:
-            self._currentHitPoints = hitPoints
 
     @property
     def xpValue(self):
@@ -474,12 +478,9 @@ class Character(Actor):
         Creates a new character object, normally not used directly but called
         by sub class constructors.
         """
+        #initialize class variables
         self._equipedItems = []
         self._inventory = Inventory(self)
-
-        #call super class constructor
-        super(Character, self).__init__()
-        #initialize class variables
         self._baseAccuracy = 10
         self._baseDodge = 10
         self._baseDamage = 10
@@ -487,11 +488,22 @@ class Character(Actor):
         self._baseBody = 10
         self._baseMind = 10
 
-        self._currentHitPoints =  self.maxHitPoints
+        #call super class constructor
+        super(Character, self).__init__()
 
         self._xpValue = 0
         self._AI = None
         self._state = Character.ACTIVE
+
+    def __str__(self):
+        return self._name + " (" \
+            + "Accuracy:" + str(self.accuracy) + " " \
+            + "Dodge:" + str(self.dodge) + " " \
+            + "Damage:" + str(self.damage) + " " \
+            + "Armor:" + str(self.armor) + " " \
+            + "Body:" + str(self.body) + " " \
+            + "Mind:" + str(self.mind) + ") " \
+            + super(Actor, self).__str__()
 
     def registerWithLevel(self, level):
         """
@@ -583,6 +595,8 @@ class Character(Actor):
         hitRoll = rollHitDie("1d100")
         # In case of an equal accuracy and dodge rating there is a 50% chance to hit
         toHit = 100 - (50 + self.accuracy - target.dodge)
+        message("Attacker: " + str(self), "GAME")
+        message("Target: " + str(target), "GAME")
         message(self.name.capitalize() + ' attacks ' + target.name + ': ' + str(hitRoll) + ' vs ' + str(toHit), "GAME")
         if hitRoll < toHit:
             # Miss, no damage
