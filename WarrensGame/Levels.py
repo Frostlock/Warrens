@@ -267,6 +267,11 @@ class TownLevel(Level):
         #Connect the two doors
         doorIn.connectTo(doorOut)
 
+        #Add an NPC in the house
+        tile = houseLevel.getRandomEmptyTile()
+        npc = Actors.NPC()
+        npc.moveToLevel(houseLevel, tile)
+
 
 class SingleRoomLevel(Level):
     """

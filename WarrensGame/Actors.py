@@ -719,8 +719,6 @@ class Player(Character):
         #player is white
         self._color = (250,250,250)
         #Character properties
-        self._naturalArmor = 0
-        self._baseAttackBonus = 0
         self._xpValue = 1
         self._AI = None
         #Player properties
@@ -893,6 +891,28 @@ class NPC(Character):
     Sub class representing a NPC, for example a vendor
     Probably we'll need to override some inventory concepts
     """
+
+    NPC_NAMES = ["John", "Jake", "jacob", "Jeremy", "Mr J"]
+
+    def __init__(self):
+        """
+        Creates and initializes new player object. Note that the object is not
+        linked to a game tile. It should be moved to the tile after creation.
+        """
+        #call super class constructor
+        super(NPC, self).__init__()
+
+        #initialize all properties
+        #Actor properties
+        self._key = 'npc'
+        self._char = '@'
+        self._name = random.choice(self.NPC_NAMES)
+        #npcs are light grey
+        self._color = (200,200,200)
+        #Character properties
+        self._xpValue = 100
+        self._AI = None
+        #NPC properties
 
 
 class Monster(Character):
