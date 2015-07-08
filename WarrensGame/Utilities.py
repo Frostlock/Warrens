@@ -1,14 +1,9 @@
-#Module with reusable utility functions
+# Module with reusable utility functions
 
-#TODO easy: this module needs better documentation comments
-# standardize functions names in this module (get rid of _)
-
-#TODO medium: this module should be made PEP8 compliant
 import random
 import math
 import CONSTANTS
 
-# rolling a hitdie
 def rollHitDie(hitdie):
     """
     this function simulates rolling hit dies and returns the resulting
@@ -20,11 +15,11 @@ def rollHitDie(hitdie):
     Returns
         integer number of hitpoints
     """
-    #interpret the hitdie string
+    # interpret the hitdie string
     d_index = hitdie.lower().index('d')
     nbr_of_rolls = int(hitdie[0:d_index])
     dice_size = int(hitdie[d_index + 1:])
-    #roll the dice
+    # roll the dice
     role_count = 0
     hitpoints = 0
     while role_count < nbr_of_rolls:
@@ -32,32 +27,36 @@ def rollHitDie(hitdie):
         hitpoints += random.randrange(1, dice_size)
     return hitpoints
 
+
 def randomChoiceIndex(chances):
     """
     Returns the index of a random choice based on a list of chances.
     """
-    #the dice will land on some number between 1 and the sum of the chances
+    # the dice will land on some number between 1 and the sum of the chances
     dice = random.randrange(1, sum(chances))
 
-    #go through all chances, keeping the sum so far
+    # go through all chances, keeping the sum so far
     running_sum = 0
     choice = 0
     for w in chances:
         running_sum += w
 
-        #see if the dice landed in the part that corresponds to this choice
+        # see if the dice landed in the part that corresponds to this choice
         if dice <= running_sum:
             return choice
         choice += 1
 
-#Queue to keep track of game messages
+
+# Queue to keep track of game messages
 from collections import deque
 messageBuffer = deque([])
+
 
 def resetMessageBuffer():
     global messageBuffer
     messageBuffer = deque([])
-        
+
+
 def message(text, category=None):
     """
     Utility function to deal with in game messages.
@@ -68,10 +67,10 @@ def message(text, category=None):
     global messageBuffer
     
     if category is None:
-        #Default to console output
+        # Default to console output
         print text
     elif category.upper() == "GAME":
-        #Game output is stored (so it can be referenced by application implementation)
+        # Game output is stored (so it can be referenced by application implementation)
         if CONSTANTS.SHOW_GAME_LOGGING is True:
             print "GAME: " + text
         messageBuffer.append(text)
@@ -86,17 +85,19 @@ def message(text, category=None):
         if CONSTANTS.SHOW_GENERATION_LOGGING is True:
             print "GENERATION: " + text
     else:
-        #Default to console output
+        # Default to console output
         print text
-    #Only keep the 20 latest messages in the messageBuffer
-    if len(messageBuffer) > 20: messageBuffer.popleft()
+    # Only keep the 20 latest messages in the messageBuffer
+    if len(messageBuffer) > 20:
+        messageBuffer.popleft()
+
 
 def clamp(n, minn, maxn):
     """
     This function returns the number n limited to the range min-max.
     It is meant to be used to keep coordinates withing the limites of the map.
     """
-    #Hurray for readability ;-)
+    # Hurray for readability ;-)
     return max(min(maxn, n), minn)
 
 
@@ -156,7 +157,6 @@ def get_line_segments(x1, y1, x2, y2):
     deltay = abs(y2 - y1)
     error = int(deltax / 2)
     y = y1
-    ystep = None
     if y1 < y2:
         ystep = 1
     else:
