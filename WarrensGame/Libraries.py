@@ -153,10 +153,10 @@ class MonsterLibrary():
 
         # do not create multiple unique monsters
         if baseMonster.unique:
-            unique_ids = []
+            uniqueKeys = []
             for unique_monster in self.uniqueMonsters:
-                unique_ids.append(unique_monster.id)
-            if monster_key in unique_ids:
+                uniqueKeys.append(unique_monster.key)
+            if monster_key in uniqueKeys:
                 #This unique was already created, do nothing
                 raise GameError('Unique monster' + monster_key + ' already exists.')
 

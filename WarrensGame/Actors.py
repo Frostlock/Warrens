@@ -37,11 +37,11 @@ class Actor(object):
         return 1
 
     @property
-    def id(self):
+    def key(self):
         """
         ID code for this Actor
         """
-        return self._id
+        return self._key
 
     @property
     def name(self):
@@ -165,7 +165,7 @@ class Actor(object):
         """
         # Initialize class properties
         self._char = "?"
-        self._id = "not set"
+        self._key = "not set"
         self._name = "Nameless"
         self._flavorText = ""
         self._tile = None
@@ -713,7 +713,7 @@ class Player(Character):
 
         #initialize all properties
         #Actor properties
-        self._id = 'player'
+        self._key = 'player'
         self._char = '@'
         self._name = random.choice(('Joe', 'Wesley', 'Frost'))
         #player is white
@@ -1011,7 +1011,7 @@ class Monster(Character):
         super(Monster, self).__init__()
 
         #Actor components
-        self._id = baseMonster.key
+        self._key = baseMonster.key
         self._char = baseMonster.char
         self._baseMaxHitPoints = rollHitDie(baseMonster.hitdie)
         self._currentHitPoints = self._baseMaxHitPoints
@@ -1211,7 +1211,7 @@ class Item(Actor):
         super(Item, self).__init__()
         #Initialize Item components
         self._baseItem = baseItem
-        self._id = baseItem.key
+        self._key = baseItem.key
         self._char = baseItem.char
         self._baseMaxHitPoints = 1
         self._currentHitPoints = self._baseMaxHitPoints

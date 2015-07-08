@@ -38,20 +38,17 @@ class Inventory(object):
         newItem.owner = self.owner
         #if item is stackable
         if newItem.stackable:
-            #Check if there is another item with the same ID
-            existingItem = self.find(newItem.id)
+            #Check if there is an identical item
+            existingItem = self.find(newItem)
             if existingItem is None:
                 #If there is no existing item just add the new one
                 self.items.append(newItem)
-                #TODO: Problem here: Items with different modifiers should not stack!
-                #TODO: Problem here: Modifiers on first item apply to entire stack
             else:
                 #Item already exists, increase the stack with one
                 existingItem.stackSize +=1
         else:
             #Add non stackable item
             self.items.append(newItem)
-        
     
     def remove(self, removeItem):
         '''
@@ -59,12 +56,18 @@ class Inventory(object):
         '''
         self.items.remove(removeItem)
 
-    def find(self, itemID):
+    def find(self, item):
         '''
-        Search this inventory for an item with the specified itemID.
+        Search this inventory for the specified item. with the specified itemID.
+        Matching is done based on itemID and modifierIDs.
         Returns None if the item is not found
         '''
-        for item in self.items:
-            if item.id == itemID:
-                return item
+        for availableItem in self.items:
+            # Same base item
+            if availableItem.key == item.key:
+                availableModKeys = [mod.key for mod in availableItem.modifiers]
+                itemModKeys = [mod.key for mod in item.modifiers]
+                # TODO: sort itemModKeys and availableModKeys alphabetically
+                if str(availableModKeys) == str(itemModKeys):
+                    return availableItem
         return None
