@@ -2,11 +2,13 @@
 
 This repository contains a python game called 'Warrens'. It is meant as a coding playground for me to have some fun with Python.
 
-The GUI implementation is based on pygame and opengl. There is a deprecated pygame only interface and an opengl interface.
-
-Feel free to fork a copy and get your hands dirty!
+The GUI implementation is based on PyGame and PyOpengl. There is a deprecated pygame only interface and an opengl interface.
 
 Check out the Wiki for some <a href="https://github.com/Frostlock/Warrens/wiki/Running-the-game">installation instructions</a>.
+
+Special thanks to these two for getting me started!
+- http://www.arcsynthesis.org/gltut/
+- http://www.willmcgugan.com/blog/tech/2007/6/4/opengl-sample-code-for-pygame/
 
 -Frost
 
