@@ -330,12 +330,15 @@ class GuiApplication(object):
                     if event.key in MOVEMENT_KEYS:
                         player.tryMoveOrAttack(*MOVEMENT_KEYS[event.key])
                     #portal keys
-                    elif event.key == pygame.K_LESS:
+                    elif event.key == pygame.K_PERIOD:
                         #check for shift modifier to detect ">" key.
                         mods = pygame.key.get_mods()
                         if (mods & KMOD_LSHIFT) or (mods & KMOD_RSHIFT): 
                             player.tryFollowPortalDown()
-                        else:
+                    elif event.key == pygame.K_COMMA:
+                        # check for shift modifier to detect "<" key.
+                        mods = pygame.key.get_mods()
+                        if (mods & KMOD_LSHIFT) or (mods & KMOD_RSHIFT):
                             player.tryFollowPortalUp()
                     #inventory
                     elif event.key == pygame.K_i:
@@ -343,7 +346,7 @@ class GuiApplication(object):
                     elif event.key == pygame.K_d:
                         self.dropInventory()
                     #interact
-                    elif event.key == pygame.K_COMMA:
+                    elif event.key == pygame.K_KP0:
                         player.tryInteract()
         
     

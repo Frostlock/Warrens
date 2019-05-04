@@ -30,7 +30,7 @@ def showMessageControls(target):
     message = "  Movement: keypad or arrowkeys\n" + \
               "  Attack: move towards target\n" + \
               "  Portals: > to go down, < to go up.\n" + \
-              "  Pick up item: , \n" + \
+              "  Pick up item: key pad 0 \n" + \
               "  View and use inventory: i\n" + \
               "  Drop from inventory: d\n"
               
